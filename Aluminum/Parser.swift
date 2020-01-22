@@ -12,8 +12,11 @@ import Metal
 
 internal class Parser {
     
-    static let indexDelimiter = "{}"
+    static let startIndexDelimiter = "["
+    static let endIndexDelimiter = "]"
+    static let indexDelimiter = Parser.startIndexDelimiter + Parser.endIndexDelimiter
     
+
     enum Argument: Hashable {
         case argument(MTLArgument)
         case type(MTLType)
@@ -86,7 +89,7 @@ private extension Parser {
         case .struct: parseStruct(array.elementStructType()!, namespace: arrayNamespace)
         case .pointer: parsePointer(array.elementPointerType()!, namespace: arrayNamespace)
         case .array: parseArray(array.element()!, namespace: arrayNamespace)
-        default: mapping[namespace] = .type(array)
+        default: mapping[arrayNamespace] = .type(array)
         }
     }
 }

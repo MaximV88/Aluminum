@@ -13,11 +13,15 @@ using namespace metal;
 #import "AluminumArgumentBuffer.h"
 
 
-kernel void test_arguments(device float * buff [[ buffer(0) ]],
-                           constant TestArgumentsUniforms &uniforms [[ buffer(1) ]],
-                           device metal::array<float, 3> * arr [[ buffer(2) ]],
-                           device TestArgumentsBuffer & argumentBuffer [[ buffer(3) ]],
-                           texture2d<float> tex [[ texture(0) ]])
+kernel void test_arguments(device metal::array<float, 3> * arr [[ buffer(1) ]],
+                           threadgroup metal::array<float, 2> * k [[ threadgroup(5) ]],
+                           array<texture2d<float>, 10> constarr [[ texture(3) ]],
+                           texture_buffer<float> testarr [[ texture(0) ]],
+                           texture1d_array<float, metal::access::read> testtextarr [[ texture(1) ]],
+                           device float * buff [[ buffer(2) ]],
+                           constant TestArgumentsUniforms &uniforms [[ buffer(3) ]],
+                           device TestArgumentsBuffer & argumentBuffer [[ buffer(4) ]],
+                           texture2d<float> tex [[ texture(2) ]])
 {
     
 }

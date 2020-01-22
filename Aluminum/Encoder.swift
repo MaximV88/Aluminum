@@ -56,21 +56,71 @@ public extension ComputePipelineStateController.Encoder {
 
 private extension ComputePipelineStateController.Encoder {
     func traverseArgument(_ argument: MTLArgument) {
-        // check whether argument was directly bound
-        if let binding = binder.binding(for: .argument(argument)) {
-            encodeArgument(argument, with: binding)
-            return // TODO: add multiple bounds
+        applyArgument(argument, with: .argument(argument))
+        
+        switch argument.type {
+        case .buffer: traversePointer(argument.bufferPointerType!, in: argument)
+        case .texture: break // TODO: can have an array
+        default: break
+        }
+    }
+    
+    func traversePointer(_ pointer: MTLPointerType, in argument: MTLArgument) {
+        applyArgument(argument, with: .type(pointer))
+        
+        switch pointer.elementType {
+        case .struct: traverseStruct(pointer.elementStructType()!, in: argument)
+        // ???: cant find a case where a pointer contains a reference to an array, seems that an array is always in a struct
+        case .array: traverseArray(pointer.elementArrayType()!, in: argument)
+        default: break
+        }
+    }
+    
+    func traverseStruct(_ struct: MTLStructType, in argument: MTLArgument) {
+        applyArgument(argument, with: .type(`struct`))
+        
+        for member in `struct`.members {
+            applyArgument(argument, with: .structMember(member))
+
+            switch member.dataType {
+            case .struct: traverseStruct(member.structType()!, in: argument)
+            case .array: traverseArray(member.arrayType()!, in: argument)
+            default: break
+            }
+        }
+    }
+    
+    func traverseArray(_ array: MTLArrayType, in argument: MTLArgument) {
+        applyArgument(argument, with: .type(array))
+        
+        switch array.elementType {
+        case .array: traverseArray(array.element()!, in: argument)
+        case .struct: traverseStruct(array.elementStructType()!, in: argument)
+        default: break
+        }
+    }
+}
+
+private extension ComputePipelineStateController.Encoder {
+    func applyArgument(_ argument: MTLArgument,
+                        with candidate: Parser.Argument)
+    {
+        guard let binding = binder.binding(for: candidate) else {
+            return
         }
         
-        
+        switch binding {
+        case .value(let value): encodeArgument(argument, with: value)
+        case .arrayMember(let value, let nestedIndices): encodeArgument(argument, with: value, inArrayAt: nestedIndices.first!) // first level
+        }
     }
 }
 
 private extension ComputePipelineStateController.Encoder {
     func encodeArgument(_ argument: MTLArgument,
-                        with binding: ComputePipelineStateController.Binder.Binding)
+                        with value: ComputePipelineStateController.Binder.Value)
     {
-        switch binding {
+        switch value {
         case .bytes(let data):
             data.withUnsafeBytes { bytes in
                 let ptr: UnsafePointer<UInt8> = bytes.baseAddress!.assumingMemoryBound(to: UInt8.self)
@@ -81,5 +131,16 @@ private extension ComputePipelineStateController.Encoder {
         case .custom(let encodable):
             encodable.encode(to: computeCommandEncoder)
         }
+    }
+    
+    func encodeArgument(_ argument: MTLArgument,
+                        with value: ComputePipelineStateController.Binder.Value,
+                        inArrayAt index: UInt)
+    {
+        guard argument.bufferDataType == .array else {
+            fatalError()
+        }
+        
+        
     }
 }

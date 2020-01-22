@@ -17,11 +17,13 @@ class AluminumTests: XCTestCase {
     
     private var device: MTLDevice!
     private var library: MTLLibrary!
+    private var commandQueue: MTLCommandQueue!
     
 
     override func setUp() {
         device = MTLCreateSystemDefaultDevice()
         library = try! device.makeDefaultLibrary(bundle: Bundle(for: AluminumTests.self))
+        commandQueue = device.makeCommandQueue()
     }
 
     func testArguments() {
@@ -31,11 +33,22 @@ class AluminumTests: XCTestCase {
         let buff = device.makeBuffer(length: 1, options: .storageModeShared)!
         
         do {
-            try binder.bind("buff", to: buff)
-            try binder.bind("uniforms", struct: TestArgumentsUniforms(bufferLength: uint(buff.length)))
+//            try binder.bind("buff", to: buff)
+//            try binder.bind("uniforms", to: TestArgumentsUniforms(bufferLength: uint(buff.length)))
+            try binder.bind("arr[10]", to: TestArgumentsUniforms(bufferLength: uint(buff.length)))
         } catch {
             XCTFail(error.localizedDescription)
         }
+        
+        let encoder = controller.makeEncoder()
+        
+        let commandBuffer = commandQueue.makeCommandBuffer()!
+        let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()!
+        encoder.encode(computeCommandEncoder, binder: binder)
+        
+        computeCommandEncoder.endEncoding()
+        commandBuffer.commit()
+        commandBuffer.waitUntilCompleted()
     }
 
     func testPerformanceExample() {
