@@ -8,12 +8,42 @@
 
 /* Begin PBXBuildFile section */
 		9453C90B23D32A3B00E7FCFE /* Aluminum.h in Headers */ = {isa = PBXBuildFile; fileRef = 9453C90923D32A3B00E7FCFE /* Aluminum.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9453C91223D32AA600E7FCFE /* ComputePipelineState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9453C91123D32AA600E7FCFE /* ComputePipelineState.swift */; };
+		9453C91523D32AB300E7FCFE /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9453C91423D32AB300E7FCFE /* Metal.framework */; };
+		9453C91D23D32ADF00E7FCFE /* AluminumTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9453C91C23D32ADF00E7FCFE /* AluminumTests.swift */; };
+		9453C91F23D32ADF00E7FCFE /* Aluminum.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9453C90623D32A3B00E7FCFE /* Aluminum.framework */; };
+		9453C92623D32B7100E7FCFE /* AluminumTests.metal in Sources */ = {isa = PBXBuildFile; fileRef = 9453C92523D32B7100E7FCFE /* AluminumTests.metal */; };
+		9453C92A23D60C9800E7FCFE /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9453C92923D60C9800E7FCFE /* Parser.swift */; };
+		9453C92C23D6137800E7FCFE /* Binder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9453C92B23D6137800E7FCFE /* Binder.swift */; };
+		9453C92E23D613EA00E7FCFE /* Encoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9453C92D23D613EA00E7FCFE /* Encoder.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		9453C92023D32ADF00E7FCFE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9453C8FD23D32A3B00E7FCFE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9453C90523D32A3B00E7FCFE;
+			remoteInfo = Aluminum;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		9453C90623D32A3B00E7FCFE /* Aluminum.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Aluminum.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		9453C90923D32A3B00E7FCFE /* Aluminum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Aluminum.h; sourceTree = "<group>"; };
 		9453C90A23D32A3B00E7FCFE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9453C91123D32AA600E7FCFE /* ComputePipelineState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComputePipelineState.swift; sourceTree = "<group>"; };
+		9453C91423D32AB300E7FCFE /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		9453C91A23D32ADF00E7FCFE /* AluminumTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AluminumTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9453C91C23D32ADF00E7FCFE /* AluminumTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AluminumTests.swift; sourceTree = "<group>"; };
+		9453C91E23D32ADF00E7FCFE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9453C92523D32B7100E7FCFE /* AluminumTests.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = AluminumTests.metal; sourceTree = "<group>"; };
+		9453C92723D32BB300E7FCFE /* AluminumTestsUniforms.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AluminumTestsUniforms.h; sourceTree = "<group>"; };
+		9453C92823D32E0B00E7FCFE /* AluminumTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AluminumTests-Bridging-Header.h"; sourceTree = "<group>"; };
+		9453C92923D60C9800E7FCFE /* Parser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Parser.swift; sourceTree = "<group>"; };
+		9453C92B23D6137800E7FCFE /* Binder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Binder.swift; sourceTree = "<group>"; };
+		9453C92D23D613EA00E7FCFE /* Encoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Encoder.swift; sourceTree = "<group>"; };
+		9453C92F23D6D94800E7FCFE /* AluminumArgumentBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AluminumArgumentBuffer.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -21,6 +51,15 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9453C91523D32AB300E7FCFE /* Metal.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9453C91723D32ADF00E7FCFE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9453C91F23D32ADF00E7FCFE /* Aluminum.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -31,7 +70,9 @@
 			isa = PBXGroup;
 			children = (
 				9453C90823D32A3B00E7FCFE /* Aluminum */,
+				9453C91B23D32ADF00E7FCFE /* AluminumTests */,
 				9453C90723D32A3B00E7FCFE /* Products */,
+				9453C91323D32AB300E7FCFE /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -39,6 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				9453C90623D32A3B00E7FCFE /* Aluminum.framework */,
+				9453C91A23D32ADF00E7FCFE /* AluminumTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,8 +90,33 @@
 			children = (
 				9453C90923D32A3B00E7FCFE /* Aluminum.h */,
 				9453C90A23D32A3B00E7FCFE /* Info.plist */,
+				9453C91123D32AA600E7FCFE /* ComputePipelineState.swift */,
+				9453C92B23D6137800E7FCFE /* Binder.swift */,
+				9453C92923D60C9800E7FCFE /* Parser.swift */,
+				9453C92D23D613EA00E7FCFE /* Encoder.swift */,
 			);
 			path = Aluminum;
+			sourceTree = "<group>";
+		};
+		9453C91323D32AB300E7FCFE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9453C91423D32AB300E7FCFE /* Metal.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		9453C91B23D32ADF00E7FCFE /* AluminumTests */ = {
+			isa = PBXGroup;
+			children = (
+				9453C91C23D32ADF00E7FCFE /* AluminumTests.swift */,
+				9453C92723D32BB300E7FCFE /* AluminumTestsUniforms.h */,
+				9453C92F23D6D94800E7FCFE /* AluminumArgumentBuffer.h */,
+				9453C92523D32B7100E7FCFE /* AluminumTests.metal */,
+				9453C91E23D32ADF00E7FCFE /* Info.plist */,
+				9453C92823D32E0B00E7FCFE /* AluminumTests-Bridging-Header.h */,
+			);
+			path = AluminumTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -84,16 +151,39 @@
 			productReference = 9453C90623D32A3B00E7FCFE /* Aluminum.framework */;
 			productType = "com.apple.product-type.framework";
 		};
+		9453C91923D32ADF00E7FCFE /* AluminumTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9453C92223D32ADF00E7FCFE /* Build configuration list for PBXNativeTarget "AluminumTests" */;
+			buildPhases = (
+				9453C91623D32ADF00E7FCFE /* Sources */,
+				9453C91723D32ADF00E7FCFE /* Frameworks */,
+				9453C91823D32ADF00E7FCFE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9453C92123D32ADF00E7FCFE /* PBXTargetDependency */,
+			);
+			name = AluminumTests;
+			productName = AluminumTests;
+			productReference = 9453C91A23D32ADF00E7FCFE /* AluminumTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
 		9453C8FD23D32A3B00E7FCFE /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 1100;
 				LastUpgradeCheck = 1100;
 				ORGANIZATIONNAME = "Maxim Vainshtein";
 				TargetAttributes = {
 					9453C90523D32A3B00E7FCFE = {
+						CreatedOnToolsVersion = 11.0;
+						LastSwiftMigration = 1100;
+					};
+					9453C91923D32ADF00E7FCFE = {
 						CreatedOnToolsVersion = 11.0;
 					};
 				};
@@ -112,12 +202,20 @@
 			projectRoot = "";
 			targets = (
 				9453C90523D32A3B00E7FCFE /* Aluminum */,
+				9453C91923D32ADF00E7FCFE /* AluminumTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		9453C90423D32A3B00E7FCFE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9453C91823D32ADF00E7FCFE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -131,10 +229,31 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9453C92E23D613EA00E7FCFE /* Encoder.swift in Sources */,
+				9453C92A23D60C9800E7FCFE /* Parser.swift in Sources */,
+				9453C92C23D6137800E7FCFE /* Binder.swift in Sources */,
+				9453C91223D32AA600E7FCFE /* ComputePipelineState.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9453C91623D32ADF00E7FCFE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9453C91D23D32ADF00E7FCFE /* AluminumTests.swift in Sources */,
+				9453C92623D32B7100E7FCFE /* AluminumTests.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9453C92123D32ADF00E7FCFE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9453C90523D32A3B00E7FCFE /* Aluminum */;
+			targetProxy = 9453C92023D32ADF00E7FCFE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		9453C90C23D32A3B00E7FCFE /* Debug */ = {
@@ -259,6 +378,7 @@
 		9453C90F23D32A3B00E7FCFE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEFINES_MODULE = YES;
@@ -276,6 +396,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = aurora.Aluminum;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -283,6 +404,7 @@
 		9453C91023D32A3B00E7FCFE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEFINES_MODULE = YES;
@@ -304,6 +426,46 @@
 			};
 			name = Release;
 		};
+		9453C92323D32ADF00E7FCFE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = EF74XXMQ5K;
+				INFOPLIST_FILE = AluminumTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = aurora.AluminumTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "AluminumTests/AluminumTests-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9453C92423D32ADF00E7FCFE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = EF74XXMQ5K;
+				INFOPLIST_FILE = AluminumTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = aurora.AluminumTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "AluminumTests/AluminumTests-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -321,6 +483,15 @@
 			buildConfigurations = (
 				9453C90F23D32A3B00E7FCFE /* Debug */,
 				9453C91023D32A3B00E7FCFE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9453C92223D32ADF00E7FCFE /* Build configuration list for PBXNativeTarget "AluminumTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9453C92323D32ADF00E7FCFE /* Debug */,
+				9453C92423D32ADF00E7FCFE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
