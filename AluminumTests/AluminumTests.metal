@@ -13,7 +13,7 @@ using namespace metal;
 #import "AluminumArgumentBuffer.h"
 
 struct C {
-//    device float * t; // check regular nested arrays before this
+    device float * t;
     metal::array<bool, 9> arr;
     uint a;
     ushort c;
