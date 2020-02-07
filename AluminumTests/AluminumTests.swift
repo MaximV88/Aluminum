@@ -26,16 +26,25 @@ class AluminumTests: XCTestCase {
         commandQueue = device.makeCommandQueue()
     }
 
-    func testArguments() {
-        let controller = try! makeComputePipelineState(functionName: "test_arguments")
+    private let captureManager = MTLCaptureManager.shared()
+    
+    func testArrayArgument() {
+
+        let controller = try! makeComputePipelineState(functionName: "test_array_argument")
         let binder = controller.makeBinder()
-        
-        let buff = device.makeBuffer(length: 1, options: .storageModeShared)!
-        
+                
+        let argumentBuffer = device.makeBuffer(length: 4096, options: .storageModeShared)
+        let resultBuffer = device.makeBuffer(length: MemoryLayout<UInt32>.stride * 1 , options: .storageModeShared)!
+
         do {
-//            try binder.bind("buff", to: buff)
-//            try binder.bind("uniforms", to: TestArgumentsUniforms(bufferLength: uint(buff.length)))
-            try binder.bind("arr[10]", to: TestArgumentsUniforms(bufferLength: uint(buff.length)))
+            try binder.bind("arr[0].a", to: UInt32(1.0))
+            try binder.bind("arr[1].a", to: UInt32(2.0))
+            try binder.bind("arr[2].a", to: UInt32(3.0))
+            try binder.bind("arr[3].a", to: UInt32(4.0))
+//            try binder.bind("buf_arr[0].arr[0]", to: UInt32(4.0))
+//            try binder.bind("buf_arr[0].arr[1]", to: UInt32(4.0))
+//            try binder.bind("buf_arr[1].arr[1]", to: UInt32(4.0))
+            try binder.bind("result", to: resultBuffer)
         } catch {
             XCTFail(error.localizedDescription)
         }
@@ -44,20 +53,13 @@ class AluminumTests: XCTestCase {
         
         let commandBuffer = commandQueue.makeCommandBuffer()!
         let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()!
-        encoder.encode(computeCommandEncoder, binder: binder)
+        encoder.encode(computeCommandEncoder, binder: binder, argumentBuffer: argumentBuffer)
         
-        computeCommandEncoder.endEncoding()
-        commandBuffer.commit()
-        commandBuffer.waitUntilCompleted()
-    }
+        dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
+        
+      XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(10))
 
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        measure {
-            // Put the code you want to measure the time of here.
-        }
     }
-
 }
 
 private extension AluminumTests {
@@ -67,5 +69,16 @@ private extension AluminumTests {
         }
         
         return try ComputePipelineStateController(function: function)
+    }
+    
+    func dispatchAndCommit(_ computeCommandEncoder: MTLComputeCommandEncoder, commandBuffer: MTLCommandBuffer, threadCount: Int) {
+        let threadGroupsCount = MTLSizeMake(1, 1, 1)
+        let threadGroups = MTLSizeMake(threadCount, 1, 1)
+        
+        computeCommandEncoder.dispatchThreadgroups(threadGroups, threadsPerThreadgroup: threadGroupsCount)
+
+        computeCommandEncoder.endEncoding()
+        commandBuffer.commit()
+        commandBuffer.waitUntilCompleted()
     }
 }

@@ -15,3 +15,15 @@ struct TestArgumentsUniforms {
 };
 typedef struct TestArgumentsUniforms TestArgumentsUniforms;
 
+typedef vector_int3 GridPoint;
+
+struct GridSize {
+    uint width, height, depth;
+};
+typedef struct GridSize GridSize;
+
+struct GridRegion {
+    GridSize size;
+    GridPoint origin;
+};
+typedef struct GridRegion GridRegion;

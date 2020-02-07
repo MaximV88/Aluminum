@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		942574BD23E877E50024DC43 /* ComputePipelineStateError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 942574BC23E877E50024DC43 /* ComputePipelineStateError.swift */; };
 		9453C90B23D32A3B00E7FCFE /* Aluminum.h in Headers */ = {isa = PBXBuildFile; fileRef = 9453C90923D32A3B00E7FCFE /* Aluminum.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9453C91223D32AA600E7FCFE /* ComputePipelineState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9453C91123D32AA600E7FCFE /* ComputePipelineState.swift */; };
 		9453C91523D32AB300E7FCFE /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9453C91423D32AB300E7FCFE /* Metal.framework */; };
@@ -29,6 +30,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		942574BC23E877E50024DC43 /* ComputePipelineStateError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComputePipelineStateError.swift; sourceTree = "<group>"; };
 		9453C90623D32A3B00E7FCFE /* Aluminum.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Aluminum.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		9453C90923D32A3B00E7FCFE /* Aluminum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Aluminum.h; sourceTree = "<group>"; };
 		9453C90A23D32A3B00E7FCFE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -91,8 +93,9 @@
 				9453C90923D32A3B00E7FCFE /* Aluminum.h */,
 				9453C90A23D32A3B00E7FCFE /* Info.plist */,
 				9453C91123D32AA600E7FCFE /* ComputePipelineState.swift */,
-				9453C92B23D6137800E7FCFE /* Binder.swift */,
+				942574BC23E877E50024DC43 /* ComputePipelineStateError.swift */,
 				9453C92923D60C9800E7FCFE /* Parser.swift */,
+				9453C92B23D6137800E7FCFE /* Binder.swift */,
 				9453C92D23D613EA00E7FCFE /* Encoder.swift */,
 			);
 			path = Aluminum;
@@ -232,6 +235,7 @@
 				9453C92E23D613EA00E7FCFE /* Encoder.swift in Sources */,
 				9453C92A23D60C9800E7FCFE /* Parser.swift in Sources */,
 				9453C92C23D6137800E7FCFE /* Binder.swift in Sources */,
+				942574BD23E877E50024DC43 /* ComputePipelineStateError.swift in Sources */,
 				9453C91223D32AA600E7FCFE /* ComputePipelineState.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

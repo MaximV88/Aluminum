@@ -39,6 +39,8 @@ public class ComputePipelineStateController {
     }
     
     public func makeEncoder() -> Encoder {
-         return Encoder(function: function, reflection: reflection)
+        return Encoder(function: function,
+                       reflection: reflection,
+                       computePipelineState: computePipelineState)
      }
 }
