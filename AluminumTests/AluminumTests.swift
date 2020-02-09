@@ -37,13 +37,15 @@ class AluminumTests: XCTestCase {
         let resultBuffer = device.makeBuffer(length: MemoryLayout<UInt32>.stride * 1 , options: .storageModeShared)!
 
         do {
-            try binder.bind("arr[0].a", to: UInt32(1.0))
-            try binder.bind("arr[1].a", to: UInt32(2.0))
-            try binder.bind("arr[2].a", to: UInt32(3.0))
-            try binder.bind("arr[3].a", to: UInt32(4.0))
-//            try binder.bind("buf_arr[0].arr[0]", to: UInt32(4.0))
-//            try binder.bind("buf_arr[0].arr[1]", to: UInt32(4.0))
-//            try binder.bind("buf_arr[1].arr[1]", to: UInt32(4.0))
+            try binder.bind("arr[0].a", to: UInt32(11.0))
+            try binder.bind("arr[1].a", to: UInt32(22.0))
+            try binder.bind("arr[2].a", to: UInt32(33.0))
+            try binder.bind("arr[3].a", to: UInt32(44.0))
+            try binder.bind("arr[0].arr[0]", to: UInt32(1.0))
+            try binder.bind("arr[1].arr[1]", to: UInt32(2.0))
+            try binder.bind("arr[2].arr[2]", to: UInt32(3.0))
+            try binder.bind("arr[3].arr[3]", to: UInt32(4.0))
+//            try binder.bind("arr[3].d[3].a", to: UInt32(4.0))
             try binder.bind("result", to: resultBuffer)
         } catch {
             XCTFail(error.localizedDescription)
@@ -57,7 +59,7 @@ class AluminumTests: XCTestCase {
         
         dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
         
-      XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(10))
+      XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(120))
 
     }
 }
