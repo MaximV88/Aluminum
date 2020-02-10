@@ -34,12 +34,12 @@ typedef struct C C;
 
 
 kernel void test_array_argument(device metal::array<C, 40> & arr [[ buffer(0) ]],
-                                device atomic_uint * result [[ buffer(1) ]],
-                                constant metal::array<TestArgumentsBuffer, 3> * tarr [[ buffer(2) ]])
+                                device metal::array<TestArgumentsBuffer, 40> & tarr [[ buffer(1) ]],
+                                device atomic_uint * result [[ buffer(2) ]])
 {
     for (int i = 0, end = arr.size() ; i < end ; i++)
     {
-        atomic_fetch_add_explicit(result, arr[i].a + arr[i].arr[i] + arr[i].d[i].a , memory_order_relaxed);
+        atomic_fetch_add_explicit(result, arr[i].a + arr[i].arr[i] + arr[i].d[i].a + tarr[i].l , memory_order_relaxed);
     }
 }
 

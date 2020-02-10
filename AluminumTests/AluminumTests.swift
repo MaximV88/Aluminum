@@ -33,7 +33,7 @@ class AluminumTests: XCTestCase {
         let controller = try! makeComputePipelineState(functionName: "test_array_argument")
         let binder = controller.makeBinder()
                 
-        let argumentBuffer = device.makeBuffer(length: 80960, options: .storageModeShared)
+        let argumentBuffer = device.makeBuffer(length: 800960, options: .storageModeShared)
         let resultBuffer = device.makeBuffer(length: MemoryLayout<UInt32>.stride * 1 , options: .storageModeShared)!
 
         do {
@@ -46,6 +46,7 @@ class AluminumTests: XCTestCase {
             try binder.bind("arr[2].arr[2]", to: UInt32(3.0))
             try binder.bind("arr[3].arr[3]", to: UInt32(4.0))
             try binder.bind("arr[3].d[3].a", to: UInt32(5.0))
+            try binder.bind("tarr[0].l", to: UInt32(6.0))
             try binder.bind("result", to: resultBuffer)
         } catch {
             XCTFail(error.localizedDescription)
@@ -59,7 +60,7 @@ class AluminumTests: XCTestCase {
         
         dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
         
-      XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(125))
+      XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(131))
 
     }
 }

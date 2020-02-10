@@ -124,57 +124,104 @@ private extension ComputePipelineStateController.Encoder {
         let bindings = binder.bindings(for: lastArgument)
         guard !bindings.isEmpty else { return }
 
-        let index = lastIndex(from: argumentPath)
-        let baseOffset: Int = self.baseOffset(from: argumentPath, encoder: encoder)
+        // TODO: all binding need to be homogenous, otherwise binding buffer/bytes to same index will override each other
+        
+        let applicationIndex = self.index(from: argumentPath)
         
         switch encoder {
-        case .computeCommandEncoder(let e): e.setBuffer(argumentBuffer, offset: 0, index: index)
-        case .argumentEncoder: break // buffer is bound when creating encoder
+        case .argumentEncoder:
+            applyArgumentEncoder(encoder,
+                                 index: applicationIndex,
+                                 argumentPath: argumentPath,
+                                 bindings: bindings)
+        case .computeCommandEncoder:
+            applyComputeCommandEncoder(encoder,
+                                       index: applicationIndex,
+                                       argumentPath: argumentPath,
+                                       bindings: bindings)
         }
-
+    }
+    
+    func applyArgumentEncoder(_ encoder: Encoder,
+                              index: Int,
+                              argumentPath: [Parser.Argument],
+                              bindings: [ComputePipelineStateController.Binder.Binding])
+    {
+        guard case .argumentEncoder(let argumentEncoder) = encoder else {
+            return
+        }
         
-        // TODO: all binding need to be homogenous, otherwise binding buffer/bytes to same index will override each other
+        // bytes are encoded using 'constantData', index starts at nested type, not at origin.
+        let bytesBaseOffset = -nestedBaseOffset(from: argumentPath)
+        
         for binding in bindings {
             switch binding.value {
             case .bytes(let data):
-                encode(data,
-                       index: index,
-                       offset: baseOffset + offset(for: binding.indexPath, from: argumentPath),
-                       encoder: encoder)
+                
+                let destination = argumentEncoder.constantData(at: index).assumingMemoryBound(to: UInt8.self)
+                let indexOffset = bytesBaseOffset + offset(for: binding.indexPath, from: argumentPath)
+                
+                encode(data, destination: destination, offset: indexOffset)
+                
             case .buffer(let buffer, let offset):
-                encode(buffer,
-                       index: index,
-                       offset: offset,
-                       usage: lastArgument.usage!, // buffer assignment requires pointer argument
-                       encoder: encoder)
+                
+                argumentEncoder.setBuffer(buffer, offset: offset, index: index)
+                
+                // buffer encoding assumes pointer argument
+                computeCommandEncoder.useResource(buffer, usage: argumentPath.last!.usage!)
+                
             case .custom(let encodable): break
             }
         }
     }
-
-    func baseOffset(from argumentPath: [Parser.Argument], encoder: Encoder) -> Int {
-        var baseOffset = offset(for: [Int](repeating: 0, count: argumentPath.count), from: argumentPath)
-        
-        switch encoder {
-        case .argumentEncoder:
-            
-            // will be using 'constantData', index starts at nested type, not at origin.
-            return -baseOffset
-            
-        case .computeCommandEncoder:
-            
-            // when dealing with struct, the base offset needs to point to struct's offset, not the type nested in that struct
-            // this needs to be also considered when type is nested in a struct.
-            for argument in argumentPath {
-                switch argument {
-                case .structMember(let s): baseOffset -= s.offset
-                default: continue
-                }
-            }
-            
-            return baseOffset
+    
+    func applyComputeCommandEncoder(_ encoder: Encoder,
+                                    index: Int,
+                                    argumentPath: [Parser.Argument],
+                                    bindings: [ComputePipelineStateController.Binder.Binding])
+    {
+        guard case .computeCommandEncoder(let computeCommandEncoder) = encoder else {
+            return
         }
         
+        computeCommandEncoder.setBuffer(argumentBuffer,
+                                        offset: baseOffset(from: argumentPath),
+                                        index: index)
+        
+        for binding in bindings {
+            switch binding.value {
+            case .bytes(let data):
+                
+                let destination = argumentBuffer.contents().assumingMemoryBound(to: UInt8.self)
+                let indexOffset = offset(for: binding.indexPath, from: argumentPath)
+                
+                encode(data, destination: destination, offset: indexOffset)
+                
+            case .buffer(let buffer, let offset):
+                
+                computeCommandEncoder.setBuffer(buffer, offset: offset, index: index)
+                
+            case .custom(let encodable): break
+            }
+        }
+    }
+    
+    func nestedBaseOffset(from argumentPath: [Parser.Argument]) -> Int {
+        return offset(for: [Int](repeating: 0, count: argumentPath.count), from: argumentPath)
+    }
+    
+    func baseOffset(from argumentPath: [Parser.Argument]) -> Int {
+        var baseOffset = nestedBaseOffset(from: argumentPath)
+        
+        // when dealing with struct, the base offset needs to point to struct's offset, not the type nested in that struct
+        for argument in argumentPath {
+            switch argument {
+            case .structMember(let s): baseOffset -= s.offset
+            default: continue
+            }
+        }
+        
+        return baseOffset
     }
     
     /**
@@ -209,10 +256,14 @@ private extension ComputePipelineStateController.Encoder {
         // TODO: check size contribution in child encoder size
         
         // TODO: will crash on non buffer types, check valid results when fixing
-        return reflection.arguments[..<argument.index].reduce(0) { $0 + $1.bufferDataSize }
+        return reflection.arguments[..<argument.index].reduce(0) {
+            let alignment = $1.bufferAlignment
+            let aligned = $0.aligned(by: alignment)
+            return aligned + $1.bufferDataSize
+        }
     }
     
-    func lastIndex(from argumentPath: [Parser.Argument]) -> Int {
+    func index(from argumentPath: [Parser.Argument]) -> Int {
         guard case let .argument(argument) = argumentPath[0] else {
             fatalError("First item in argument path must be an argument.")
         }
@@ -240,7 +291,7 @@ private extension ComputePipelineStateController.Encoder {
         let childEncoder: MTLArgumentEncoder
         
         // align offset
-        encoderOffset = (((encoderOffset + (alignment - 1)) / alignment) * alignment);
+        encoderOffset.align(by: alignment)
         
         // argument encoder requires encoding the buffer into parent in the original index
         switch encoder {
@@ -258,29 +309,11 @@ private extension ComputePipelineStateController.Encoder {
         return .argumentEncoder(childEncoder)
     }
     
-    func encode(_ buffer: MTLBuffer, index: Int, offset: Int, usage: MTLResourceUsage, encoder: Encoder) {
-        switch encoder {
-        case .argumentEncoder(let encoder):
-            encoder.setBuffer(buffer, offset: offset, index: index)
-            computeCommandEncoder.useResource(buffer, usage: usage)
-        case .computeCommandEncoder(let encoder): encoder.setBuffer(buffer, offset: offset, index: index)
-        }
-    }
-    
-    func encode(_ data: Data, index: Int, offset: Int, encoder: Encoder) {
+    func encode(_ data: Data, destination: UnsafeMutablePointer<UInt8>, offset: Int) {
         data.withUnsafeBytes { bytes in
-            let ptr: UnsafeMutablePointer<UInt8>
-            
-            switch encoder {
-            case .argumentEncoder(let e):
-                ptr = e.constantData(at: index).assumingMemoryBound(to: UInt8.self)
-            case .computeCommandEncoder:
-                ptr = argumentBuffer.contents().assumingMemoryBound(to: UInt8.self)
-            }
-            
             let source = bytes.baseAddress!.assumingMemoryBound(to: UInt8.self)
             for i in 0 ..< bytes.count {
-                ptr[offset + i] = source[i]
+                destination[offset + i] = source[i]
             }
         }
     }
@@ -304,7 +337,7 @@ private extension Collection where Element == Parser.Argument {
     }
 }
 
-extension Parser.Argument {
+private extension Parser.Argument {
     var usage: MTLResourceUsage? {
         switch self {
         case .type(let t):
@@ -327,7 +360,7 @@ extension Parser.Argument {
     }
 }
 
-extension MTLArgumentAccess {
+private extension MTLArgumentAccess {
     var usage: MTLResourceUsage {
         switch self {
         case .readOnly: return .read
@@ -337,3 +370,14 @@ extension MTLArgumentAccess {
         }
     }
 }
+
+private extension Int {
+    func aligned(by alignment: Int) -> Int {
+        return (((self + (alignment - 1)) / alignment) * alignment)
+    }
+    
+    mutating func align(by alignment: Int) {
+        self = aligned(by: alignment)
+    }
+}
+
