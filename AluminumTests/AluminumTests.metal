@@ -12,20 +12,22 @@ using namespace metal;
 #import "AluminumTestsUniforms.h"
 #import "AluminumArgumentBuffer.h"
 
-
 struct Composite {
-    uint a;
     float b;
+    uint a;
     GridRegion d;
+    device uint * e;
 };
+
 typedef struct Composite Composite;
 
 struct C {
+    
     device float * t;
     uint a;
     metal::array<uint, 9> arr;
     ushort c;
-    metal::array<device Composite *, 9> d;
+    metal::array<Composite, 9> d;
 };
 typedef struct C C;
 
@@ -36,7 +38,7 @@ kernel void test_array_argument(device metal::array<C, 40> & arr [[ buffer(0) ]]
 {
     for (int i = 0, end = arr.size() ; i < end ; i++)
     {
-        atomic_fetch_add_explicit(result, arr[i].a + arr[i].arr[i] + arr[i].d[i]->a, memory_order_relaxed);
+        atomic_fetch_add_explicit(result, arr[i].a + arr[i].arr[i] + arr[i].d[i].a , memory_order_relaxed);
     }
 }
 

@@ -212,19 +212,25 @@ private extension ComputePipelineStateController.Encoder {
     }
     
     func lastIndex(from argumentPath: [Parser.Argument]) -> Int {
-        for argument in argumentPath.reversed() {
+        guard case let .argument(argument) = argumentPath[0] else {
+            fatalError("First item in argument path must be an argument.")
+        }
+        
+        var validIndex: Int = argument.index
+        
+        for argument in argumentPath[1...] {
             switch argument {
-            case .argument(let a): return a.index
             case .structMember(let s):
                 // ignore struct member that encapsulate arrays, they dont influence indexing
                 if s.dataType != .array {
-                    return s.argumentIndex
+                    validIndex += s.argumentIndex
                 }
             case .type: continue
+            case .argument: fatalError("Argument already accounted for.")
             }
         }
         
-        fatalError("No index found for given argument path.")
+        return validIndex
     }
 }
 
