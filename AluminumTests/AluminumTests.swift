@@ -33,7 +33,7 @@ class AluminumTests: XCTestCase {
         let controller = try! makeComputePipelineState(functionName: "test_array_argument")
         let binder = controller.makeBinder()
                 
-        let argumentBuffer = device.makeBuffer(length: 40960, options: .storageModeShared)
+        let argumentBuffer = device.makeBuffer(length: 80960, options: .storageModeShared)
         let resultBuffer = device.makeBuffer(length: MemoryLayout<UInt32>.stride * 1 , options: .storageModeShared)!
 
         do {

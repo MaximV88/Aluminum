@@ -13,10 +13,11 @@ using namespace metal;
 #import "AluminumArgumentBuffer.h"
 
 struct Composite {
+    device float * t;
     float b;
     uint a;
     GridRegion d;
-    device uint * e;
+
 };
 
 typedef struct Composite Composite;
@@ -33,8 +34,8 @@ typedef struct C C;
 
 
 kernel void test_array_argument(device metal::array<C, 40> & arr [[ buffer(0) ]],
-//                                device metal::array<TestArgumentsBuffer, 3> & buf_arr [[ buffer(2) ]],
-                                device atomic_uint * result [[ buffer(1) ]])
+                                device atomic_uint * result [[ buffer(1) ]],
+                                constant metal::array<TestArgumentsBuffer, 3> * tarr [[ buffer(2) ]])
 {
     for (int i = 0, end = arr.size() ; i < end ; i++)
     {

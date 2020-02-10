@@ -73,10 +73,10 @@ private extension ComputePipelineStateController.Encoder {
     }
     
     func traversePointer(_ pointer: MTLPointerType, in argumentPath: [Parser.Argument], encoder: Encoder) {
-        // possibility of using argument encoder with pointer types
+        // pointers may represent argument buffers
         let pointerEncoder: Encoder
         if pointer.elementIsArgumentBuffer {
-            pointerEncoder = makeArgumentEncoder(from: encoder, at: 0, alignment: pointer.alignment)
+            pointerEncoder = makeArgumentEncoder(from: encoder, at: argumentPath.lastIndex!, alignment: pointer.alignment)
         } else {
             pointerEncoder = encoder
         }
@@ -145,6 +145,7 @@ private extension ComputePipelineStateController.Encoder {
                 encode(buffer,
                        index: index,
                        offset: offset,
+                       usage: lastArgument.usage!, // buffer assignment requires pointer argument
                        encoder: encoder)
             case .custom(let encodable): break
             }
@@ -257,9 +258,11 @@ private extension ComputePipelineStateController.Encoder {
         return .argumentEncoder(childEncoder)
     }
     
-    func encode(_ buffer: MTLBuffer, index: Int, offset: Int, encoder: Encoder) {
+    func encode(_ buffer: MTLBuffer, index: Int, offset: Int, usage: MTLResourceUsage, encoder: Encoder) {
         switch encoder {
-        case .argumentEncoder(let encoder): encoder.setBuffer(buffer, offset: offset, index: index)
+        case .argumentEncoder(let encoder):
+            encoder.setBuffer(buffer, offset: offset, index: index)
+            computeCommandEncoder.useResource(buffer, usage: usage)
         case .computeCommandEncoder(let encoder): encoder.setBuffer(buffer, offset: offset, index: index)
         }
     }
@@ -292,5 +295,45 @@ private extension Collection where Element == ComputePipelineStateController.Bin
             return false
         }
         return true
+    }
+}
+
+private extension Collection where Element == Parser.Argument {
+    var lastIndex: Int? {
+        return first(where: { $0.index != nil })?.index ?? nil
+    }
+}
+
+extension Parser.Argument {
+    var usage: MTLResourceUsage? {
+        switch self {
+        case .type(let t):
+            // usage has meaning only with pointers
+            if t.dataType == .pointer {
+                return (t as! MTLPointerType).access.usage
+            }
+        default: break
+        }
+        
+        return nil
+    }
+    
+    var index: Int? {
+        switch self {
+        case .argument(let a): return a.index
+        case .structMember(let s): return s.argumentIndex
+        case .type: return nil
+        }
+    }
+}
+
+extension MTLArgumentAccess {
+    var usage: MTLResourceUsage {
+        switch self {
+        case .readOnly: return .read
+        case .writeOnly: return .write
+        case .readWrite: return [.read, .write]
+        default: fatalError("Unknown usage.")
+        }
     }
 }
