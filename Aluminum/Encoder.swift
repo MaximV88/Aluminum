@@ -12,13 +12,6 @@ import Metal
 
 public extension ComputePipelineStateController {
     class Encoder {
-        private enum Action {
-            case setBuffer
-            case setBytes
-        }
-        
-        private var cachedActions = [Action]()
-        private var encoderOffset: Int = 0
         
         private let function: MTLFunction
         private let reflection: MTLComputePipelineReflection
@@ -76,7 +69,11 @@ private extension ComputePipelineStateController.Encoder {
         // pointers may represent argument buffers
         let pointerEncoder: Encoder
         if pointer.elementIsArgumentBuffer {
-            pointerEncoder = makeArgumentEncoder(from: encoder, at: argumentPath.lastIndex!, alignment: pointer.alignment)
+            
+            pointerEncoder = makeArgumentEncoder(from: encoder,
+                                                 at: index(from: argumentPath),
+                                                 offset: baseOffset(from: argumentPath),
+                                                 alignment: pointer.alignment)
         } else {
             pointerEncoder = encoder
         }
@@ -125,25 +122,20 @@ private extension ComputePipelineStateController.Encoder {
         guard !bindings.isEmpty else { return }
 
         // TODO: all binding need to be homogenous, otherwise binding buffer/bytes to same index will override each other
-        
-        let applicationIndex = self.index(from: argumentPath)
-        
+                
         switch encoder {
         case .argumentEncoder:
             applyArgumentEncoder(encoder,
-                                 index: applicationIndex,
                                  argumentPath: argumentPath,
                                  bindings: bindings)
         case .computeCommandEncoder:
             applyComputeCommandEncoder(encoder,
-                                       index: applicationIndex,
                                        argumentPath: argumentPath,
                                        bindings: bindings)
         }
     }
     
     func applyArgumentEncoder(_ encoder: Encoder,
-                              index: Int,
                               argumentPath: [Parser.Argument],
                               bindings: [ComputePipelineStateController.Binder.Binding])
     {
@@ -151,6 +143,9 @@ private extension ComputePipelineStateController.Encoder {
             return
         }
         
+        // argument encoders use local indices
+        let index = localIndex(from: argumentPath)
+
         // bytes are encoded using 'constantData', index starts at nested type, not at origin.
         let bytesBaseOffset = -nestedBaseOffset(from: argumentPath)
         
@@ -176,7 +171,6 @@ private extension ComputePipelineStateController.Encoder {
     }
     
     func applyComputeCommandEncoder(_ encoder: Encoder,
-                                    index: Int,
                                     argumentPath: [Parser.Argument],
                                     bindings: [ComputePipelineStateController.Binder.Binding])
     {
@@ -184,6 +178,8 @@ private extension ComputePipelineStateController.Encoder {
             return
         }
         
+        let index = self.index(from: argumentPath)
+
         computeCommandEncoder.setBuffer(argumentBuffer,
                                         offset: baseOffset(from: argumentPath),
                                         index: index)
@@ -260,51 +256,40 @@ private extension ComputePipelineStateController.Encoder {
             let alignment = $1.bufferAlignment
             let aligned = $0.aligned(by: alignment)
             return aligned + $1.bufferDataSize
-        }
+        } 
     }
     
     func index(from argumentPath: [Parser.Argument]) -> Int {
+        return argumentPath.reduce(0) {
+            return $0 + ($1.index ?? 0)
+        }
+    }
+    
+    func localIndex(from argumentPath: [Parser.Argument]) -> Int {
         guard case let .argument(argument) = argumentPath[0] else {
             fatalError("First item in argument path must be an argument.")
         }
         
-        var validIndex: Int = argument.index
-        
-        for argument in argumentPath[1...] {
-            switch argument {
-            case .structMember(let s):
-                // ignore struct member that encapsulate arrays, they dont influence indexing
-                if s.dataType != .array {
-                    validIndex += s.argumentIndex
-                }
-            case .type: continue
-            case .argument: fatalError("Argument already accounted for.")
-            }
-        }
-        
-        return validIndex
+        // disregal global (argument) index
+        return index(from: argumentPath) - argument.index
     }
 }
 
 private extension ComputePipelineStateController.Encoder {
-    func makeArgumentEncoder(from encoder: Encoder, at index: Int, alignment: Int) -> Encoder {
+    func makeArgumentEncoder(from encoder: Encoder, at index: Int, offset: Int, alignment: Int) -> Encoder {
         let childEncoder: MTLArgumentEncoder
-        
-        // align offset
-        encoderOffset.align(by: alignment)
-        
+                
         // argument encoder requires encoding the buffer into parent in the original index
         switch encoder {
         case .computeCommandEncoder(let e):
             childEncoder = function.makeArgumentEncoder(bufferIndex: index)
-            e.setBuffer(argumentBuffer, offset: encoderOffset, index: index)
+            e.setBuffer(argumentBuffer, offset: offset, index: index)
         case .argumentEncoder(let e):
             childEncoder = e.makeArgumentEncoderForBuffer(atIndex: index)!
-            e.setBuffer(argumentBuffer, offset: encoderOffset, index: index) // TODO: not correct for nested encoder ...
+            e.setBuffer(argumentBuffer, offset: offset, index: index)
         }
         
-        childEncoder.setArgumentBuffer(argumentBuffer, offset: encoderOffset)
-        encoderOffset += childEncoder.encodedLength
+        childEncoder.setArgumentBuffer(argumentBuffer, offset: offset)
 
         return .argumentEncoder(childEncoder)
     }

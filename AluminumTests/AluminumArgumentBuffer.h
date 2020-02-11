@@ -22,11 +22,11 @@ struct TestInternalArgumentsBuffer {
 typedef struct TestInternalArgumentsBuffer TestInternalArgumentsBuffer;
 
 struct TestArgumentsBuffer {
-//    device float * buffer;
+    device float * buffer;
     uint l;
     metal::array<bool, 9> arr;
-//    constant TestInternalArgumentsBuffer * t;
-//    metal::array<TestInternalArgumentsBuffer, 4> arr_t;
+    constant TestInternalArgumentsBuffer * t;
+    metal::array<TestInternalArgumentsBuffer, 4> arr_t;
 };
 typedef struct TestArgumentsBuffer TestArgumentsBuffer;
 

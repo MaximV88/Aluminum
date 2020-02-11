@@ -47,6 +47,7 @@ class AluminumTests: XCTestCase {
             try binder.bind("arr[3].arr[3]", to: UInt32(4.0))
             try binder.bind("arr[3].d[3].a", to: UInt32(5.0))
             try binder.bind("tarr[0].l", to: UInt32(6.0))
+            try binder.bind("tarr[1].arr_t[1].arr[1].i", to: UInt32(7.0))
             try binder.bind("result", to: resultBuffer)
         } catch {
             XCTFail(error.localizedDescription)
@@ -60,7 +61,7 @@ class AluminumTests: XCTestCase {
         
         dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
         
-      XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(131))
+      XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(138))
 
     }
 }
