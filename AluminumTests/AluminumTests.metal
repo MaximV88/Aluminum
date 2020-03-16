@@ -39,7 +39,7 @@ kernel void test_array_argument(device metal::array<C, 40> & arr [[ buffer(0) ]]
 {
     for (int i = 0, end = arr.size() ; i < end ; i++)
     {
-        atomic_fetch_add_explicit(result, arr[i].a + *arr[i].t, //tarr[0].arr_t[0].tr->i,
+        atomic_fetch_add_explicit(result, *arr[i].t + arr[i].a + arr[i].c + arr[i].arr[0], //tarr[0].arr_t[0].tr->i,
                                   memory_order_relaxed);
     }
 }

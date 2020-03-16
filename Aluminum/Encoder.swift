@@ -62,7 +62,6 @@ class RootEncoder {
             argumentPath.count > 1,
             case let .pointer(pointer) = argumentPath[1],
             pointer.elementIsArgumentBuffer {
-            // TODO: argument path index to start local argument path
             internalEncoder = ArgumentEncoder(rootPath: rootPath,
                                               parser: parser,
                                               encoderIndex: argument.index,
@@ -217,7 +216,13 @@ private extension RootArgumentEncoder {
         
         for item in argumentPath {
             switch item {
+            case .argument:
+                pathIndex += 1
             case .array(let array):
+                guard pathIndex < path.count else {
+                    throw ComputePipelineStateController.ControllerError.invalidPathStructure
+                }
+                
                 guard let index = path[pathIndex].index else {
                     throw ComputePipelineStateController.ControllerError.invalidPathIndexPlacement(pathIndex)
                 }
@@ -230,7 +235,11 @@ private extension RootArgumentEncoder {
                 }
                 
                 offset += s.offset
-                pathIndex += 1
+
+                // ignore array struct as argument since they are not part of path
+                if s.dataType != .array {
+                    pathIndex += 1
+                }
             default: break
             }
         }
@@ -273,6 +282,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
+        precondition(argumentBuffer.length >= encodedLength)
         argumentEncoder.setArgumentBuffer(argumentBuffer, offset: offset)
         computeCommandEncoder.setBuffer(argumentBuffer, offset: offset, index: encoderIndex)
     }
@@ -310,8 +320,29 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     }
 
     func childEncoder(for path: Path) throws -> ComputePipelineStateEncoder {
-        // should differ by .pointer being arg or not
-        return self
+        let encoderPath = rootPath + path
+        
+        guard let argumentPath = parser.argumentPath(for: path) else {
+            throw ComputePipelineStateController.ControllerError.nonExistingPath
+        }
+        
+        guard case .pointer(let p) = argumentPath.last else {
+            throw ComputePipelineStateController.ControllerError.invalidBufferPath
+        }
+        
+        let index = try self.index(for: path, argumentPath: argumentPath[(argumentIndex + 1)...(argumentPath.count - 2)])
+
+        if p.elementIsArgumentBuffer {
+            return ArgumentEncoder(rootPath: encoderPath,
+                                   parser: parser,
+                                   encoderIndex: index,
+                                   argumentIndex: argumentPath.count - 1,
+                                   argumentEncoder: argumentEncoder.makeArgumentEncoderForBuffer(atIndex: index)!,
+                                   computeCommandEncoder: computeCommandEncoder)
+        } else {
+            fatalError()
+            return self
+        }
     }
 }
 
@@ -325,7 +356,13 @@ private extension ArgumentEncoder {
         // pointers are not expected in argument since each pointer represents an encoder
         for item in argumentPath {
             switch item {
+            case .argument:
+                fatalError("Path for an MTLArgumentEncoder is not supposed to start from argument root.")
             case .array(let a):
+                guard pathIndex < path.count else {
+                    throw ComputePipelineStateController.ControllerError.invalidPathStructure
+                }
+                
                 guard let inputIndex = path[pathIndex].index else {
                     throw ComputePipelineStateController.ControllerError.invalidPathIndexPlacement(pathIndex)
                 }

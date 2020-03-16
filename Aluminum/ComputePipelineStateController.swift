@@ -16,6 +16,7 @@ public class ComputePipelineStateController {
         case nonExistingPath
         case invalidEncoderPath(String) // encoder does not support given path (extends outside of it) - first unsupported parameter name
         case invalidPathIndexPlacement(Int) // index is missing at expected position
+        case invalidPathStructure(Int) // path has an index in an unexpected index - returns index of invalid path compoent
         case invalidBufferPath // last element in path should be a pointer
         case invalidBytesPath // last element in path shouldnt be a pointer
     }
