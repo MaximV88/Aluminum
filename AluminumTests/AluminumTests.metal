@@ -13,7 +13,7 @@ using namespace metal;
 #import "AluminumArgumentBuffer.h"
 
 struct Composite {
-    device float * t;
+//    device float * t;
     float b;
     uint a;
     GridRegion d;
@@ -24,8 +24,8 @@ typedef struct Composite Composite;
 
 struct C {
     
-    device float * t;
     uint a;
+    device float * t;
     metal::array<uint, 9> arr;
     ushort c;
     metal::array<Composite, 9> d;
@@ -39,7 +39,8 @@ kernel void test_array_argument(device metal::array<C, 40> & arr [[ buffer(0) ]]
 {
     for (int i = 0, end = arr.size() ; i < end ; i++)
     {
-        atomic_fetch_add_explicit(result, arr[i].a + arr[i].arr[i] + arr[i].d[i].a + tarr[i].l + tarr[i].arr_t[i].arr[i].i, memory_order_relaxed);
+        atomic_fetch_add_explicit(result, arr[i].a + *arr[i].t, //tarr[0].arr_t[0].tr->i,
+                                  memory_order_relaxed);
     }
 }
 

@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		942574BD23E877E50024DC43 /* ComputePipelineStateError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 942574BC23E877E50024DC43 /* ComputePipelineStateError.swift */; };
+		9402316924165FB8002242B3 /* Path.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9402316824165FB8002242B3 /* Path.swift */; };
+		9402316B24182A2A002242B3 /* String+NSRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9402316A24182A2A002242B3 /* String+NSRange.swift */; };
+		9402316D24182A6A002242B3 /* Path+VisualFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9402316C24182A6A002242B3 /* Path+VisualFormat.swift */; };
 		9453C90B23D32A3B00E7FCFE /* Aluminum.h in Headers */ = {isa = PBXBuildFile; fileRef = 9453C90923D32A3B00E7FCFE /* Aluminum.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9453C91223D32AA600E7FCFE /* ComputePipelineStateController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9453C91123D32AA600E7FCFE /* ComputePipelineStateController.swift */; };
 		9453C91523D32AB300E7FCFE /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9453C91423D32AB300E7FCFE /* Metal.framework */; };
@@ -15,8 +17,8 @@
 		9453C91F23D32ADF00E7FCFE /* Aluminum.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9453C90623D32A3B00E7FCFE /* Aluminum.framework */; };
 		9453C92623D32B7100E7FCFE /* AluminumTests.metal in Sources */ = {isa = PBXBuildFile; fileRef = 9453C92523D32B7100E7FCFE /* AluminumTests.metal */; };
 		9453C92A23D60C9800E7FCFE /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9453C92923D60C9800E7FCFE /* Parser.swift */; };
-		9453C92C23D6137800E7FCFE /* Binder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9453C92B23D6137800E7FCFE /* Binder.swift */; };
 		9453C92E23D613EA00E7FCFE /* Encoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9453C92D23D613EA00E7FCFE /* Encoder.swift */; };
+		9497B83223FB1006000C8085 /* Argument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9497B83123FB1006000C8085 /* Argument.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -30,7 +32,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		942574BC23E877E50024DC43 /* ComputePipelineStateError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComputePipelineStateError.swift; sourceTree = "<group>"; };
+		9402316824165FB8002242B3 /* Path.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Path.swift; sourceTree = "<group>"; };
+		9402316A24182A2A002242B3 /* String+NSRange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+NSRange.swift"; sourceTree = "<group>"; };
+		9402316C24182A6A002242B3 /* Path+VisualFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Path+VisualFormat.swift"; sourceTree = "<group>"; };
 		9453C90623D32A3B00E7FCFE /* Aluminum.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Aluminum.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		9453C90923D32A3B00E7FCFE /* Aluminum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Aluminum.h; sourceTree = "<group>"; };
 		9453C90A23D32A3B00E7FCFE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -43,9 +47,9 @@
 		9453C92723D32BB300E7FCFE /* AluminumTestsUniforms.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AluminumTestsUniforms.h; sourceTree = "<group>"; };
 		9453C92823D32E0B00E7FCFE /* AluminumTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AluminumTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		9453C92923D60C9800E7FCFE /* Parser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Parser.swift; sourceTree = "<group>"; };
-		9453C92B23D6137800E7FCFE /* Binder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Binder.swift; sourceTree = "<group>"; };
 		9453C92D23D613EA00E7FCFE /* Encoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Encoder.swift; sourceTree = "<group>"; };
 		9453C92F23D6D94800E7FCFE /* AluminumArgumentBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AluminumArgumentBuffer.h; sourceTree = "<group>"; };
+		9497B83123FB1006000C8085 /* Argument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Argument.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,10 +97,12 @@
 				9453C90923D32A3B00E7FCFE /* Aluminum.h */,
 				9453C90A23D32A3B00E7FCFE /* Info.plist */,
 				9453C91123D32AA600E7FCFE /* ComputePipelineStateController.swift */,
-				942574BC23E877E50024DC43 /* ComputePipelineStateError.swift */,
-				9453C92923D60C9800E7FCFE /* Parser.swift */,
-				9453C92B23D6137800E7FCFE /* Binder.swift */,
 				9453C92D23D613EA00E7FCFE /* Encoder.swift */,
+				9497B83123FB1006000C8085 /* Argument.swift */,
+				9453C92923D60C9800E7FCFE /* Parser.swift */,
+				9402316824165FB8002242B3 /* Path.swift */,
+				9402316C24182A6A002242B3 /* Path+VisualFormat.swift */,
+				9402316A24182A2A002242B3 /* String+NSRange.swift */,
 			);
 			path = Aluminum;
 			sourceTree = "<group>";
@@ -232,11 +238,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9497B83223FB1006000C8085 /* Argument.swift in Sources */,
 				9453C92E23D613EA00E7FCFE /* Encoder.swift in Sources */,
 				9453C92A23D60C9800E7FCFE /* Parser.swift in Sources */,
-				9453C92C23D6137800E7FCFE /* Binder.swift in Sources */,
-				942574BD23E877E50024DC43 /* ComputePipelineStateError.swift in Sources */,
+				9402316924165FB8002242B3 /* Path.swift in Sources */,
+				9402316B24182A2A002242B3 /* String+NSRange.swift in Sources */,
 				9453C91223D32AA600E7FCFE /* ComputePipelineStateController.swift in Sources */,
+				9402316D24182A6A002242B3 /* Path+VisualFormat.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

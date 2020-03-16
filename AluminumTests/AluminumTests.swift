@@ -29,40 +29,56 @@ class AluminumTests: XCTestCase {
     private let captureManager = MTLCaptureManager.shared()
     
     func testArrayArgument() {
-
-        let controller = try! makeComputePipelineState(functionName: "test_array_argument")
-        let binder = controller.makeBinder()
-                
-        let argumentBuffer = device.makeBuffer(length: 800960, options: .storageModeShared)
-        let resultBuffer = device.makeBuffer(length: MemoryLayout<UInt32>.stride * 1 , options: .storageModeShared)!
-
-        do {
-            try binder.bind("arr[0].a", to: UInt32(11.0))
-            try binder.bind("arr[1].a", to: UInt32(22.0))
-            try binder.bind("arr[2].a", to: UInt32(33.0))
-            try binder.bind("arr[3].a", to: UInt32(44.0))
-            try binder.bind("arr[0].arr[0]", to: UInt32(1.0))
-            try binder.bind("arr[1].arr[1]", to: UInt32(2.0))
-            try binder.bind("arr[2].arr[2]", to: UInt32(3.0))
-            try binder.bind("arr[3].arr[3]", to: UInt32(4.0))
-            try binder.bind("arr[3].d[3].a", to: UInt32(5.0))
-            try binder.bind("tarr[0].l", to: UInt32(6.0))
-            try binder.bind("tarr[1].arr_t[1].arr[1].i", to: UInt32(7.0))
-            try binder.bind("result", to: resultBuffer)
-        } catch {
-            XCTFail(error.localizedDescription)
-        }
-        
-        let encoder = controller.makeEncoder()
         
         let commandBuffer = commandQueue.makeCommandBuffer()!
         let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()!
-        encoder.encode(computeCommandEncoder, binder: binder, argumentBuffer: argumentBuffer)
         
-        dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
+        let controller = try! makeComputePipelineState(functionName: "test_array_argument")
+        let arrEncoder = try! controller.makeEncoder(for: "arr", with: computeCommandEncoder)
+        let resultEncoder = try! controller.makeEncoder(for: "result", with: computeCommandEncoder)
+                
+        let argumentBuffer = device.makeBuffer(length: 800960, options: .storageModeShared)!
+        let resultBuffer = device.makeBuffer(length: MemoryLayout<UInt32>.stride * 1 , options: .storageModeShared)!
         
-      XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(138))
+        let testBufferArr: [MTLBuffer] = (0..<40).map { _ in
+            return device.makeBuffer(length: MemoryLayout<Float>.stride * 4 , options: .storageModeShared)!
+        }
 
+        for i in 0 ..< 40 {
+            testBufferArr[i].contents().assumingMemoryBound(to: Float.self).pointee = Float(i)
+        }
+        
+        arrEncoder.setArgumentBuffer(argumentBuffer)
+        resultEncoder.setArgumentBuffer(resultBuffer)
+        
+        do {
+            for i in 0 ..< 40 {
+                try arrEncoder.encode(UInt32(i), to: [.index(UInt(i)), .argument("a")])
+                try arrEncoder.encode(buffer: testBufferArr[i], to: [.index(UInt(i)), .argument("t")])
+            }
+            
+//            try binder.bind("arr[0].a", to: UInt32(11))
+//            try binder.bind("arr[1].a", to: UInt32(22.0))
+//            try binder.bind("arr[2].a", to: UInt32(33.0))
+//            try binder.bind("arr[3].a", to: UInt32(44.0))
+//            try binder.bind("arr[0].arr[0]", to: UInt32(1.0))
+//            try binder.bind("arr[1].arr[1]", to: UInt32(2.0))
+//            try binder.bind("arr[2].arr[2]", to: UInt32(3.0))
+//            try binder.bind("arr[3].arr[3]", to: UInt32(4.0))
+//            try binder.bind("arr[3].d[3].a", to: UInt32(5.0))
+//            try binder.bind("tarr[0].l", to: UInt32(6.0))
+//            try binder.bind("tarr[0].arr_t[0].tr", to: testBuffer)
+//            try binder.bind("tarr[0].arr_t[0].tr.i", to: UInt32(1))
+
+            
+            dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
+            
+            XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(138))
+
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+                
     }
 }
 

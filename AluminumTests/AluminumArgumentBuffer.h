@@ -14,19 +14,21 @@ struct TestStruct {
     float k;
     bool j;
 };
+typedef struct TestStruct TestStruct;
 
 struct TestInternalArgumentsBuffer {
+    device TestStruct * tr;
     device int * buffer;
     metal::array<TestStruct, 9> arr;
 };
 typedef struct TestInternalArgumentsBuffer TestInternalArgumentsBuffer;
 
 struct TestArgumentsBuffer {
+    metal::array<TestInternalArgumentsBuffer, 1> arr_t;
+    constant TestInternalArgumentsBuffer * t1;
     device float * buffer;
     uint l;
     metal::array<bool, 9> arr;
-    constant TestInternalArgumentsBuffer * t;
-    metal::array<TestInternalArgumentsBuffer, 4> arr_t;
 };
 typedef struct TestArgumentsBuffer TestArgumentsBuffer;
 
