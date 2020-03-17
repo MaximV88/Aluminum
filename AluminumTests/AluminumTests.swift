@@ -35,9 +35,11 @@ class AluminumTests: XCTestCase {
         
         let controller = try! makeComputePipelineState(functionName: "test_array_argument")
         let arrEncoder = try! controller.makeEncoder(for: "arr", with: computeCommandEncoder)
+        let tarrEncoder = try! controller.makeEncoder(for: "tarr", with: computeCommandEncoder)
         let resultEncoder = try! controller.makeEncoder(for: "result", with: computeCommandEncoder)
                 
-        let argumentBuffer = device.makeBuffer(length: 800960, options: .storageModeShared)!
+        let arrBuffer = device.makeBuffer(length: arrEncoder.encodedLength, options: .storageModeShared)!
+        let tarrBuffer = device.makeBuffer(length: tarrEncoder.encodedLength, options: .storageModeShared)!
         let resultBuffer = device.makeBuffer(length: MemoryLayout<UInt32>.stride * 1 , options: .storageModeShared)!
         
         let testBufferArr: [MTLBuffer] = (0..<40).map { _ in
@@ -48,16 +50,20 @@ class AluminumTests: XCTestCase {
             testBufferArr[i].contents().assumingMemoryBound(to: Float.self).pointee = Float(i)
         }
         
-        arrEncoder.setArgumentBuffer(argumentBuffer)
+        arrEncoder.setArgumentBuffer(arrBuffer)
+        tarrEncoder.setArgumentBuffer(tarrBuffer)
         resultEncoder.setArgumentBuffer(resultBuffer)
         
+        
         do {
-            for i in 0 ..< 40 {
-                try arrEncoder.encode(UInt32(i), to: [.index(UInt(i)), .argument("a")])
-                try arrEncoder.encode(UInt16(i), to: [.index(UInt(i)), .argument("c")])
-                try arrEncoder.encode(UInt32(i), to: [.index(UInt(i)), .argument("arr"), .index(0)])
-                try arrEncoder.encode(UInt32(1), to: [.index(UInt(i)), .argument("arr"), .index(1)])
-                try arrEncoder.encode(testBufferArr[i], to: [.index(UInt(i)), .argument("t")])
+            for i: UInt in 0 ..< 40 {
+                try arrEncoder.encode(UInt32(i), to: [.index(i), .argument("a")])
+                try arrEncoder.encode(UInt16(i), to: [.index(i), .argument("c")])
+                try arrEncoder.encode(UInt32(i), to: [.index(i), .argument("arr"), .index(0)])
+                try arrEncoder.encode(UInt32(1), to: [.index(i), .argument("arr"), .index(1)])
+                try arrEncoder.encode(testBufferArr[Int(i)], to: [.index(i), .argument("t")])
+                
+                try tarrEncoder.encode(UInt(1), to: [.index(i), .argument("l")])
             }
             
 //            try binder.bind("arr[0].a", to: UInt32(11))

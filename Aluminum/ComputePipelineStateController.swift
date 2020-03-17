@@ -19,6 +19,7 @@ public class ComputePipelineStateController {
         case invalidPathStructure(Int) // path has an index in an unexpected index - returns index of invalid path compoent
         case invalidBufferPath // last element in path should be a pointer
         case invalidBytesPath // last element in path shouldnt be a pointer
+        case noArgumentBuffer // did not set argument buffer for encoder
     }
     
     public let function: MTLFunction

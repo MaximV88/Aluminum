@@ -10,7 +10,7 @@ import Metal
 
 
 public protocol ComputePipelineStateEncoder {
-    var encodedLength: UInt { get }
+    var encodedLength: Int { get }
 
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int)
     
@@ -79,7 +79,7 @@ class RootEncoder {
 }
 
 extension RootEncoder: ComputePipelineStateEncoder {
-    var encodedLength: UInt {
+    var encodedLength: Int {
         return internalEncoder.encodedLength
     }
     
@@ -126,8 +126,8 @@ class RootArgumentEncoder {
 }
 
 extension RootArgumentEncoder: ComputePipelineStateEncoder {
-    var encodedLength: UInt {
-        return UInt(argument.bufferDataSize)
+    var encodedLength: Int {
+        return argument.bufferDataSize
     }
     
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
@@ -139,6 +139,8 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) throws {
+        try validate()
+
         let pathOffset = try offset(for: rootPath + path)
 
         let destination = argumentBuffer.contents().assumingMemoryBound(to: UInt8.self)
@@ -150,6 +152,8 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) throws {
+        try validate()
+
         guard let argumentPath = parser.argumentPath(for: path) else {
             throw ComputePipelineStateController.ControllerError.nonExistingPath
         }
@@ -165,6 +169,8 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func childEncoder(for path: Path) throws -> ComputePipelineStateEncoder {
+        try validate()
+        
         let encoderPath = rootPath + path
         
         guard let argumentPath = parser.argumentPath(for: path) else {
@@ -187,6 +193,14 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
 }
 
 private extension RootArgumentEncoder {
+    func validate() throws {
+        guard argumentBuffer != nil else {
+            throw ComputePipelineStateController.ControllerError.noArgumentBuffer
+        }
+        
+        // valid
+    }
+    
     func offset(for path: Path) throws -> Int {
         guard let argumentPath = parser.argumentPath(for: path) else {
             throw ComputePipelineStateController.ControllerError.nonExistingPath
@@ -241,6 +255,8 @@ class ArgumentEncoder {
     private let argumentEncoder: MTLArgumentEncoder
     private weak var computeCommandEncoder: MTLComputeCommandEncoder!
 
+    private var hasArgumentBuffer: Bool = false
+
     init(rootPath: Path,
          parser: Parser,
          encoderIndex: Int,
@@ -258,17 +274,20 @@ class ArgumentEncoder {
 }
 
 extension ArgumentEncoder: ComputePipelineStateEncoder {
-    var encodedLength: UInt {
-        return UInt(argumentEncoder.encodedLength)
+    var encodedLength: Int {
+        return argumentEncoder.encodedLength
     }
     
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
         precondition(argumentBuffer.length >= encodedLength)
+        hasArgumentBuffer = true
         argumentEncoder.setArgumentBuffer(argumentBuffer, offset: offset)
         computeCommandEncoder.setBuffer(argumentBuffer, offset: offset, index: encoderIndex)
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) throws {
+        try validate()
+        
         guard let argumentPath = parser.argumentPath(for: rootPath + path) else {
             throw ComputePipelineStateController.ControllerError.nonExistingPath
         }
@@ -287,6 +306,8 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) throws {
+        try validate()
+
         guard let argumentPath = parser.argumentPath(for: rootPath + path) else {
             throw ComputePipelineStateController.ControllerError.nonExistingPath
         }
@@ -301,6 +322,8 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     }
 
     func childEncoder(for path: Path) throws -> ComputePipelineStateEncoder {
+        try validate()
+
         let encoderPath = rootPath + path
         
         guard let argumentPath = parser.argumentPath(for: path) else {
@@ -324,6 +347,16 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
             fatalError()
             return self
         }
+    }
+}
+
+private extension ArgumentEncoder {
+    func validate() throws {
+        guard hasArgumentBuffer else {
+            throw ComputePipelineStateController.ControllerError.noArgumentBuffer
+        }
+        
+        // valid
     }
 }
 
