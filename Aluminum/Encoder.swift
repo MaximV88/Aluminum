@@ -14,9 +14,9 @@ public protocol ComputePipelineStateEncoder {
 
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int)
     
-    func encode(bytes: UnsafeRawPointer, count: Int, to path: Path) throws
+    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) throws
 
-    func encode(buffer: MTLBuffer, offset: Int, to path: Path) throws
+    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) throws
 
     // TODO: missing stubs for texture/...
     
@@ -29,13 +29,13 @@ public extension ComputePipelineStateEncoder {
         setArgumentBuffer(argumentBuffer, offset: 0)
     }
     
-    func encode(buffer: MTLBuffer, to path: Path) throws  {
-        try encode(buffer: buffer, offset: 0, to: path)
+    func encode(_ buffer: MTLBuffer, to path: Path) throws  {
+        try encode(buffer, offset: 0, to: path)
     }
 
     func encode<T>(_ parameter: T, to path: Path) throws {
         try withUnsafePointer(to: parameter) { ptr in
-            try encode(bytes: ptr, count: MemoryLayout<T>.stride, to: path)
+            try encode(ptr, count: MemoryLayout<T>.stride, to: path)
         }
     }
 }
@@ -87,12 +87,12 @@ extension RootEncoder: ComputePipelineStateEncoder {
         internalEncoder.setArgumentBuffer(argumentBuffer, offset: offset)
     }
     
-    func encode(bytes: UnsafeRawPointer, count: Int, to path: Path) throws {
-        try internalEncoder.encode(bytes: bytes, count: count, to: path)
+    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) throws {
+        try internalEncoder.encode(bytes, count: count, to: path)
     }
 
-    func encode(buffer: MTLBuffer, offset: Int, to path: Path) throws {
-        try internalEncoder.encode(buffer: buffer, offset: offset, to: path)
+    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) throws {
+        try internalEncoder.encode(buffer, offset: offset, to: path)
     }
 
     func childEncoder(for path: Path) throws -> ComputePipelineStateEncoder {
@@ -138,7 +138,7 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
         computeCommandEncoder.setBuffer(argumentBuffer, offset: offset, index: argument.index)
     }
     
-    func encode(bytes: UnsafeRawPointer, count: Int, to path: Path) throws {
+    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) throws {
         let pathOffset = try offset(for: rootPath + path)
 
         let destination = argumentBuffer.contents().assumingMemoryBound(to: UInt8.self)
@@ -149,15 +149,19 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
         }
     }
     
-    func encode(buffer: MTLBuffer, offset: Int, to path: Path) throws {
+    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) throws {
         guard let argumentPath = parser.argumentPath(for: path) else {
             throw ComputePipelineStateController.ControllerError.nonExistingPath
         }
         
-        let index = try pointerIndex(for: argumentPath)
-        assert(index != argument.index)
+        guard case .pointer = argumentPath.last else {
+            throw ComputePipelineStateController.ControllerError.invalidBufferPath
+        }
+        
+        let pointerIndex = try index(for: rootPath + path, argumentPath: argumentPath[...(argumentPath.count - 2)])
+        assert(pointerIndex != argument.index)
 
-        computeCommandEncoder.setBuffer(buffer, offset: offset, index: index)
+        computeCommandEncoder.setBuffer(buffer, offset: offset, index: pointerIndex)
     }
     
     func childEncoder(for path: Path) throws -> ComputePipelineStateEncoder {
@@ -167,45 +171,22 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
             throw ComputePipelineStateController.ControllerError.nonExistingPath
         }
         
-        let index = try pointerIndex(for: argumentPath)
+        guard case .pointer = argumentPath.last else {
+            throw ComputePipelineStateController.ControllerError.invalidBufferPath
+        }
+        
+        let pointerIndex = try index(for: encoderPath, argumentPath: argumentPath[...(argumentPath.count - 2)])
                 
         return ArgumentEncoder(rootPath: encoderPath,
                                parser: parser,
-                               encoderIndex: index,
+                               encoderIndex: pointerIndex,
                                argumentIndex: argumentPath.count - 1,
-                               argumentEncoder: function.makeArgumentEncoder(bufferIndex: index),
+                               argumentEncoder: function.makeArgumentEncoder(bufferIndex: pointerIndex),
                                computeCommandEncoder: computeCommandEncoder)
     }
 }
 
 private extension RootArgumentEncoder {
-    func pointerIndex(for argumentPath: [Argument]) throws -> Int {
-        guard case .pointer = argumentPath.last else {
-            throw ComputePipelineStateController.ControllerError.invalidBufferPath
-        }
-        
-        guard case .argument(let a) = argumentPath.first else {
-            fatalError("RootArgumentEncoder root must be an MTLArgument.")
-        }
-        
-        var lastNamedArgument = a.name
-        var index = a.index
-        
-        // first and last are already accounted for
-        for item in argumentPath[1...(argumentPath.count - 1)] {
-            switch item {
-            case .structMember(let s):
-                lastNamedArgument = s.name
-                index += s.argumentIndex
-            case .pointer:
-                throw ComputePipelineStateController.ControllerError.invalidEncoderPath(lastNamedArgument)
-            default: break
-            }
-        }
-        
-        return index
-    }
-
     func offset(for path: Path) throws -> Int {
         guard let argumentPath = parser.argumentPath(for: path) else {
             throw ComputePipelineStateController.ControllerError.nonExistingPath
@@ -220,7 +201,7 @@ private extension RootArgumentEncoder {
                 pathIndex += 1
             case .array(let array):
                 guard pathIndex < path.count else {
-                    throw ComputePipelineStateController.ControllerError.invalidPathStructure
+                    throw ComputePipelineStateController.ControllerError.invalidPathStructure(pathIndex)
                 }
                 
                 guard let index = path[pathIndex].index else {
@@ -231,7 +212,7 @@ private extension RootArgumentEncoder {
                 pathIndex += 1
             case .structMember(let s):
                 guard s.dataType != .pointer else {
-                    throw ComputePipelineStateController.ControllerError.invalidEncoderPath(s.name)
+                    throw ComputePipelineStateController.ControllerError.invalidEncoderPath(pathIndex)
                 }
                 
                 offset += s.offset
@@ -287,7 +268,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         computeCommandEncoder.setBuffer(argumentBuffer, offset: offset, index: encoderIndex)
     }
     
-    func encode(bytes: UnsafeRawPointer, count: Int, to path: Path) throws {
+    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) throws {
         guard let argumentPath = parser.argumentPath(for: rootPath + path) else {
             throw ComputePipelineStateController.ControllerError.nonExistingPath
         }
@@ -296,8 +277,8 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
             throw ComputePipelineStateController.ControllerError.invalidBytesPath
         }
         
-        let index = try self.index(for: path, argumentPath: argumentPath[(argumentIndex + 1)...(argumentPath.count - 1)])
-        let destination = argumentEncoder.constantData(at: index).assumingMemoryBound(to: UInt8.self)
+        let bytesIndex = try index(for: path, argumentPath: argumentPath[(argumentIndex + 1)...(argumentPath.count - 1)])
+        let destination = argumentEncoder.constantData(at: bytesIndex).assumingMemoryBound(to: UInt8.self)
         let source = bytes.assumingMemoryBound(to: UInt8.self)
 
         for i in 0 ..< count {
@@ -305,7 +286,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         }
     }
     
-    func encode(buffer: MTLBuffer, offset: Int, to path: Path) throws {
+    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) throws {
         guard let argumentPath = parser.argumentPath(for: rootPath + path) else {
             throw ComputePipelineStateController.ControllerError.nonExistingPath
         }
@@ -314,8 +295,8 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
             throw ComputePipelineStateController.ControllerError.invalidBufferPath
         }
         
-        let index = try self.index(for: path, argumentPath: argumentPath[(argumentIndex + 1)...(argumentPath.count - 2)])
-        argumentEncoder.setBuffer(buffer, offset: offset, index: index)
+        let pointerIndex = try index(for: path, argumentPath: argumentPath[(argumentIndex + 1)...(argumentPath.count - 2)])
+        argumentEncoder.setBuffer(buffer, offset: offset, index: pointerIndex)
         computeCommandEncoder.useResource(buffer, usage: p.access.usage)
     }
 
@@ -330,14 +311,14 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
             throw ComputePipelineStateController.ControllerError.invalidBufferPath
         }
         
-        let index = try self.index(for: path, argumentPath: argumentPath[(argumentIndex + 1)...(argumentPath.count - 2)])
+        let pointerIndex = try index(for: path, argumentPath: argumentPath[(argumentIndex + 1)...(argumentPath.count - 2)])
 
         if p.elementIsArgumentBuffer {
             return ArgumentEncoder(rootPath: encoderPath,
                                    parser: parser,
-                                   encoderIndex: index,
+                                   encoderIndex: pointerIndex,
                                    argumentIndex: argumentPath.count - 1,
-                                   argumentEncoder: argumentEncoder.makeArgumentEncoderForBuffer(atIndex: index)!,
+                                   argumentEncoder: argumentEncoder.makeArgumentEncoderForBuffer(atIndex: pointerIndex)!,
                                    computeCommandEncoder: computeCommandEncoder)
         } else {
             fatalError()
@@ -346,45 +327,41 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     }
 }
 
-private extension ArgumentEncoder {
-    func index(for path: Path, argumentPath: ArraySlice<Argument>) throws -> Int {
-        // in argument encoder, the starting argument is a struct (by definition)
-        var lastNamedArgument: String!
-        var index = 0
-        var pathIndex: Int = 0
+private func index(for path: Path, argumentPath: ArraySlice<Argument>) throws -> Int {
+    // in argument encoder, the starting argument is a struct (by definition)
+    var index = 0
+    var pathIndex: Int = 0
 
-        // pointers are not expected in argument since each pointer represents an encoder
-        for item in argumentPath {
-            switch item {
-            case .argument:
-                fatalError("Path for an MTLArgumentEncoder is not supposed to start from argument root.")
-            case .array(let a):
-                guard pathIndex < path.count else {
-                    throw ComputePipelineStateController.ControllerError.invalidPathStructure
-                }
-                
-                guard let inputIndex = path[pathIndex].index else {
-                    throw ComputePipelineStateController.ControllerError.invalidPathIndexPlacement(pathIndex)
-                }
-
-                index += a.argumentIndexStride * Int(inputIndex)
-                pathIndex += 1
-            case .structMember(let s):
-                lastNamedArgument = s.name
-                index += s.argumentIndex
-                
-                // ignore array struct as argument since they are not part of path
-                if s.dataType != .array {
-                    pathIndex += 1
-                }
-            case .pointer:
-                throw ComputePipelineStateController.ControllerError.invalidEncoderPath(lastNamedArgument)
-            default: break
+    // pointers are not expected in argument since each pointer represents an encoder
+    for item in argumentPath {
+        switch item {
+        case .argument(let a):
+            index += a.index
+        case .array(let a):
+            guard pathIndex < path.count else {
+                throw ComputePipelineStateController.ControllerError.invalidPathStructure(pathIndex)
             }
+            
+            guard let inputIndex = path[pathIndex].index else {
+                throw ComputePipelineStateController.ControllerError.invalidPathIndexPlacement(pathIndex)
+            }
+
+            index += a.argumentIndexStride * Int(inputIndex)
+            pathIndex += 1
+        case .structMember(let s):
+            index += s.argumentIndex
+            
+            // ignore array struct as argument since they are not part of path
+            if s.dataType != .array {
+                pathIndex += 1
+            }
+        case .pointer:
+            throw ComputePipelineStateController.ControllerError.invalidEncoderPath(pathIndex)
+        default: break
         }
-        
-        return index
     }
+    
+    return index
 }
 
 //    func applyArgumentEncoder(_ encoder: Encoder,

@@ -56,7 +56,8 @@ class AluminumTests: XCTestCase {
                 try arrEncoder.encode(UInt32(i), to: [.index(UInt(i)), .argument("a")])
                 try arrEncoder.encode(UInt16(i), to: [.index(UInt(i)), .argument("c")])
                 try arrEncoder.encode(UInt32(i), to: [.index(UInt(i)), .argument("arr"), .index(0)])
-                try arrEncoder.encode(buffer: testBufferArr[i], to: [.index(UInt(i)), .argument("t")])
+                try arrEncoder.encode(UInt32(1), to: [.index(UInt(i)), .argument("arr"), .index(1)])
+                try arrEncoder.encode(testBufferArr[i], to: [.index(UInt(i)), .argument("t")])
             }
             
 //            try binder.bind("arr[0].a", to: UInt32(11))
