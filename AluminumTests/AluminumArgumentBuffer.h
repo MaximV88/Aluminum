@@ -17,8 +17,8 @@ struct TestStruct {
 typedef struct TestStruct TestStruct;
 
 struct TestInternalArgumentsBuffer {
-    device TestStruct * tr;
     device int * buffer;
+    device TestStruct * tr;
     metal::array<TestStruct, 9> arr;
 };
 typedef struct TestInternalArgumentsBuffer TestInternalArgumentsBuffer;

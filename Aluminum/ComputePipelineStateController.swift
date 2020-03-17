@@ -21,6 +21,7 @@ public class ComputePipelineStateController {
         case invalidBytesPath // last element in path shouldnt be a pointer
         case noArgumentBuffer // did not set argument buffer for encoder
         case invalidArgumentBuffer // argument buffer is too short
+        case pathIndexOutOfBounds(Int) // index is not in bounds of array - index of invalid path
     }
     
     public let function: MTLFunction

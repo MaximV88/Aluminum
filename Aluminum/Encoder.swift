@@ -216,7 +216,7 @@ private extension RootArgumentEncoder {
             switch item {
             case .argument:
                 pathIndex += 1
-            case .array(let array):
+            case .array(let a):
                 guard pathIndex < path.count else {
                     throw ComputePipelineStateController.ControllerError.invalidPathStructure(pathIndex)
                 }
@@ -225,7 +225,11 @@ private extension RootArgumentEncoder {
                     throw ComputePipelineStateController.ControllerError.invalidPathIndexPlacement(pathIndex)
                 }
                 
-                offset += Int(index) * array.stride
+                guard index >= 0, index < a.arrayLength else {
+                    throw ComputePipelineStateController.ControllerError.pathIndexOutOfBounds(pathIndex)
+                }
+                
+                offset += Int(index) * a.stride
                 pathIndex += 1
             case .structMember(let s):
                 guard s.dataType != .pointer else {
@@ -383,6 +387,10 @@ private func index(for path: Path, argumentPath: ArraySlice<Argument>) throws ->
             
             guard let inputIndex = path[pathIndex].index else {
                 throw ComputePipelineStateController.ControllerError.invalidPathIndexPlacement(pathIndex)
+            }
+            
+            guard inputIndex >= 0, inputIndex < a.arrayLength else {
+                throw ComputePipelineStateController.ControllerError.pathIndexOutOfBounds(pathIndex)
             }
 
             index += a.argumentIndexStride * Int(inputIndex)

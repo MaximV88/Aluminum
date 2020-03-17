@@ -45,7 +45,10 @@ class AluminumTests: XCTestCase {
         let testBufferArr: [MTLBuffer] = (0..<40).map { _ in
             return device.makeBuffer(length: MemoryLayout<Float>.stride * 4 , options: .storageModeShared)!
         }
-
+        
+        let intBuffer = device.makeBuffer(length: MemoryLayout<Int>.stride, options: .storageModeShared)!
+        intBuffer.contents().assumingMemoryBound(to: Int.self).pointee = 5
+        
         for i in 0 ..< 40 {
             testBufferArr[i].contents().assumingMemoryBound(to: Float.self).pointee = Float(i)
         }
@@ -64,6 +67,7 @@ class AluminumTests: XCTestCase {
                 try arrEncoder.encode(testBufferArr[Int(i)], to: [.index(i), .argument("t")])
                 
                 try tarrEncoder.encode(UInt(1), to: [.index(i), .argument("l")])
+                try tarrEncoder.encode(intBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("buffer")])
             }
             
 //            try binder.bind("arr[0].a", to: UInt32(11))
