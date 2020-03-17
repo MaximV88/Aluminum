@@ -12,7 +12,7 @@ import Metal
 public protocol ComputePipelineStateEncoder {
     var encodedLength: Int { get }
 
-    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int)
+    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) throws
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) throws
 
@@ -25,8 +25,8 @@ public protocol ComputePipelineStateEncoder {
 }
 
 public extension ComputePipelineStateEncoder {
-    func setArgumentBuffer(_ argumentBuffer: MTLBuffer) {
-        setArgumentBuffer(argumentBuffer, offset: 0)
+    func setArgumentBuffer(_ argumentBuffer: MTLBuffer) throws {
+        try setArgumentBuffer(argumentBuffer, offset: 0)
     }
     
     func encode(_ buffer: MTLBuffer, to path: Path) throws  {
@@ -83,8 +83,8 @@ extension RootEncoder: ComputePipelineStateEncoder {
         return internalEncoder.encodedLength
     }
     
-    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
-        internalEncoder.setArgumentBuffer(argumentBuffer, offset: offset)
+    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) throws {
+        try internalEncoder.setArgumentBuffer(argumentBuffer, offset: offset)
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) throws {
@@ -130,8 +130,11 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
         return argument.bufferDataSize
     }
     
-    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
-        precondition(argumentBuffer.length >= encodedLength)
+    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) throws {
+        guard argumentBuffer.length >= encodedLength else {
+            throw ComputePipelineStateController.ControllerError.invalidArgumentBuffer
+        }
+        
         self.argumentBuffer = argumentBuffer
         self.bufferOffset = offset
         
@@ -278,8 +281,11 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         return argumentEncoder.encodedLength
     }
     
-    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
-        precondition(argumentBuffer.length >= encodedLength)
+    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) throws {
+        guard argumentBuffer.length >= encodedLength else {
+            throw ComputePipelineStateController.ControllerError.invalidArgumentBuffer
+        }
+
         hasArgumentBuffer = true
         argumentEncoder.setArgumentBuffer(argumentBuffer, offset: offset)
         computeCommandEncoder.setBuffer(argumentBuffer, offset: offset, index: encoderIndex)

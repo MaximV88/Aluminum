@@ -49,13 +49,13 @@ class AluminumTests: XCTestCase {
         for i in 0 ..< 40 {
             testBufferArr[i].contents().assumingMemoryBound(to: Float.self).pointee = Float(i)
         }
-        
-        arrEncoder.setArgumentBuffer(arrBuffer)
-        tarrEncoder.setArgumentBuffer(tarrBuffer)
-        resultEncoder.setArgumentBuffer(resultBuffer)
-        
+                
         
         do {
+            try arrEncoder.setArgumentBuffer(arrBuffer)
+            try tarrEncoder.setArgumentBuffer(tarrBuffer)
+            try resultEncoder.setArgumentBuffer(resultBuffer)
+
             for i: UInt in 0 ..< 40 {
                 try arrEncoder.encode(UInt32(i), to: [.index(i), .argument("a")])
                 try arrEncoder.encode(UInt16(i), to: [.index(i), .argument("c")])
