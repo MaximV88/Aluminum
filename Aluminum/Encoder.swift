@@ -69,6 +69,8 @@ class RootEncoder {
         }
         
         // path gurantees that there is at most a single argument encoder due to logic in parser
+        assert(argumentPath.argumentEncoderCount <= 1)
+        
         if let encoderPathIndex = argumentPath.firstArgumentEncoderIndex {
             internalEncoder = ArgumentEncoder(rootPath: rootPath,
                                               parser: parser,
@@ -607,6 +609,16 @@ private extension PathComponent {
 }
 
 private extension Array where Element == Argument {
+    var argumentEncoderCount: Int {
+        return reduce(0) {
+            switch $1 {
+            case .pointer(let p) where p.elementIsArgumentBuffer:
+                return $0 + 1
+            default: return $0
+            }
+        }
+    }
+    
     var firstArgumentEncoderIndex: Int? {
         return firstIndex {
             switch $0 {
