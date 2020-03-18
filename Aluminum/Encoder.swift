@@ -9,6 +9,10 @@
 import Metal
 
 
+public protocol bufferEncoder {
+    
+}
+
 public protocol ComputePipelineStateEncoder {
     var encodedLength: Int { get }
 
@@ -17,6 +21,8 @@ public protocol ComputePipelineStateEncoder {
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) throws
 
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) throws
+    
+    // TODO: make encode buffer with buffer encoder (works by path) non escaping closure, throw if not struct
 
     // TODO: missing stubs for texture/...
     
@@ -53,19 +59,21 @@ class RootEncoder {
     private let internalEncoder: ComputePipelineStateEncoder
         
     init(rootPath: Path,
-         argument: MTLArgument,
+         argumentPath: [Argument],
          parser: Parser,
          function: MTLFunction,
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
-        if let argumentPath = parser.argumentPath(for: rootPath),
-            argumentPath.count > 1,
-            case let .pointer(pointer) = argumentPath[1],
-            pointer.elementIsArgumentBuffer {
+        guard case .argument(let argument) = argumentPath.first else {
+            fatalError("RootEncoder expects an argument path that starts with an argument.")
+        }
+        
+        // path gurantees that there is at most a single argument encoder due to logic in parser
+        if let encoderPathIndex = argumentPath.firstArgumentEncoderIndex {
             internalEncoder = ArgumentEncoder(rootPath: rootPath,
                                               parser: parser,
                                               encoderIndex: argument.index,
-                                              argumentIndex: 1 ,
+                                              argumentIndex: encoderPathIndex,
                                               argumentEncoder: function.makeArgumentEncoder(bufferIndex: argument.index),
                                               computeCommandEncoder: computeCommandEncoder)
         } else {
@@ -375,7 +383,6 @@ private func index(for path: Path, argumentPath: ArraySlice<Argument>) throws ->
     var index = 0
     var pathIndex: Int = 0
 
-    // pointers are not expected in argument since each pointer represents an encoder
     for item in argumentPath {
         switch item {
         case .argument(let a):
@@ -402,8 +409,11 @@ private func index(for path: Path, argumentPath: ArraySlice<Argument>) throws ->
             if s.dataType != .array {
                 pathIndex += 1
             }
-        case .pointer:
-            throw ComputePipelineStateController.ControllerError.invalidEncoderPath(pathIndex)
+        case .pointer(let p):
+            // argument buffer pointer is not expected in argument since it represents an encoder
+            if p.elementIsArgumentBuffer {
+                throw ComputePipelineStateController.ControllerError.invalidEncoderPath(pathIndex)
+            }
         default: break
         }
     }
@@ -592,6 +602,17 @@ private extension PathComponent {
         switch self {
         case .index(let i): return i
         default: return nil
+        }
+    }
+}
+
+private extension Array where Element == Argument {
+    var firstArgumentEncoderIndex: Int? {
+        return firstIndex {
+            switch $0 {
+            case .pointer(let p): return p.elementIsArgumentBuffer
+            default: return false
+            }
         }
     }
 }

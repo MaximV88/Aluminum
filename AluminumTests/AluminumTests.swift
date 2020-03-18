@@ -49,6 +49,9 @@ class AluminumTests: XCTestCase {
         let intBuffer = device.makeBuffer(length: MemoryLayout<Int>.stride, options: .storageModeShared)!
         intBuffer.contents().assumingMemoryBound(to: Int.self).pointee = 5
         
+        let trBuffer = device.makeBuffer(length: 1000, options: .storageModeShared)!
+        trBuffer.contents().assumingMemoryBound(to: UInt.self).pointee = 0
+        
         for i in 0 ..< 40 {
             testBufferArr[i].contents().assumingMemoryBound(to: Float.self).pointee = Float(i)
         }
@@ -68,21 +71,12 @@ class AluminumTests: XCTestCase {
                 
                 try tarrEncoder.encode(UInt(1), to: [.index(i), .argument("l")])
                 try tarrEncoder.encode(intBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("buffer")])
-            }
-            
-//            try binder.bind("arr[0].a", to: UInt32(11))
-//            try binder.bind("arr[1].a", to: UInt32(22.0))
-//            try binder.bind("arr[2].a", to: UInt32(33.0))
-//            try binder.bind("arr[3].a", to: UInt32(44.0))
-//            try binder.bind("arr[0].arr[0]", to: UInt32(1.0))
-//            try binder.bind("arr[1].arr[1]", to: UInt32(2.0))
-//            try binder.bind("arr[2].arr[2]", to: UInt32(3.0))
-//            try binder.bind("arr[3].arr[3]", to: UInt32(4.0))
-//            try binder.bind("arr[3].d[3].a", to: UInt32(5.0))
-//            try binder.bind("tarr[0].l", to: UInt32(6.0))
-//            try binder.bind("tarr[0].arr_t[0].tr", to: testBuffer)
-//            try binder.bind("tarr[0].arr_t[0].tr.i", to: UInt32(1))
+                try tarrEncoder.encode(trBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("tr")])
 
+                try tarrEncoder.encode(trBuffer, to: [.index(i), .argument("t1")])
+
+            }
+                    
             
             dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
             

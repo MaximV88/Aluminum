@@ -34,7 +34,7 @@ private extension Parser {
         
         // children should override parent's mapping, assign before recursion
         mapping[currentPath] = argumentPath
-
+        
         for child in argumentPath.last!.children() {
             parseArgumentPath(argumentPath + [child], from: currentPath)
         }
