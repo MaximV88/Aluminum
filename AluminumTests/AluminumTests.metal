@@ -46,7 +46,8 @@ kernel void test_array_argument(device metal::array<C, 40> & arr [[ buffer(0) ]]
                                   + arr[i].arr[1]
                                   + tarr[i].l
                                   + *tarr[i].arr_t[0].buffer
-                                  + tarr[i].arr_t[0].tr->i,
+                                  + tarr[i].arr_t[0].tr->i
+                                  + *tarr[i].t1->buffer,
                                   memory_order_relaxed);
     }
 }

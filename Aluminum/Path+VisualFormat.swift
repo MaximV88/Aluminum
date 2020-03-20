@@ -34,26 +34,32 @@ private extension Path {
     }
 }
 
-public extension ComputePipelineStateEncoder {
-    func encode(_ buffer: MTLBuffer, to path: String) throws  {
-        try encode(buffer, to: Path.path(withVisualFormat: path))
+public extension Encoder {
+    func encode(_ buffer: MTLBuffer, to path: String) {
+        encode(buffer, to: Path.path(withVisualFormat: path))
     }
 
-    func encode<T>(_ parameter: T, to path: String) throws {
-            try encode(parameter, to: Path.path(withVisualFormat: path))
+    func encode<T>(_ parameter: T, to path: String) {
+        encode(parameter, to: Path.path(withVisualFormat: path))
+    }
+}
+
+public extension Encoder {
+    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: String) {
+        encode(bytes, count: count, to: Path.path(withVisualFormat: path))
+    }
+
+    func encode(_ buffer: MTLBuffer, offset: Int, to path: String) {
+        encode(buffer, offset: offset, to: Path.path(withVisualFormat: path))
+    }
+
+    func encode(_ buffer: MTLBuffer, offset: Int, to path: String, _ encoderClosure: (Encoder)->()) {
+        encode(buffer, offset: offset, to: Path.path(withVisualFormat: path), encoderClosure)
     }
 }
 
 public extension ComputePipelineStateEncoder {
-    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: String) throws {
-        try encode(bytes, count: count, to: Path.path(withVisualFormat: path))
-    }
-
-    func encode(_ buffer: MTLBuffer, offset: Int, to path: String) throws {
-        try encode(buffer, offset: offset, to: Path.path(withVisualFormat: path))
-    }
-
-    func childEncoder(for path: String) throws -> ComputePipelineStateEncoder {
-        try childEncoder(for: Path.path(withVisualFormat: path))
+    func childEncoder(for path: String) -> ComputePipelineStateEncoder {
+        childEncoder(for: Path.path(withVisualFormat: path))
     }
 }

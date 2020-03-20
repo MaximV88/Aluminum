@@ -52,40 +52,42 @@ class AluminumTests: XCTestCase {
         let trBuffer = device.makeBuffer(length: 1000, options: .storageModeShared)!
         trBuffer.contents().assumingMemoryBound(to: UInt.self).pointee = 0
         
+        let t1Buffers: [MTLBuffer] = (0..<40).map { _ in
+            return device.makeBuffer(length: 128, options: .storageModeShared)!
+        }
+        
         for i in 0 ..< 40 {
             testBufferArr[i].contents().assumingMemoryBound(to: Float.self).pointee = Float(i)
         }
                 
         
-        do {
-            try arrEncoder.setArgumentBuffer(arrBuffer)
-            try tarrEncoder.setArgumentBuffer(tarrBuffer)
-            try resultEncoder.setArgumentBuffer(resultBuffer)
-
-            for i: UInt in 0 ..< 40 {
-                try arrEncoder.encode(UInt32(i), to: [.index(i), .argument("a")])
-                try arrEncoder.encode(UInt16(i), to: [.index(i), .argument("c")])
-                try arrEncoder.encode(UInt32(i), to: [.index(i), .argument("arr"), .index(0)])
-                try arrEncoder.encode(UInt32(1), to: [.index(i), .argument("arr"), .index(1)])
-                try arrEncoder.encode(testBufferArr[Int(i)], to: [.index(i), .argument("t")])
+        arrEncoder.setArgumentBuffer(arrBuffer)
+        tarrEncoder.setArgumentBuffer(tarrBuffer)
+        resultEncoder.setArgumentBuffer(resultBuffer)
                 
-                try tarrEncoder.encode(UInt(1), to: [.index(i), .argument("l")])
-                try tarrEncoder.encode(intBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("buffer")])
-                try tarrEncoder.encode(trBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("tr")])
-
-                try tarrEncoder.encode(trBuffer, to: [.index(i), .argument("t1")])
-
-            }
-                    
+        for i: UInt in 0 ..< 40 {
+            arrEncoder.encode(UInt32(i), to: [.index(i), .argument("a")])
+            arrEncoder.encode(UInt16(i), to: [.index(i), .argument("c")])
+            arrEncoder.encode(UInt32(i), to: [.index(i), .argument("arr"), .index(0)])
+            arrEncoder.encode(UInt32(1), to: [.index(i), .argument("arr"), .index(1)])
+            arrEncoder.encode(testBufferArr[Int(i)], to: [.index(i), .argument("t")])
             
-            dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
-            
-            XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(138))
+            tarrEncoder.encode(UInt(1), to: [.index(i), .argument("l")])
+            tarrEncoder.encode(intBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("buffer")])
+            tarrEncoder.encode(trBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("tr")])
+                        
+            let t1Encoder = tarrEncoder.childEncoder(for: [.index(i), .argument("t1")])
+            t1Encoder.setArgumentBuffer(t1Buffers[Int(i)])
 
-        } catch {
-            XCTFail(error.localizedDescription)
+            t1Encoder.encode(intBuffer, to: [.argument("buffer")])
         }
-                
+        
+        
+        dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
+        
+        XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(138))
+        
+        
     }
 }
 

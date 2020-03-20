@@ -10,6 +10,8 @@
 		9402316924165FB8002242B3 /* Path.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9402316824165FB8002242B3 /* Path.swift */; };
 		9402316B24182A2A002242B3 /* String+NSRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9402316A24182A2A002242B3 /* String+NSRange.swift */; };
 		9402316D24182A6A002242B3 /* Path+VisualFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9402316C24182A6A002242B3 /* Path+VisualFormat.swift */; };
+		9402316F2424BC77002242B3 /* Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9402316E2424BC77002242B3 /* Error.swift */; };
+		9402317124250C6A002242B3 /* PathType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9402317024250C6A002242B3 /* PathType.swift */; };
 		9453C90B23D32A3B00E7FCFE /* Aluminum.h in Headers */ = {isa = PBXBuildFile; fileRef = 9453C90923D32A3B00E7FCFE /* Aluminum.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9453C91223D32AA600E7FCFE /* ComputePipelineStateController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9453C91123D32AA600E7FCFE /* ComputePipelineStateController.swift */; };
 		9453C91523D32AB300E7FCFE /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9453C91423D32AB300E7FCFE /* Metal.framework */; };
@@ -35,6 +37,8 @@
 		9402316824165FB8002242B3 /* Path.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Path.swift; sourceTree = "<group>"; };
 		9402316A24182A2A002242B3 /* String+NSRange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+NSRange.swift"; sourceTree = "<group>"; };
 		9402316C24182A6A002242B3 /* Path+VisualFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Path+VisualFormat.swift"; sourceTree = "<group>"; };
+		9402316E2424BC77002242B3 /* Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
+		9402317024250C6A002242B3 /* PathType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathType.swift; sourceTree = "<group>"; };
 		9453C90623D32A3B00E7FCFE /* Aluminum.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Aluminum.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		9453C90923D32A3B00E7FCFE /* Aluminum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Aluminum.h; sourceTree = "<group>"; };
 		9453C90A23D32A3B00E7FCFE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -98,6 +102,8 @@
 				9453C90A23D32A3B00E7FCFE /* Info.plist */,
 				9453C91123D32AA600E7FCFE /* ComputePipelineStateController.swift */,
 				9453C92D23D613EA00E7FCFE /* Encoder.swift */,
+				9402317024250C6A002242B3 /* PathType.swift */,
+				9402316E2424BC77002242B3 /* Error.swift */,
 				9497B83123FB1006000C8085 /* Argument.swift */,
 				9453C92923D60C9800E7FCFE /* Parser.swift */,
 				9402316824165FB8002242B3 /* Path.swift */,
@@ -240,8 +246,10 @@
 			files = (
 				9497B83223FB1006000C8085 /* Argument.swift in Sources */,
 				9453C92E23D613EA00E7FCFE /* Encoder.swift in Sources */,
+				9402317124250C6A002242B3 /* PathType.swift in Sources */,
 				9453C92A23D60C9800E7FCFE /* Parser.swift in Sources */,
 				9402316924165FB8002242B3 /* Path.swift in Sources */,
+				9402316F2424BC77002242B3 /* Error.swift in Sources */,
 				9402316B24182A2A002242B3 /* String+NSRange.swift in Sources */,
 				9453C91223D32AA600E7FCFE /* ComputePipelineStateController.swift in Sources */,
 				9402316D24182A6A002242B3 /* Path+VisualFormat.swift in Sources */,
