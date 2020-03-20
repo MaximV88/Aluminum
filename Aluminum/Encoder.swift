@@ -66,10 +66,15 @@ class RootEncoder {
         assert(argumentPath.argumentEncoderCount <= 1)
         
         if let encoderPathIndex = argumentPath.firstArgumentEncoderIndex {
+            guard case let .pointer(pointer) = argumentPath[encoderPathIndex] else {
+                fatalError()
+            }
+            
             internalEncoder = ArgumentEncoder(rootPath: rootPath,
                                               parser: parser,
                                               encoderIndex: argument.index,
                                               argumentIndex: encoderPathIndex,
+                                              pointer: pointer,
                                               argumentEncoder: function.makeArgumentEncoder(bufferIndex: argument.index),
                                               parentArgumentEncoder: nil,
                                               computeCommandEncoder: computeCommandEncoder)
@@ -188,7 +193,10 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     func childEncoder(for path: Path) -> ComputePipelineStateEncoder {
         let data = pathData(for: path, isPathToChildEncoder: true)
         let pathType = queryPathType(for: data.argumentPath)
-        assert(pathType.isArgumentBuffer, .invalidChildEncoderPath(pathType))
+        
+        guard case let .argumentBuffer(pointer) = pathType else {
+            fatalError(.invalidChildEncoderPath(pathType))
+        }
         
         let index = queryIndex(for: data.absolutePath, argumentPath: data.argumentPath)
                 
@@ -196,6 +204,7 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
                                parser: parser,
                                encoderIndex: index,
                                argumentIndex: data.argumentPath.lastArgumentEncoderIndex!,
+                               pointer: pointer,
                                argumentEncoder: function.makeArgumentEncoder(bufferIndex: index),
                                parentArgumentEncoder: nil,
                                computeCommandEncoder: computeCommandEncoder)
@@ -224,6 +233,7 @@ class ArgumentEncoder {
     private let encoderIndex: Int
     private let argumentIndex: Int
     
+    private let pointer: MTLPointerType
     private let argumentEncoder: MTLArgumentEncoder
     private let parentArgumentEncoder: MTLArgumentEncoder?
     private weak var computeCommandEncoder: MTLComputeCommandEncoder!
@@ -234,6 +244,7 @@ class ArgumentEncoder {
          parser: Parser,
          encoderIndex: Int,
          argumentIndex: Int,
+         pointer: MTLPointerType,
          argumentEncoder: MTLArgumentEncoder,
          parentArgumentEncoder: MTLArgumentEncoder?,
          computeCommandEncoder: MTLComputeCommandEncoder)
@@ -242,6 +253,7 @@ class ArgumentEncoder {
         self.parser = parser
         self.encoderIndex = encoderIndex
         self.argumentIndex = argumentIndex
+        self.pointer = pointer
         self.argumentEncoder = argumentEncoder
         self.parentArgumentEncoder = parentArgumentEncoder
         self.computeCommandEncoder = computeCommandEncoder
@@ -262,6 +274,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         // TODO: check if required
         if let parentArgumentEncoder = parentArgumentEncoder {
             parentArgumentEncoder.setBuffer(argumentBuffer, offset: offset, index: encoderIndex)
+            computeCommandEncoder.useResource(argumentBuffer, usage: pointer.access.usage)
         } else {
             computeCommandEncoder.setBuffer(argumentBuffer, offset: offset, index: encoderIndex)
         }
@@ -324,7 +337,10 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         let encoderPath = rootPath + path
         let argumentPath = localArgumentPath(for: path, isPathToChildEncoder: true)
         let pathType = queryPathType(for: argumentPath)
-        assert(pathType.isArgumentBuffer, .invalidChildEncoderPath(pathType))
+
+        guard case let .argumentBuffer(pointer) = pathType else {
+            fatalError(.invalidChildEncoderPath(pathType))
+        }
 
         let index = queryIndex(for: path, argumentPath: argumentPath)
 
@@ -332,6 +348,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
                                parser: parser,
                                encoderIndex: index,
                                argumentIndex: argumentPath.lastArgumentEncoderIndex!,
+                               pointer: pointer,
                                argumentEncoder: argumentEncoder.makeArgumentEncoderForBuffer(atIndex: index)!,
                                parentArgumentEncoder: argumentEncoder,
                                computeCommandEncoder: computeCommandEncoder)
@@ -500,35 +517,6 @@ private func validatePathLocality<ArgumentArray: RandomAccessCollection>(
     return true
 }
 
-
-//    func makeArgumentEncoder(from encoder: Encoder, argumentPath: [Parser.Argument], alignment: Int) -> Encoder {
-//        let childEncoder: MTLArgumentEncoder
-//
-//
-//        // argument encoder requires encoding the buffer into parent in the original index
-//        switch encoder {
-//        case .computeCommandEncoder(let e):
-//            let index = self.index(from: argumentPath)
-//            let offset =  0//baseOffset(from: argumentPath).aligned(by: alignment)
-//
-//            childEncoder = function.makeArgumentEncoder(bufferIndex: index)
-//            e.setBuffer(argumentBuffer, offset: offset, index: index)
-//            childEncoder.setArgumentBuffer(argumentBuffer, offset: offset)
-//
-//        case .argumentEncoder(let e):
-//            let index = localIndex(from: argumentPath)
-//            let offset = nestedBaseOffset(from: argumentPath)
-//
-//            childEncoder = e.makeArgumentEncoderForBuffer(atIndex: index)!
-//            e.setBuffer(argumentBuffer, offset: offset, index: index)
-//            childEncoder.setArgumentBuffer(argumentBuffer, offset: offset)
-//        }
-//
-//
-//        return .argumentEncoder(childEncoder)
-//    }
-//
-
 private extension Parser {
     func safeArgumentPath(for path: Path) -> [Argument] {
         guard let argumentPath = argumentPath(for: path) else {
@@ -573,7 +561,7 @@ private extension PathType {
     }
 
     var isArgumentBuffer: Bool {
-        if case .argumentBuffer = self {
+        if case .argumentBuffer(let p) = self {
             return true
         }
         return false
