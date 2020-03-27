@@ -408,44 +408,6 @@ private extension Argument {
     }
 }
 
-// required for comparison without associated value
-private extension PathType {
-    var isArgument: Bool {
-        if case .argument = self {
-            return true
-        }
-        return false
-    }
-    
-    var isBytes: Bool {
-        if case .bytes = self {
-            return true
-        }
-        return false
-    }
-    
-    var isBuffer: Bool {
-        if case .buffer = self {
-            return true
-        }
-        return false
-    }
-
-    var isArgumentBuffer: Bool {
-        if case .argumentBuffer = self {
-            return true
-        }
-        return false
-    }
-    
-    var isEncodableBuffer: Bool {
-        if case .encodableBuffer = self {
-            return true
-        }
-        return false
-    }
-}
-
 private extension MTLArgumentAccess {
     var usage: MTLResourceUsage {
         switch self {
@@ -464,41 +426,5 @@ private extension Int {
     
     mutating func align(by alignment: Int) {
         self = aligned(by: alignment)
-    }
-}
-
-private extension RandomAccessCollection where Element == Argument, Index == Int {
-    var argumentEncoderCount: Index {
-        return reduce(0) {
-            switch $1 {
-            case .pointer(let p) where p.elementIsArgumentBuffer:
-                return $0 + 1
-            default: return $0
-            }
-        }
-    }
-    
-    var firstArgumentEncoderIndex: Index? {
-        return firstIndex {
-            switch $0  {
-            case .pointer(let p): return p.elementIsArgumentBuffer
-            default: return false
-            }
-        }
-    }
-    
-    var lastArgumentEncoderIndex: Index? {
-        return lastIndex {
-            switch $0  {
-            case .pointer(let p): return p.elementIsArgumentBuffer
-            default: return false
-            }
-        }
-    }
-    
-    var lastArgumentEncoder: MTLPointerType? {
-        guard let lastArgumentEncoderIndex = lastArgumentEncoderIndex else { return nil }
-        guard case .pointer(let p) = self[lastArgumentEncoderIndex] else { return nil}
-        return p
     }
 }

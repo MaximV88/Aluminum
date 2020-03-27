@@ -25,9 +25,11 @@ internal class Parser {
         }
         
         let argumentPath: [Argument] // arguments from encoding root only
+        
         var localArgumentPath: [Argument] {
             Array(argumentPath[argumentPathIndex...])
         }
+        
         let encodingType: EncodingType
         
                 
@@ -53,10 +55,13 @@ internal class Parser {
             guard let argumentPath = parser.mapping[parsePath] else {
                 fatalError(.nonExistingPath)
             }
-
+            
             assert(validatePathLocality(for: argumentPath[self.argumentPath.count...],
                                         localPath: localPath,
                                         containsEncoder: true))
+            
+            let pathType = queryPathType(for: argumentPath[self.argumentPath.count...])
+            assert(pathType.isArgumentBuffer, .invalidChildEncoderPath(pathType))
 
             return Encoding(argumentPath: argumentPath,
                             parsePath: parsePath,
@@ -177,6 +182,7 @@ private extension Parser {
     }
 }
 
+// TODO: refactor with rules - innacurate for non last pointers (i.e. encoder cant have a non coding pointer after a pointer or vice-a-versa
 private func validatePathLocality<ArgumentArray: RandomAccessCollection>(
     for argumentPath: ArgumentArray,
     localPath: Path,
