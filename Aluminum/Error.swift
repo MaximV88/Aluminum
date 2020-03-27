@@ -36,8 +36,6 @@ enum AluminumError: Error {
     case unknownArgument(String) // name does not match any argument
     case nonExistingPath
     case invalidEncoderPath(Int) // encoder does not support given path (extends outside of it) - first unsupported parameter index
-    case invalidPathIndexPlacement(Int) // index is missing at expected position
-    case invalidPathStructure(Int) // path has an index in an unexpected index - returns index of invalid path compoent
     case noArgumentBuffer // did not set argument buffer for encoder
     case invalidArgumentBuffer // argument buffer is too short
     case pathIndexOutOfBounds(Int) // index is not in bounds of array - index of invalid path

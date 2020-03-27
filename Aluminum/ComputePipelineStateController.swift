@@ -32,18 +32,13 @@ public class ComputePipelineStateController {
     }
     
     public func makeEncoder(for argument: String, with computeCommandEncoder: MTLComputeCommandEncoder) throws -> ComputePipelineStateEncoder {
-        let rootPath: Path = [.argument(argument)]
-        
-        guard let argumentPath = parser.argumentPath(for: rootPath) else {
-            fatalError(.unknownArgument(argument))
-        }
+        let encoding = parser.encoding(for: argument)
                 
         computeCommandEncoder.setComputePipelineState(computePipelineState)
         
-        return RootEncoder(rootPath: rootPath,
-                           argumentPath: argumentPath,
-                           parser: parser,
+        return RootEncoder(encoding: encoding,
+                           rootPath: [.argument(argument)],
                            function: function,
                            computeCommandEncoder: computeCommandEncoder)
-     }
+    }
 }

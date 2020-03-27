@@ -16,3 +16,204 @@ internal enum PathType {
     case argumentBuffer(MTLPointerType)
     case encodableBuffer(MTLPointerType, MTLStructType)
 }
+
+
+private protocol PathInteractor {
+    var currentArgument: Argument { get }
+    
+    @discardableResult
+    func nextArgument() -> Argument?
+}
+
+private protocol PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType?
+}
+
+private class PathContext<ArgumentArray: RandomAccessCollection>
+where ArgumentArray.Element == Argument, ArgumentArray.Index == Int {
+    private var index = 0
+    private var temporaryIndex = 0
+    private let argumentPath: ArgumentArray
+        
+    var isFinished: Bool {
+        index >= argumentPath.count
+    }
+    
+    init(argumentPath: ArgumentArray) {
+        self.argumentPath = argumentPath
+    }
+    
+    func saveState() {
+        temporaryIndex = index
+    }
+    
+    func loadState() {
+        index = temporaryIndex
+    }
+    
+    func advance() {
+        index += 1
+    }
+}
+
+extension PathContext: PathInteractor {
+    var currentArgument: Argument {
+        argumentPath[index]
+    }
+    
+    func nextArgument() -> Argument? {
+        guard index < argumentPath.count - 1 else {
+            return nil
+        }
+        
+        index += 1
+        return argumentPath[index]
+    }
+}
+
+private struct BytesFromMetalArrayPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard
+            case .struct = interactor.currentArgument,
+            case let .structMember(s) = interactor.nextArgument(),
+            s.dataType == .array
+            else
+        {
+            return nil
+        }
+        
+        // skip 'array'
+        guard case .array = interactor.nextArgument() else {
+            return nil
+        }
+        
+        return .bytes(s)
+    }
+}
+
+private struct BytesFromAtomicVariablePathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard
+            case .struct = interactor.currentArgument,
+            case let .structMember(s) = interactor.nextArgument(),
+            s.name == "__s"
+            else
+        {
+            return nil
+        }
+        
+        return .bytes(s)
+    }
+}
+
+private struct ArgumentPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard case let .argument(a) = interactor.currentArgument else {
+            return nil
+        }
+        
+        return .argument(a)
+    }
+}
+
+private struct BytesPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard
+            case let .structMember(s) = interactor.currentArgument,
+            s.dataType != .pointer
+            else
+        {
+            return nil
+        }
+        
+        return .bytes(s)
+    }
+}
+
+private struct EncodableBufferPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard
+            case let .pointer(p) = interactor.currentArgument,
+            !p.elementIsArgumentBuffer,
+            case let .struct(s) = interactor.nextArgument()
+            else
+        {
+            return nil
+        }
+        
+        return .encodableBuffer(p, s)
+    }
+}
+
+private struct BufferPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard
+            case let .pointer(p) = interactor.currentArgument,
+            !p.elementIsArgumentBuffer
+            else
+        {
+            return nil
+        }
+        
+        return .buffer(p)
+    }
+}
+
+private struct ArgumentBufferPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard
+            case let .pointer(p) = interactor.currentArgument,
+            p.elementIsArgumentBuffer
+            else
+        {
+            return nil
+        }
+        
+        return .argumentBuffer(p)
+    }
+}
+
+private let pathRules: [PathRule] = [
+    BytesFromMetalArrayPathRule(),
+    BytesFromAtomicVariablePathRule(),
+    ArgumentPathRule(),
+    BytesPathRule(),
+    EncodableBufferPathRule(),
+    BufferPathRule(),
+    ArgumentBufferPathRule()
+]
+
+internal func queryPathType<ArgumentArray: RandomAccessCollection>(
+    for argumentPath: ArgumentArray
+) -> PathType
+where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
+{
+    assert(!argumentPath.isEmpty)
+
+    let context = PathContext(argumentPath: argumentPath)
+    var result: PathType!
+    
+    while !context.isFinished {
+        context.saveState()
+        var current: PathType!
+
+        for rule in pathRules {
+            if let pathType = rule.apply(context) {
+                current = pathType
+                break
+            } else {
+                context.loadState()
+            }
+        }
+        
+        if current != nil {
+            result = current
+        }
+        
+        context.advance()
+    }
+ 
+    assert(result != nil, "No rules were applied to argument path.")
+
+    return result
+}

@@ -24,6 +24,7 @@ typedef struct Composite Composite;
 
 struct C {
     
+    uint k[4];
     uint a;
     device float * t;
     metal::array<uint, 9> arr;
@@ -32,12 +33,16 @@ struct C {
 };
 typedef struct C C;
 
+//kernel void test_array_argument(device C arr[40] , // still a buffer
+//device metal::array<TestArgumentsBuffer, 40> & tarr ,
+//device atomic_uint * result)
 
-kernel void test_array_argument(device metal::array<C, 40> & arr [[ buffer(0) ]],
+
+kernel void test_array_argument(device metal::array<C, 40> & arr,
                                 device metal::array<TestArgumentsBuffer, 40> & tarr [[ buffer(1) ]],
                                 device atomic_uint * result [[ buffer(2) ]])
 {
-    for (int i = 0, end = arr.size() ; i < end ; i++)
+    for (int i = 0, end = 40 ; i < end ; i++)
     {
         atomic_fetch_add_explicit(result, *arr[i].t
                                   + arr[i].a

@@ -15,3 +15,11 @@ public enum PathComponent: Hashable {
     case index(UInt)
 }
 
+internal extension PathComponent {
+    var index: UInt? {
+        switch self {
+        case .index(let i): return i
+        default: return nil
+        }
+    }
+}

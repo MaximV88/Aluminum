@@ -48,7 +48,7 @@ class AluminumTests: XCTestCase {
         
         let intBuffer = device.makeBuffer(length: MemoryLayout<Int>.stride, options: .storageModeShared)!
         intBuffer.contents().assumingMemoryBound(to: Int.self).pointee = 5
-        
+    
         let trBuffer = device.makeBuffer(length: 1000, options: .storageModeShared)!
         trBuffer.contents().assumingMemoryBound(to: UInt.self).pointee = 0
         
@@ -71,7 +71,7 @@ class AluminumTests: XCTestCase {
             arrEncoder.encode(UInt32(i), to: [.index(i), .argument("arr"), .index(0)])
             arrEncoder.encode(UInt32(1), to: [.index(i), .argument("arr"), .index(1)])
             arrEncoder.encode(testBufferArr[Int(i)], to: [.index(i), .argument("t")])
-            
+
             tarrEncoder.encode(UInt(1), to: [.index(i), .argument("l")])
             tarrEncoder.encode(intBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("buffer")])
             tarrEncoder.encode(trBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("tr")])

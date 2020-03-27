@@ -48,42 +48,27 @@ public extension ComputePipelineStateEncoder {
     }
 }
 
-
 class RootEncoder {
     private let internalEncoder: ComputePipelineStateEncoder
         
-    init(rootPath: Path,
-         argumentPath: [Argument],
-         parser: Parser,
+    init(encoding: Parser.Encoding,
+         rootPath: Path,
          function: MTLFunction,
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
-        guard case .argument(let argument) = argumentPath.first else {
-            fatalError("RootEncoder expects an argument path that starts with an argument.")
-        }
-        
-        // path gurantees that there is at most a single argument encoder due to logic in parser
-        assert(argumentPath.argumentEncoderCount <= 1)
-        
-        if let encoderPathIndex = argumentPath.firstArgumentEncoderIndex {
-            guard case let .pointer(pointer) = argumentPath[encoderPathIndex] else {
-                fatalError()
-            }
-            
-            internalEncoder = ArgumentEncoder(rootPath: rootPath,
-                                              parser: parser,
-                                              encoderIndex: argument.index,
-                                              argumentIndex: encoderPathIndex,
-                                              pointer: pointer,
-                                              argumentEncoder: function.makeArgumentEncoder(bufferIndex: argument.index),
-                                              parentArgumentEncoder: nil,
-                                              computeCommandEncoder: computeCommandEncoder)
-        } else {
-            internalEncoder = RootArgumentEncoder(rootPath: rootPath,
-                                                  argument: argument,
-                                                  parser: parser,
+        switch encoding.encodingType {
+        case .argument:
+            internalEncoder = RootArgumentEncoder(encoding: encoding,
                                                   function: function,
                                                   computeCommandEncoder: computeCommandEncoder)
+        case .argumentContainingArgumentBuffer:
+            let index = queryIndex(for: rootPath, argumentPath: encoding.argumentPath)
+            internalEncoder = ArgumentEncoder(encoding: encoding,
+                                              encoderIndex: index,
+                                              argumentEncoder: function.makeArgumentEncoder(bufferIndex: index),
+                                              parentArgumentEncoder: nil,
+                                              computeCommandEncoder: computeCommandEncoder)
+        case .argumentBuffer: fatalError("RootEncoder must start with an argument.")
         }
     }
 }
@@ -114,26 +99,27 @@ extension RootEncoder: ComputePipelineStateEncoder {
     }
 }
 
+
 class RootArgumentEncoder {
-    private let rootPath: Path
+    private let encoding: Parser.Encoding
     private let argument: MTLArgument
     private let function: MTLFunction
-    private let parser: Parser
 
     private weak var computeCommandEncoder: MTLComputeCommandEncoder!
     private weak var argumentBuffer: MTLBuffer!
     
     private var bufferOffset: Int = 0
 
-    init(rootPath: Path,
-         argument: MTLArgument,
-         parser: Parser,
+    init(encoding: Parser.Encoding,
          function: MTLFunction,
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
-        self.rootPath = rootPath
+        guard case let .argument(argument) = encoding.argumentPath.first else {
+            fatalError("RootEncoder expects an argument path that starts with an argument.")
+        }
+        
+        self.encoding = encoding
         self.argument = argument
-        self.parser = parser
         self.function = function
         self.computeCommandEncoder = computeCommandEncoder
     }
@@ -156,13 +142,13 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
         assert(argumentBuffer != nil, .noArgumentBuffer)
 
-        let data = pathData(for: path)
-        let pathType = queryPathType(for: data.argumentPath)
+        let argumentPath = encoding.argumentPath(for: path)
+        let pathType = queryPathType(for: argumentPath)
         assert(pathType.isBytes, .invalidBytesPath(pathType))
 
         // TODO: make sure that count is within argument length (i.e. prevent overflow)
 
-        let pathOffset = queryOffset(for: data.absolutePath, argumentPath: data.argumentPath)
+        let pathOffset = queryOffset(for: path, argumentPath: argumentPath)
         let destination = argumentBuffer.contents().assumingMemoryBound(to: UInt8.self)
         let source = bytes.assumingMemoryBound(to: UInt8.self)
         
@@ -172,66 +158,39 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
-        let data = pathData(for: path)
-        let pathType = queryPathType(for: data.argumentPath)
+        let argumentPath = encoding.argumentPath(for: path)
+        let pathType = queryPathType(for: argumentPath)
         assert(pathType.isBuffer, .invalidBufferPath(pathType))
         
-        let index = queryIndex(for: data.absolutePath, argumentPath: data.argumentPath)
+        let index = queryIndex(for: path, argumentPath: argumentPath)
         assert(index != argument.index) // shouldnt override argument buffer
         
         computeCommandEncoder.setBuffer(buffer, offset: offset, index: index)
     }
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (Encoder)->()) {
-        let data = pathData(for: path)
-        let pathType = queryPathType(for: data.argumentPath)
+        let argumentPath = encoding.argumentPath(for: path)
+        let pathType = queryPathType(for: argumentPath)
         assert(pathType.isEncodableBuffer, .invalidBufferEncoderPath(pathType))
         
         fatalError("Logical error. MTLArgument does not access pointer of struct (encodable buffer)")
     }
     
     func childEncoder(for path: Path) -> ComputePipelineStateEncoder {
-        let data = pathData(for: path, isPathToChildEncoder: true)
-        let pathType = queryPathType(for: data.argumentPath)
-        
-        guard case let .argumentBuffer(pointer) = pathType else {
-            fatalError(.invalidChildEncoderPath(pathType))
-        }
-        
-        let index = queryIndex(for: data.absolutePath, argumentPath: data.argumentPath)
-                
-        return ArgumentEncoder(rootPath: data.absolutePath,
-                               parser: parser,
+        let childEncoding = encoding.childEncoding(for: path)
+        let index = queryIndex(for: path, argumentPath: childEncoding.argumentPath)
+                        
+        return ArgumentEncoder(encoding: childEncoding,
                                encoderIndex: index,
-                               argumentIndex: data.argumentPath.lastArgumentEncoderIndex!,
-                               pointer: pointer,
                                argumentEncoder: function.makeArgumentEncoder(bufferIndex: index),
                                parentArgumentEncoder: nil,
                                computeCommandEncoder: computeCommandEncoder)
     }
 }
 
-private extension RootArgumentEncoder {
-    struct PathData {
-        let absolutePath: Path
-        let argumentPath: [Argument]
-    }
-    
-    func pathData(for localPath: Path, isPathToChildEncoder: Bool = false) -> PathData {
-        let absolutePath = rootPath + localPath
-        let argumentPath = parser.safeArgumentPath(for: absolutePath)
-        
-        assert(validatePathLocality(for: argumentPath, isPathToChildEncoder: isPathToChildEncoder))
-
-        return PathData(absolutePath: absolutePath, argumentPath: argumentPath)
-    }
-}
-
 class ArgumentEncoder {
-    private let rootPath: Path
-    private let parser: Parser
+    private let encoding: Parser.Encoding
     private let encoderIndex: Int
-    private let argumentIndex: Int
     
     private let pointer: MTLPointerType
     private let argumentEncoder: MTLArgumentEncoder
@@ -240,19 +199,21 @@ class ArgumentEncoder {
 
     private var hasArgumentBuffer: Bool = false
 
-    init(rootPath: Path,
-         parser: Parser,
+    init(encoding: Parser.Encoding,
          encoderIndex: Int,
-         argumentIndex: Int,
-         pointer: MTLPointerType,
          argumentEncoder: MTLArgumentEncoder,
          parentArgumentEncoder: MTLArgumentEncoder?,
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
-        self.rootPath = rootPath
-        self.parser = parser
+        let pointer: MTLPointerType
+        switch encoding.encodingType {
+        case .argumentBuffer(let p): pointer = p
+        case .argumentContainingArgumentBuffer(_, let p): pointer = p
+        default: fatalError("Invalid instantiation of encoder per encoding type.")
+        }
+
+        self.encoding = encoding
         self.encoderIndex = encoderIndex
-        self.argumentIndex = argumentIndex
         self.pointer = pointer
         self.argumentEncoder = argumentEncoder
         self.parentArgumentEncoder = parentArgumentEncoder
@@ -283,7 +244,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
         validateArgumentBuffer()
         
-        let argumentPath = localArgumentPath(for: path)
+        let argumentPath = encoding.localArgumentPath(for: path)
         let pathType = queryPathType(for: argumentPath)
         assert(pathType.isBytes, .invalidBytesPath(pathType))
         
@@ -300,7 +261,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
         validateArgumentBuffer()
 
-        let argumentPath = localArgumentPath(for: path)
+        let argumentPath = encoding.localArgumentPath(for: path)
         let pathType = queryPathType(for: argumentPath)
         
         switch pathType {
@@ -318,7 +279,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (Encoder)->()) {
         validateArgumentBuffer()
 
-        let argumentPath = localArgumentPath(for: path)
+        let argumentPath = encoding.localArgumentPath(for: path)
         let pathType = queryPathType(for: argumentPath)
         
         guard case let .encodableBuffer(p, s) = pathType else {
@@ -334,21 +295,11 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     func childEncoder(for path: Path) -> ComputePipelineStateEncoder {
         validateArgumentBuffer()
 
-        let encoderPath = rootPath + path
-        let argumentPath = localArgumentPath(for: path, isPathToChildEncoder: true)
-        let pathType = queryPathType(for: argumentPath)
+        let childEncoding = encoding.childEncoding(for: path)
+        let index = queryIndex(for: path, argumentPath: childEncoding.localArgumentPath)
 
-        guard case let .argumentBuffer(pointer) = pathType else {
-            fatalError(.invalidChildEncoderPath(pathType))
-        }
-
-        let index = queryIndex(for: path, argumentPath: argumentPath)
-
-        return ArgumentEncoder(rootPath: encoderPath,
-                               parser: parser,
+        return ArgumentEncoder(encoding: childEncoding,
                                encoderIndex: index,
-                               argumentIndex: argumentPath.lastArgumentEncoderIndex!,
-                               pointer: pointer,
                                argumentEncoder: argumentEncoder.makeArgumentEncoderForBuffer(atIndex: index)!,
                                parentArgumentEncoder: argumentEncoder,
                                computeCommandEncoder: computeCommandEncoder)
@@ -359,41 +310,6 @@ private extension ArgumentEncoder {
     func validateArgumentBuffer() {
         assert(hasArgumentBuffer, .noArgumentBuffer)
     }
-    
-    func localArgumentPath(for localPath: Path, isPathToChildEncoder: Bool = false) -> ArraySlice<Argument> {
-        let absolutePath = rootPath + localPath
-        let localArgumentPath = parser.safeArgumentPath(for: absolutePath)[(argumentIndex + 1)...]
-        
-        assert(validatePathLocality(for: localArgumentPath, isPathToChildEncoder: isPathToChildEncoder))
-
-        return localArgumentPath
-    }
-}
-
-private func queryPathType<ArgumentArray: RandomAccessCollection>(
-    for argumentPath: ArgumentArray
-) -> PathType
-    where ArgumentArray.Element == Argument
-{
-    assert(!argumentPath.isEmpty)
-    
-    var candidateType: PathType!
-    
-    for argument in argumentPath {
-        switch argument {
-        case .argument(let a): candidateType = .argument(a)
-        case .structMember(let s): candidateType = .bytes(s)
-        case .pointer(let p) where p.elementIsArgumentBuffer: candidateType = .argumentBuffer(p)
-        case .pointer(let p) where !p.elementIsArgumentBuffer: candidateType = .buffer(p)
-        case .struct(let s):
-            if case .buffer(let p) = candidateType {
-                candidateType = .encodableBuffer(p, s)
-            }
-        default: break
-        }
-    }
-
-    return candidateType
 }
 
 private func queryIndex<ArgumentArray: RandomAccessCollection>(
@@ -412,12 +328,9 @@ private func queryIndex<ArgumentArray: RandomAccessCollection>(
         switch item {
         case .argument(let a):
             index += a.index
+            pathIndex += 1
         case .array(let a):
-            assert(pathIndex < path.count, .invalidPathStructure(pathIndex))
-            
-            guard let inputIndex = path[pathIndex].index else {
-                fatalError(.invalidPathIndexPlacement(pathIndex))
-            }
+            let inputIndex = path[pathIndex].index!
             
             assert(inputIndex >= 0 && inputIndex < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
 
@@ -455,12 +368,7 @@ private func queryOffset<ArgumentArray: RandomAccessCollection>(
         case .argument:
             pathIndex += 1
         case .array(let a):
-            assert(pathIndex < path.count, .invalidPathStructure(pathIndex))
-            
-            guard let index = path[pathIndex].index else {
-                fatalError(.invalidPathIndexPlacement(pathIndex))
-            }
-            
+            let index = path[pathIndex].index!
             assert(index >= 0 && index < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
             
             offset += Int(index) * a.stride
@@ -482,51 +390,6 @@ private func queryOffset<ArgumentArray: RandomAccessCollection>(
     return offset
 }
 
-private func validatePathLocality<ArgumentArray: RandomAccessCollection>(
-    for argumentPath: ArgumentArray,
-    isPathToChildEncoder: Bool
-) -> Bool
-    where ArgumentArray.Element == Argument
-{
-    assert(!argumentPath.isEmpty)
-
-    var pathIndex: Int = 0
-
-    for (index, item) in argumentPath.enumerated() {
-        switch item {
-        case .argument: pathIndex += 1
-        case .array: pathIndex += 1
-        case .structMember(let s):
-            // ignore array struct as argument since they are not part of path
-            if s.dataType != .array {
-                pathIndex += 1
-            }
-        case .pointer(let p):
-            // TODO: check encounters with pointer to pointer
-
-            if isPathToChildEncoder {
-                // only last item is allowed to be an argument buffer pointer, if path is specified as such
-                assert(index >= argumentPath.count - 2 && p.elementIsArgumentBuffer, .invalidEncoderPath(pathIndex))
-            } else {
-                assert(index >= argumentPath.count - 2 && !p.elementIsArgumentBuffer, .invalidEncoderPath(pathIndex))
-            }
-        default: break
-        }
-    }
-
-    return true
-}
-
-private extension Parser {
-    func safeArgumentPath(for path: Path) -> [Argument] {
-        guard let argumentPath = argumentPath(for: path) else {
-            fatalError(.nonExistingPath)
-        }
-        
-        return argumentPath
-    }
-}
-
 private extension Argument {
     var index: Int? {
         switch self {
@@ -534,6 +397,14 @@ private extension Argument {
         case .structMember(let s): return s.argumentIndex
         default: return nil
         }
+    }
+    
+    var pointer: MTLPointerType? {
+        guard case let .pointer(p) = self else {
+            return nil
+        }
+        
+        return p
     }
 }
 
@@ -561,7 +432,7 @@ private extension PathType {
     }
 
     var isArgumentBuffer: Bool {
-        if case .argumentBuffer(let p) = self {
+        if case .argumentBuffer = self {
             return true
         }
         return false
@@ -596,15 +467,6 @@ private extension Int {
     }
 }
 
-private extension PathComponent {
-    var index: UInt? {
-        switch self {
-        case .index(let i): return i
-        default: return nil
-        }
-    }
-}
-
 private extension RandomAccessCollection where Element == Argument, Index == Int {
     var argumentEncoderCount: Index {
         return reduce(0) {
@@ -632,5 +494,11 @@ private extension RandomAccessCollection where Element == Argument, Index == Int
             default: return false
             }
         }
+    }
+    
+    var lastArgumentEncoder: MTLPointerType? {
+        guard let lastArgumentEncoderIndex = lastArgumentEncoderIndex else { return nil }
+        guard case .pointer(let p) = self[lastArgumentEncoderIndex] else { return nil}
+        return p
     }
 }
