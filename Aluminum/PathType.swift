@@ -128,7 +128,7 @@ private struct BytesFromMetalArrayPathRule: PathRule {
             return nil
         }
         
-        // skip 'array'
+        // skip array
         guard case .array = interactor.nextArgument() else {
             return nil
         }
@@ -140,7 +140,9 @@ private struct BytesFromMetalArrayPathRule: PathRule {
 private struct BytesFromAtomicVariablePathRule: PathRule {
     func apply(_ interactor: PathInteractor) -> PathType? {
         guard
-            case .struct = interactor.currentArgument,
+            case let .pointer(p) = interactor.currentArgument,
+            !p.elementIsArgumentBuffer,
+            case .struct = interactor.nextArgument(),
             case let .structMember(s) = interactor.nextArgument(),
             s.name == "__s"
             else
@@ -252,6 +254,10 @@ where ArgumentArray.Element == Argument, ArgumentArray.Index == Int {
         ArgumentBufferPathRule()
     ]
     
+    var isFinished: Bool {
+        return context.isFinished
+    }
+    
     init(argumentPath: ArgumentArray) {
         self.context = PathTypeContext(argumentPath: argumentPath)
     }
@@ -281,8 +287,7 @@ where ArgumentArray.Element == Argument, ArgumentArray.Index == Int {
     }
 }
 
-// find last PathType on given path
-internal func queryPathType<ArgumentArray: RandomAccessCollection>(
+internal func lastPathType<ArgumentArray: RandomAccessCollection>(
     for argumentPath: ArgumentArray
 ) -> PathType
 where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
@@ -293,14 +298,11 @@ where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
     var result = iterator.next()
     
     // get to last item
-    while result != nil {
-        guard let value = iterator.next() else {
-            break
-        }
-        result = value
+    while !iterator.isFinished {
+        result = iterator.next()!
     }
         
-    assert(result != nil, "No rules were applied to argument path.")
+    assert(iterator.isFinished, "Uncompleted iteration due to missing rules.")
     return result!
 }
 
@@ -313,4 +315,24 @@ where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
 
     var iterator = PathTypeIterator(argumentPath: argumentPath)
     return iterator.next()!
+}
+
+internal func pathTypes<ArgumentArray: RandomAccessCollection>(
+    for argumentPath: ArgumentArray
+) -> [PathType]
+    where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
+{
+    guard !argumentPath.isEmpty else {
+        return []
+    }
+    
+    var iterator = PathTypeIterator(argumentPath: argumentPath)
+    var path = [PathType]()
+    
+    // get to last item
+    while !iterator.isFinished {
+        path.append(iterator.next()!)
+     }
+      
+    return path
 }

@@ -35,7 +35,7 @@ func assertionFailure(_ error: AluminumError,
 enum AluminumError: Error {
     case unknownArgument(String) // name does not match any argument
     case nonExistingPath
-    case invalidEncoderPath(Int) // encoder does not support given path (extends outside of it) - first unsupported parameter index
+    case invalidEncoderPath // encoder does not support given path (extends outside of it)
     case noArgumentBuffer // did not set argument buffer for encoder
     case invalidArgumentBuffer // argument buffer is too short
     case pathIndexOutOfBounds(Int) // index is not in bounds of array - index of invalid path

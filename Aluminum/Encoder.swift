@@ -143,7 +143,7 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
         assert(argumentBuffer != nil, .noArgumentBuffer)
 
         let argumentPath = encoding.argumentPath(for: path)
-        let pathType = queryPathType(for: argumentPath)
+        let pathType = lastPathType(for: argumentPath)
         assert(pathType.isBytes, .invalidBytesPath(pathType))
 
         // TODO: make sure that count is within argument length (i.e. prevent overflow)
@@ -159,7 +159,7 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
         let argumentPath = encoding.argumentPath(for: path)
-        let pathType = queryPathType(for: argumentPath)
+        let pathType = lastPathType(for: argumentPath)
         assert(pathType.isBuffer, .invalidBufferPath(pathType))
         
         let index = queryIndex(for: path, argumentPath: argumentPath)
@@ -170,14 +170,14 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (Encoder)->()) {
         let argumentPath = encoding.argumentPath(for: path)
-        let pathType = queryPathType(for: argumentPath)
+        let pathType = lastPathType(for: argumentPath)
         assert(pathType.isEncodableBuffer, .invalidBufferEncoderPath(pathType))
         
         fatalError("Logical error. MTLArgument does not access pointer of struct (encodable buffer)")
     }
     
     func childEncoder(for path: Path) -> ComputePipelineStateEncoder {
-        let childEncoding = encoding.childArgumentEncoding(for: path)
+        let childEncoding = encoding.childEncoding(for: path)
         let index = queryIndex(for: path, argumentPath: childEncoding.argumentPath)
                         
         return ArgumentEncoder(encoding: childEncoding,
@@ -245,7 +245,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         validateArgumentBuffer()
         
         let argumentPath = encoding.localArgumentPath(for: path)
-        let pathType = queryPathType(for: argumentPath)
+        let pathType = lastPathType(for: argumentPath)
         assert(pathType.isBytes, .invalidBytesPath(pathType))
         
         // TODO: make sure that count is within argument length (i.e. prevent overflow)
@@ -262,7 +262,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         validateArgumentBuffer()
 
         let argumentPath = encoding.localArgumentPath(for: path)
-        let pathType = queryPathType(for: argumentPath)
+        let pathType = lastPathType(for: argumentPath)
         
         switch pathType {
         case let .buffer(p): fallthrough
@@ -280,10 +280,10 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         validateArgumentBuffer()
 
         let argumentPath = encoding.localArgumentPath(for: path)
-        let pathType = queryPathType(for: argumentPath)
+        let childEncoding = encoding.childEncoding(for: path)
         
-        guard case let .encodableBuffer(p, s) = pathType else {
-            fatalError(.invalidBufferEncoderPath(pathType))
+        guard case let .encodableBuffer(p, _) = childEncoding.pathType else {
+            fatalError(.invalidBufferEncoderPath(childEncoding.pathType)) // TODO: change to invalid encodable buffer ...
         }
 
         // TODO: use encoder ...
@@ -295,7 +295,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     func childEncoder(for path: Path) -> ComputePipelineStateEncoder {
         validateArgumentBuffer()
 
-        let childEncoding = encoding.childArgumentEncoding(for: path)
+        let childEncoding = encoding.childEncoding(for: path)
         let index = queryIndex(for: path, argumentPath: childEncoding.localArgumentPath)
 
         return ArgumentEncoder(encoding: childEncoding,

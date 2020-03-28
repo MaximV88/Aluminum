@@ -34,56 +34,29 @@ internal class Parser {
         fileprivate init(argumentPath: [Argument],
                          parsePath: ParsePath,
                          parser: Parser,
-                         argumentPathIndex: Int,
-                         pathType: PathType)
+                         argumentPathIndex: Int)
         {
+            assert(validatePathLocality(for: argumentPath[argumentPathIndex...],
+                                        allowedPathTypes: [.buffer, .bytes]))
+
             self.argumentPath = argumentPath
             self.parsePath = parsePath
             self.parser = parser
             self.argumentPathIndex = argumentPathIndex
-            self.pathType = pathType
+            self.pathType = firstPathType(for: argumentPath[argumentPathIndex...])
         }
         
-        func childArgumentEncoding(for localPath: Path) -> Encoding {
+        func childEncoding(for localPath: Path) -> Encoding {
             let parsePath = self.parsePath + localPath.parsePath
             
             guard let argumentPath = parser.mapping[parsePath] else {
                 fatalError(.nonExistingPath)
             }
-            
-            assert(validatePathLocality(for: argumentPath[self.argumentPath.count...],
-                                        localPath: localPath,
-                                        containsEncoder: true))
-            
-            let pathType = firstPathType(for: argumentPath[self.argumentPath.count...])
-            assert(pathType.isArgumentBuffer, .invalidChildEncoderPath(pathType))
-            
+                                    
             return Encoding(argumentPath: argumentPath,
                             parsePath: parsePath,
                             parser: parser,
-                            argumentPathIndex: self.argumentPath.count,
-                            pathType: pathType)
-        }
-        
-        func childBytesEncoder(for localPath: Path) -> Encoding {
-            let parsePath = self.parsePath + localPath.parsePath
-            
-            guard let argumentPath = parser.mapping[parsePath] else {
-                fatalError(.nonExistingPath)
-            }
-
-            assert(validatePathLocality(for: argumentPath[self.argumentPath.count...],
-                                        localPath: localPath,
-                                        containsEncoder: false))
-            
-            let pathType = firstPathType(for: argumentPath[self.argumentPath.count...])
-            assert(pathType.isBytes, .invalidChildEncoderPath(pathType))
-
-            return Encoding(argumentPath: argumentPath,
-                            parsePath: parsePath,
-                            parser: parser,
-                            argumentPathIndex: self.argumentPath.count,
-                            pathType: pathType)
+                            argumentPathIndex: self.argumentPath.count)
         }
         
         func argumentPath(for localPath: Path) -> [Argument] {
@@ -91,12 +64,10 @@ internal class Parser {
                 fatalError(.nonExistingPath)
             }
 
-            assert(validatePathLocality(for: argumentPath[self.argumentPath.count...],
-                                        localPath: localPath,
-                                        containsEncoder: false))
-            
-            return argumentPath
+            assert(validatePathLocality(for: argumentPath[argumentPathIndex...],
+                                        allowedPathTypes: [.buffer, .bytes]))
 
+            return argumentPath
         }
         
         func localArgumentPath(for localPath: Path) -> [Argument] {
@@ -118,15 +89,11 @@ internal class Parser {
         guard let argumentPath = mapping[parsePath] else {
             fatalError(.unknownArgument(argument))
         }
-        
-        let pathType = firstPathType(for: argumentPath)
-        assert(pathType.isArgument || pathType.isArgumentContainingArgumentBuffer)
-        
+                
         return Encoding(argumentPath: argumentPath,
                         parsePath: parsePath,
                         parser: self,
-                        argumentPathIndex: 0,
-                        pathType: pathType)
+                        argumentPathIndex: 0)
     }
 }
 
@@ -150,47 +117,12 @@ private extension Parser {
     static func parseType(for argument: Argument) -> ParseType? {
         switch argument {
         case .argument(let a): return .named(a.name)
-        case .structMember(let s) where s.dataType != .array: return .named(s.name) // redundant '__elem' naming, case handled by array
+        case .structMember(let s) where s.dataType != .array && s.name != "__s":
+            return .named(s.name) // redundant '__s' naming
         case .array: return .indexed
         default: return nil
         }
     }
-}
-
-// TODO: refactor with rules - innacurate for non last pointers (i.e. encoder cant have a non coding pointer after a pointer or vice-a-versa
-private func validatePathLocality<ArgumentArray: RandomAccessCollection>(
-    for argumentPath: ArgumentArray,
-    localPath: Path,
-    containsEncoder: Bool
-) -> Bool
-    where ArgumentArray.Element == Argument
-{
-    assert(!argumentPath.isEmpty)
-    var pathIndex: Int = 0
-    var expectedEncoders = (containsEncoder ? 1 : 0)
-
-    for item in argumentPath {
-        switch item {
-        case .array:
-            pathIndex += 1
-        case .structMember(let s):
-            // ignore array struct as argument since they are not part of path
-            if s.dataType != .array {
-                pathIndex += 1
-            }
-        case .pointer(let p) where p.elementIsArgumentBuffer:
-            if expectedEncoders < 0 {
-                assertionFailure(.invalidEncoderPath(pathIndex))
-            }
-            expectedEncoders -= 1
-        case .argument:
-            fatalError("Logical error in parser.")
-        default: break
-        }
-    }
-
-    assert(expectedEncoders == 0)
-    return true
 }
 
 private extension Path {
@@ -202,6 +134,45 @@ private extension Path {
             case .argument(let a): return .named(a)
             case .index: return .indexed
             }
+        }
+    }
+}
+
+
+internal enum SimplePathType: CaseIterable {
+    case argument
+    case bytes
+    case buffer
+    case argumentBuffer
+    case encodableBuffer
+    case argumentContainingArgumentBuffer
+}
+
+internal func validatePathLocality<ArgumentArray: RandomAccessCollection>(
+    for argumentPath: ArgumentArray,
+    allowedPathTypes: [SimplePathType]
+) -> Bool
+    where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
+{
+    let test = pathTypes(for: argumentPath)[1...]
+    for pathType in test {
+        if !allowedPathTypes.contains(pathType.simplified) {
+            assertionFailure(.invalidEncoderPath)
+        }
+    }
+    
+    return true
+}
+
+private extension PathType {
+    var simplified: SimplePathType {
+        switch self {
+        case .argument: return .argument
+        case .bytes: return .bytes
+        case .buffer: return .buffer
+        case .argumentBuffer: return .argumentBuffer
+        case .encodableBuffer: return .encodableBuffer
+        case .argumentContainingArgumentBuffer: return .argumentContainingArgumentBuffer
         }
     }
 }
