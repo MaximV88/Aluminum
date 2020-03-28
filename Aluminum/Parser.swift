@@ -7,7 +7,7 @@
 //
 
 import Metal
-
+// TODO: convert parsing to PathType mapping
 
 internal class Parser {
     enum ParseType: Hashable {
@@ -37,7 +37,9 @@ internal class Parser {
                          argumentPathIndex: Int)
         {
             assert(validatePathLocality(for: argumentPath[argumentPathIndex...],
-                                        allowedPathTypes: [.buffer, .bytes]))
+                                        allowedFirstPathTypes: [.argument, .argumentBuffer, .argumentContainingArgumentBuffer, .encodableBuffer],
+                                        allowedPathTypes: [.buffer, .bytes],
+                                        allowedLastPathTypes: [.buffer, .bytes, .encodableBuffer])) // bad implementation - allows for non related
 
             self.argumentPath = argumentPath
             self.parsePath = parsePath
@@ -65,7 +67,9 @@ internal class Parser {
             }
 
             assert(validatePathLocality(for: argumentPath[argumentPathIndex...],
-                                        allowedPathTypes: [.buffer, .bytes]))
+                                        allowedFirstPathTypes: [.argument, .argumentBuffer, .argumentContainingArgumentBuffer],
+                                        allowedPathTypes: [.buffer, .bytes],
+                                        allowedLastPathTypes: [.buffer, .bytes, .encodableBuffer]))
 
             return argumentPath
         }
@@ -99,27 +103,46 @@ internal class Parser {
 
 private extension Parser {
     func parseArgument(_ argument: MTLArgument) {
-        parseArgumentPath([.argument(argument)])
+        traverseToLeaf([.argument(argument)])
     }
     
-    func parseArgumentPath(_ argumentPath: [Argument], from path: ParsePath = []) {
-        let type = Parser.parseType(for: argumentPath.last!)
-        let currentPath = type != nil ? path + [type!] : path
-        
-        // children should override parent's mapping, assign before recursion
-        mapping[currentPath] = argumentPath
+    func traverseToLeaf(_ argumentPath: [Argument]) {
+        guard !argumentPath.last!.children().isEmpty else {
+            // reached leaf
+            processFromLeaf(argumentPath)
+            return
+        }
         
         for child in argumentPath.last!.children() {
-            parseArgumentPath(argumentPath + [child], from: currentPath)
+            traverseToLeaf(argumentPath + [child])
         }
     }
     
-    static func parseType(for argument: Argument) -> ParseType? {
-        switch argument {
+    func processFromLeaf(_ argumentPath: [Argument]) {
+        assert(!argumentPath.isEmpty)
+        
+        var iterator = PathTypeIterator(argumentPath: argumentPath)
+        var aggragatePath = [ParseType]()
+        
+        while !iterator.isFinished {
+            let result = iterator.next()!
+            if let type = Parser.parseType(from: result) {
+                aggragatePath.append(type)
+            }
+            
+            // arguments assigned by path type processable chunks
+            mapping[aggragatePath] = Array(argumentPath[...(iterator.argumentIndex - 1)])
+        }
+    }
+    
+    static func parseType(from pathType: PathType) -> ParseType? {
+        // dont name metalArray, atomic
+        switch pathType {
         case .argument(let a): return .named(a.name)
-        case .structMember(let s) where s.dataType != .array && s.name != "__s":
-            return .named(s.name) // redundant '__s' naming
-        case .array: return .indexed
+        case .argumentContainingArgumentBuffer(let a, _): return .named(a.name)
+        case .bytes(let s, _) where s.dataType == .array: return .indexed
+        case .bytes(let s, let t) where t == .regular: return .named(s.name)
+        case .buffer(_, let t): return .named(t.name)
         default: return nil
         }
     }
@@ -148,19 +171,38 @@ internal enum SimplePathType: CaseIterable {
     case argumentContainingArgumentBuffer
 }
 
+// coupling of path definition to encoder from non related code
 internal func validatePathLocality<ArgumentArray: RandomAccessCollection>(
     for argumentPath: ArgumentArray,
-    allowedPathTypes: [SimplePathType]
+    allowedFirstPathTypes: [SimplePathType],
+    allowedPathTypes: [SimplePathType],
+    allowedLastPathTypes: [SimplePathType] = []
 ) -> Bool
     where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
 {
-    let test = pathTypes(for: argumentPath)[1...]
-    for pathType in test {
-        if !allowedPathTypes.contains(pathType.simplified) {
+    let path = pathTypes(for: argumentPath)
+    assert(!path.isEmpty)
+    
+    if path.count >= 1 {
+        if !allowedFirstPathTypes.contains(path[0].simplified) {
             assertionFailure(.invalidEncoderPath)
         }
     }
     
+    if path.count >= 2 {
+        if !allowedLastPathTypes.contains(path[path.count - 1].simplified) {
+            assertionFailure(.invalidEncoderPath)
+        }
+    }
+    
+    if path.count >= 3 {
+        for pathType in path[1...path.count - 2] {
+            if !allowedPathTypes.contains(pathType.simplified) {
+                assertionFailure(.invalidEncoderPath)
+            }
+        }
+    }
+
     return true
 }
 

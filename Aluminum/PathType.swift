@@ -9,10 +9,16 @@
 import Metal
 
 
+internal enum BytesType {
+    case regular
+    case atomic
+    case metalArray
+}
+
 internal enum PathType {
     case argument(MTLArgument)
-    case bytes(MTLStructMember)
-    case buffer(MTLPointerType)
+    case bytes(MTLStructMember, BytesType)
+    case buffer(MTLPointerType, MTLStructMember)
     case argumentBuffer(MTLPointerType)
     case encodableBuffer(MTLPointerType, MTLStructType)
     case argumentContainingArgumentBuffer(MTLArgument, MTLPointerType)
@@ -66,6 +72,7 @@ internal extension PathType {
 
 private protocol PathInteractor {
     var currentArgument: Argument { get }
+    var lastPathType: PathType? { get }
     
     @discardableResult
     func nextArgument() -> Argument?
@@ -75,9 +82,149 @@ private protocol PathRule {
     func apply(_ interactor: PathInteractor) -> PathType?
 }
 
+private struct BytesFromMetalArrayPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard
+            case .struct = interactor.currentArgument,
+            case let .structMember(s) = interactor.nextArgument(),
+            s.dataType == .array
+            else
+        {
+            return nil
+        }
+        
+        // skip array
+        guard case .array = interactor.nextArgument() else {
+            return nil
+        }
+        
+        return .bytes(s, .metalArray)
+    }
+}
+
+private struct BytesFromAtomicVariablePathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard
+            case let .pointer(p) = interactor.currentArgument, // TODO: check if applicable because in root
+            !p.elementIsArgumentBuffer,
+            case .struct = interactor.nextArgument(),
+            case let .structMember(s) = interactor.nextArgument(),
+            s.name == "__s"
+            else
+        {
+            return nil
+        }
+        
+        return .bytes(s, .atomic)
+    }
+}
+
+private struct ArgumentPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard case let .argument(a) = interactor.currentArgument else {
+            return nil
+        }
+        
+        return .argument(a)
+    }
+}
+
+private struct BytesPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard
+            case .struct = interactor.currentArgument,
+            case let .structMember(s) = interactor.nextArgument(),
+            s.dataType != .pointer
+            else
+        {
+            return nil
+        }
+        
+        return .bytes(s, .regular)
+    }
+}
+
+private struct EncodableBytesPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        
+        // encodable bytes are in encodableBuffer
+        guard
+            case .encodableBuffer = interactor.lastPathType,
+            case let .structMember(s) = interactor.currentArgument,
+            s.dataType != .pointer
+            else
+        {
+            return nil
+        }
+        
+        return .bytes(s, .regular)
+    }
+}
+
+private struct EncodableBufferPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard
+            case let .pointer(p) = interactor.currentArgument,
+            !p.elementIsArgumentBuffer,
+            case let .struct(s) = interactor.nextArgument()
+            else
+        {
+            return nil
+        }
+        
+        return .encodableBuffer(p, s)
+    }
+}
+
+private struct BufferPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard
+            case let .structMember(s) = interactor.currentArgument,
+            case let .pointer(p) = interactor.nextArgument(),
+            !p.elementIsArgumentBuffer
+            else
+        {
+            return nil
+        }
+        
+        return .buffer(p, s)
+    }
+}
+
+private struct ArgumentBufferPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard
+            case let .pointer(p) = interactor.currentArgument,
+            p.elementIsArgumentBuffer
+            else
+        {
+            return nil
+        }
+        
+        return .argumentBuffer(p)
+    }
+}
+
+private struct ArgumentContainingArgumentBufferPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard
+            case let .argument(a) = interactor.currentArgument,
+            case let .pointer(p) = interactor.nextArgument(),
+            p.elementIsArgumentBuffer
+            else
+        {
+            return nil
+        }
+        
+        return .argumentContainingArgumentBuffer(a, p)
+    }
+
+}
+
 private class PathTypeContext<ArgumentArray: RandomAccessCollection>
 where ArgumentArray.Element == Argument, ArgumentArray.Index == Int {
-    private var index = 0
+    fileprivate var index = 0
+    fileprivate var lastPathType: PathType?
     private var temporaryIndex = 0
     private let argumentPath: ArgumentArray
         
@@ -117,127 +264,7 @@ extension PathTypeContext: PathInteractor {
     }
 }
 
-private struct BytesFromMetalArrayPathRule: PathRule {
-    func apply(_ interactor: PathInteractor) -> PathType? {
-        guard
-            case .struct = interactor.currentArgument,
-            case let .structMember(s) = interactor.nextArgument(),
-            s.dataType == .array
-            else
-        {
-            return nil
-        }
-        
-        // skip array
-        guard case .array = interactor.nextArgument() else {
-            return nil
-        }
-        
-        return .bytes(s)
-    }
-}
-
-private struct BytesFromAtomicVariablePathRule: PathRule {
-    func apply(_ interactor: PathInteractor) -> PathType? {
-        guard
-            case let .pointer(p) = interactor.currentArgument,
-            !p.elementIsArgumentBuffer,
-            case .struct = interactor.nextArgument(),
-            case let .structMember(s) = interactor.nextArgument(),
-            s.name == "__s"
-            else
-        {
-            return nil
-        }
-        
-        return .bytes(s)
-    }
-}
-
-private struct ArgumentPathRule: PathRule {
-    func apply(_ interactor: PathInteractor) -> PathType? {
-        guard case let .argument(a) = interactor.currentArgument else {
-            return nil
-        }
-        
-        return .argument(a)
-    }
-}
-
-private struct BytesPathRule: PathRule {
-    func apply(_ interactor: PathInteractor) -> PathType? {
-        guard
-            case let .structMember(s) = interactor.currentArgument,
-            s.dataType != .pointer
-            else
-        {
-            return nil
-        }
-        
-        return .bytes(s)
-    }
-}
-
-private struct EncodableBufferPathRule: PathRule {
-    func apply(_ interactor: PathInteractor) -> PathType? {
-        guard
-            case let .pointer(p) = interactor.currentArgument,
-            !p.elementIsArgumentBuffer,
-            case let .struct(s) = interactor.nextArgument()
-            else
-        {
-            return nil
-        }
-        
-        return .encodableBuffer(p, s)
-    }
-}
-
-private struct BufferPathRule: PathRule {
-    func apply(_ interactor: PathInteractor) -> PathType? {
-        guard
-            case let .pointer(p) = interactor.currentArgument,
-            !p.elementIsArgumentBuffer
-            else
-        {
-            return nil
-        }
-        
-        return .buffer(p)
-    }
-}
-
-private struct ArgumentBufferPathRule: PathRule {
-    func apply(_ interactor: PathInteractor) -> PathType? {
-        guard
-            case let .pointer(p) = interactor.currentArgument,
-            p.elementIsArgumentBuffer
-            else
-        {
-            return nil
-        }
-        
-        return .argumentBuffer(p)
-    }
-}
-
-private struct ArgumentContainingArgumentBufferPathRule: PathRule {
-    func apply(_ interactor: PathInteractor) -> PathType? {
-        guard
-            case let .argument(a) = interactor.currentArgument,
-            case let .pointer(p) = interactor.nextArgument(),
-            p.elementIsArgumentBuffer
-            else
-        {
-            return nil
-        }
-        
-        return .argumentContainingArgumentBuffer(a, p)
-    }
-
-}
-
-private struct PathTypeIterator<ArgumentArray: RandomAccessCollection>: IteratorProtocol
+internal struct PathTypeIterator<ArgumentArray: RandomAccessCollection>: IteratorProtocol
 where ArgumentArray.Element == Argument, ArgumentArray.Index == Int {
     typealias Element = PathType
     
@@ -249,6 +276,7 @@ where ArgumentArray.Element == Argument, ArgumentArray.Index == Int {
         ArgumentContainingArgumentBufferPathRule(),
         ArgumentPathRule(),
         BytesPathRule(),
+        EncodableBytesPathRule(),
         EncodableBufferPathRule(),
         BufferPathRule(),
         ArgumentBufferPathRule()
@@ -256,6 +284,10 @@ where ArgumentArray.Element == Argument, ArgumentArray.Index == Int {
     
     var isFinished: Bool {
         return context.isFinished
+    }
+    
+    var argumentIndex: Int {
+        return context.index
     }
     
     init(argumentPath: ArgumentArray) {
@@ -269,6 +301,7 @@ where ArgumentArray.Element == Argument, ArgumentArray.Index == Int {
 
             for rule in pathRules {
                 if let pathType = rule.apply(context) {
+                    context.lastPathType = pathType
                     current = pathType
                     break
                 } else {
@@ -276,6 +309,7 @@ where ArgumentArray.Element == Argument, ArgumentArray.Index == Int {
                 }
             }
             
+            print(current == nil)
             context.advance()
             
             if current != nil {
@@ -302,7 +336,6 @@ where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
         result = iterator.next()!
     }
         
-    assert(iterator.isFinished, "Uncompleted iteration due to missing rules.")
     return result!
 }
 
@@ -331,7 +364,9 @@ internal func pathTypes<ArgumentArray: RandomAccessCollection>(
     
     // get to last item
     while !iterator.isFinished {
-        path.append(iterator.next()!)
+        if let value = iterator.next() {
+            path.append(value)
+        }
      }
       
     return path

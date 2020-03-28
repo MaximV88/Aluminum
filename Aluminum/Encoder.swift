@@ -265,7 +265,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         let pathType = lastPathType(for: argumentPath)
         
         switch pathType {
-        case let .buffer(p): fallthrough
+        case let .buffer(p, _): fallthrough
         case let .encodableBuffer(p, _):
 
             let pointerIndex = queryIndex(for: path, argumentPath: argumentPath)
