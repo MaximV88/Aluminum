@@ -18,11 +18,6 @@ internal class Parser {
     fileprivate typealias ParsePath = [ParseType]
     
     class Encoding {
-        enum EncodingType {
-            case argument(MTLArgument)
-            case argumentBuffer(MTLPointerType)
-            case argumentContainingArgumentBuffer(MTLArgument, MTLPointerType)
-        }
         
         let argumentPath: [Argument] // arguments from encoding root only
         
@@ -30,8 +25,7 @@ internal class Parser {
             Array(argumentPath[argumentPathIndex...])
         }
         
-        let encodingType: EncodingType
-        
+        let pathType: PathType
                 
         private let parsePath: [ParseType]
         private let parser: Parser
@@ -40,16 +34,17 @@ internal class Parser {
         fileprivate init(argumentPath: [Argument],
                          parsePath: ParsePath,
                          parser: Parser,
-                         argumentPathIndex: Int)
+                         argumentPathIndex: Int,
+                         pathType: PathType)
         {
             self.argumentPath = argumentPath
             self.parsePath = parsePath
             self.parser = parser
             self.argumentPathIndex = argumentPathIndex
-            self.encodingType = Parser.Encoding.encodingType(for: argumentPath[argumentPathIndex...])
+            self.pathType = pathType
         }
         
-        func childEncoding(for localPath: Path) -> Encoding {
+        func childArgumentEncoding(for localPath: Path) -> Encoding {
             let parsePath = self.parsePath + localPath.parsePath
             
             guard let argumentPath = parser.mapping[parsePath] else {
@@ -60,13 +55,35 @@ internal class Parser {
                                         localPath: localPath,
                                         containsEncoder: true))
             
-            let pathType = queryPathType(for: argumentPath[self.argumentPath.count...])
+            let pathType = firstPathType(for: argumentPath[self.argumentPath.count...])
             assert(pathType.isArgumentBuffer, .invalidChildEncoderPath(pathType))
+            
+            return Encoding(argumentPath: argumentPath,
+                            parsePath: parsePath,
+                            parser: parser,
+                            argumentPathIndex: self.argumentPath.count,
+                            pathType: pathType)
+        }
+        
+        func childBytesEncoder(for localPath: Path) -> Encoding {
+            let parsePath = self.parsePath + localPath.parsePath
+            
+            guard let argumentPath = parser.mapping[parsePath] else {
+                fatalError(.nonExistingPath)
+            }
+
+            assert(validatePathLocality(for: argumentPath[self.argumentPath.count...],
+                                        localPath: localPath,
+                                        containsEncoder: false))
+            
+            let pathType = firstPathType(for: argumentPath[self.argumentPath.count...])
+            assert(pathType.isBytes, .invalidChildEncoderPath(pathType))
 
             return Encoding(argumentPath: argumentPath,
                             parsePath: parsePath,
                             parser: parser,
-                            argumentPathIndex: self.argumentPath.count)
+                            argumentPathIndex: self.argumentPath.count,
+                            pathType: pathType)
         }
         
         func argumentPath(for localPath: Path) -> [Argument] {
@@ -102,56 +119,14 @@ internal class Parser {
             fatalError(.unknownArgument(argument))
         }
         
+        let pathType = firstPathType(for: argumentPath)
+        assert(pathType.isArgument || pathType.isArgumentContainingArgumentBuffer)
+        
         return Encoding(argumentPath: argumentPath,
                         parsePath: parsePath,
                         parser: self,
-                        argumentPathIndex: 0)
-    }
-}
-
-// TODO: refactor with rules
-private extension Parser.Encoding {
-    static func encodingType<ArgumentArray: RandomAccessCollection>(for
-        argumentPath: ArgumentArray
-    ) -> EncodingType
-        where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
-    {
-        assert(!argumentPath.isEmpty)
-        
-        var type: EncodingType?
-        switch argumentPath.first! {
-        case .argument(let a): type = .argument(a)
-        case .pointer(let p) where p.elementIsArgumentBuffer: type = .argumentBuffer(p)
-        default: type = nil
-        }
-        
-        if case let .argument(argument) = type,
-            argumentPath.count > 1,
-            case let .pointer(pointer) = argumentPath[1],
-            pointer.elementIsArgumentBuffer
-        {
-            return .argumentContainingArgumentBuffer(argument, pointer)
-        }
-        
-        if let type = type {
-            return type
-        }
-
-        guard let argumentEncoder = argumentPath.first(where: {
-            switch $0 {
-            case .pointer(let p) where p.elementIsArgumentBuffer: return true
-            default: return false
-            }
-        }) else {
-            // TODO: fix
-            fatalError("fix readability with rules")
-        }
-        
-        guard case let .pointer(p) = argumentEncoder else {
-            fatalError("Illogical")
-        }
-        
-        return .argumentBuffer(p)
+                        argumentPathIndex: 0,
+                        pathType: pathType)
     }
 }
 

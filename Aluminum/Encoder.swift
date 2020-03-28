@@ -56,7 +56,7 @@ class RootEncoder {
          function: MTLFunction,
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
-        switch encoding.encodingType {
+        switch encoding.pathType {
         case .argument:
             internalEncoder = RootArgumentEncoder(encoding: encoding,
                                                   function: function,
@@ -68,7 +68,7 @@ class RootEncoder {
                                               argumentEncoder: function.makeArgumentEncoder(bufferIndex: index),
                                               parentArgumentEncoder: nil,
                                               computeCommandEncoder: computeCommandEncoder)
-        case .argumentBuffer: fatalError("RootEncoder must start with an argument.")
+        default: fatalError("RootEncoder must start with an argument.")
         }
     }
 }
@@ -100,7 +100,7 @@ extension RootEncoder: ComputePipelineStateEncoder {
 }
 
 
-class RootArgumentEncoder {
+private class RootArgumentEncoder {
     private let encoding: Parser.Encoding
     private let argument: MTLArgument
     private let function: MTLFunction
@@ -177,7 +177,7 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func childEncoder(for path: Path) -> ComputePipelineStateEncoder {
-        let childEncoding = encoding.childEncoding(for: path)
+        let childEncoding = encoding.childArgumentEncoding(for: path)
         let index = queryIndex(for: path, argumentPath: childEncoding.argumentPath)
                         
         return ArgumentEncoder(encoding: childEncoding,
@@ -188,7 +188,7 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     }
 }
 
-class ArgumentEncoder {
+private class ArgumentEncoder {
     private let encoding: Parser.Encoding
     private let encoderIndex: Int
     
@@ -206,12 +206,12 @@ class ArgumentEncoder {
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
         let pointer: MTLPointerType
-        switch encoding.encodingType {
+        switch encoding.pathType {
         case .argumentBuffer(let p): pointer = p
         case .argumentContainingArgumentBuffer(_, let p): pointer = p
         default: fatalError("Invalid instantiation of encoder per encoding type.")
         }
-
+        
         self.encoding = encoding
         self.encoderIndex = encoderIndex
         self.pointer = pointer
@@ -295,7 +295,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     func childEncoder(for path: Path) -> ComputePipelineStateEncoder {
         validateArgumentBuffer()
 
-        let childEncoding = encoding.childEncoding(for: path)
+        let childEncoding = encoding.childArgumentEncoding(for: path)
         let index = queryIndex(for: path, argumentPath: childEncoding.localArgumentPath)
 
         return ArgumentEncoder(encoding: childEncoding,
@@ -309,6 +309,14 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
 private extension ArgumentEncoder {
     func validateArgumentBuffer() {
         assert(hasArgumentBuffer, .noArgumentBuffer)
+    }
+}
+
+private class BytesEncoder {
+    private let encoding: Parser.Encoding
+
+    init(encoding: Parser.Encoding) {
+        self.encoding = encoding
     }
 }
 

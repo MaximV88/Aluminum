@@ -8,13 +8,6 @@
 
 import Metal
 
-internal enum SimplePathType {
-    case argument
-    case bytes
-    case buffer
-    case argumentBuffer
-    case encodableBuffer
-}
 
 internal enum PathType {
     case argument(MTLArgument)
@@ -22,6 +15,7 @@ internal enum PathType {
     case buffer(MTLPointerType)
     case argumentBuffer(MTLPointerType)
     case encodableBuffer(MTLPointerType, MTLStructType)
+    case argumentContainingArgumentBuffer(MTLArgument, MTLPointerType)
 }
 
 // required for comparison without associated value
@@ -56,6 +50,13 @@ internal extension PathType {
     
     var isEncodableBuffer: Bool {
         if case .encodableBuffer = self {
+            return true
+        }
+        return false
+    }
+    
+    var isArgumentContainingArgumentBuffer: Bool {
+        if case .argumentContainingArgumentBuffer = self {
             return true
         }
         return false
@@ -218,21 +219,38 @@ private struct ArgumentBufferPathRule: PathRule {
     }
 }
 
-private let pathRules: [PathRule] = [
-    BytesFromMetalArrayPathRule(),
-    BytesFromAtomicVariablePathRule(),
-    ArgumentPathRule(),
-    BytesPathRule(),
-    EncodableBufferPathRule(),
-    BufferPathRule(),
-    ArgumentBufferPathRule()
-]
+private struct ArgumentContainingArgumentBufferPathRule: PathRule {
+    func apply(_ interactor: PathInteractor) -> PathType? {
+        guard
+            case let .argument(a) = interactor.currentArgument,
+            case let .pointer(p) = interactor.nextArgument(),
+            p.elementIsArgumentBuffer
+            else
+        {
+            return nil
+        }
+        
+        return .argumentContainingArgumentBuffer(a, p)
+    }
+
+}
 
 private struct PathTypeIterator<ArgumentArray: RandomAccessCollection>: IteratorProtocol
 where ArgumentArray.Element == Argument, ArgumentArray.Index == Int {
     typealias Element = PathType
     
     private let context: PathTypeContext<ArgumentArray>
+    
+    private let pathRules: [PathRule] = [
+        BytesFromMetalArrayPathRule(),
+        BytesFromAtomicVariablePathRule(),
+        ArgumentContainingArgumentBufferPathRule(),
+        ArgumentPathRule(),
+        BytesPathRule(),
+        EncodableBufferPathRule(),
+        BufferPathRule(),
+        ArgumentBufferPathRule()
+    ]
     
     init(argumentPath: ArgumentArray) {
         self.context = PathTypeContext(argumentPath: argumentPath)
@@ -263,28 +281,6 @@ where ArgumentArray.Element == Argument, ArgumentArray.Index == Int {
     }
 }
 
-internal func findPathType<ArgumentArray: RandomAccessCollection>(
-    _ pathType: SimplePathType,
-    for argumentPath: ArgumentArray
-) -> PathType?
-where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
-{
-    assert(!argumentPath.isEmpty)
-
-    var iterator = PathTypeIterator(argumentPath: argumentPath)
-    var result = iterator.next()
-    
-    // comapre with each item
-    while result != nil {
-        if result! == pathType {
-            return result
-        }
-        result = iterator.next()
-    }
-
-    return nil
-}
-
 // find last PathType on given path
 internal func queryPathType<ArgumentArray: RandomAccessCollection>(
     for argumentPath: ArgumentArray
@@ -308,17 +304,13 @@ where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
     return result!
 }
 
-private func == (lhs: SimplePathType, rhs: PathType) -> Bool {
-    return rhs == lhs
-}
+internal func firstPathType<ArgumentArray: RandomAccessCollection>(
+    for argumentPath: ArgumentArray
+) -> PathType
+where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
+{
+    assert(!argumentPath.isEmpty)
 
-private func == (lhs: PathType, rhs: SimplePathType) -> Bool {
-    switch (lhs, rhs) {
-    case (.argument, .argument): return true
-    case (.bytes, .bytes): return true
-    case (.buffer, .buffer): return true
-    case (.argumentBuffer, .argumentBuffer): return true
-    case (.encodableBuffer, .encodableBuffer): return true
-    default: return false
-    }
+    var iterator = PathTypeIterator(argumentPath: argumentPath)
+    return iterator.next()!
 }
