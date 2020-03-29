@@ -114,7 +114,7 @@ private class RootArgumentEncoder {
          function: MTLFunction,
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
-        guard case let .argument(argument) = encoding.argumentPath.first else {
+        guard case let .argument(argument) = encoding.pathType else {
             fatalError("RootEncoder expects an argument path that starts with an argument.")
         }
         
@@ -171,7 +171,7 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (Encoder)->()) {
         let argumentPath = encoding.argumentPath(for: path)
         let pathType = lastPathType(for: argumentPath)
-        assert(pathType.isEncodableBuffer, .invalidBufferEncoderPath(pathType))
+        assert(pathType.isEncodableBuffer, .invalidEncodableBufferPath(pathType))
         
         fatalError("Logical error. MTLArgument does not access pointer of struct (encodable buffer)")
     }
@@ -283,7 +283,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         let childEncoding = encoding.childEncoding(for: path)
         
         guard case let .encodableBuffer(p, _, _) = childEncoding.pathType else {
-            fatalError(.invalidBufferEncoderPath(childEncoding.pathType)) // TODO: change to invalid encodable buffer ...
+            fatalError(.invalidEncodableBufferPath(childEncoding.pathType))
         }
 
         // TODO: use encoder ...
@@ -316,6 +316,8 @@ private class BytesEncoder {
     private let encoding: Parser.Encoding
 
     init(encoding: Parser.Encoding) {
+        assert(encoding.pathType.isEncodableBuffer)
+        
         self.encoding = encoding
     }
 }

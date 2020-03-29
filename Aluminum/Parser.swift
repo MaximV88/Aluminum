@@ -16,8 +16,18 @@ internal class Parser {
     }
     
     fileprivate typealias ParsePath = [ParseType]
-    
+        
     class Encoding {
+        
+        // remove and replace with direct expect child type from Encoder
+        /// Valid path types that an encoder can have
+        private static let validPathTypes: [SimplePathType] = [
+            .argument,
+            .argumentBuffer,
+            .argumentContainingArgumentBuffer,
+            .encodableBuffer
+        ]
+
         
         let argumentPath: [Argument] // arguments from encoding root only
         
@@ -36,16 +46,13 @@ internal class Parser {
                          parser: Parser,
                          argumentPathIndex: Int)
         {
-//            assert(validatePathLocality(for: argumentPath[argumentPathIndex...],
-//                                        allowedFirstPathTypes: [.argument, .argumentBuffer, .argumentContainingArgumentBuffer, .encodableBuffer],
-//                                        allowedPathTypes: [.buffer, .bytes],
-//                                        allowedLastPathTypes: [.buffer, .bytes, .encodableBuffer])) // bad implementation - allows for non related
-
             self.argumentPath = argumentPath
             self.parsePath = parsePath
             self.parser = parser
             self.argumentPathIndex = argumentPathIndex
-            self.pathType = lastPathType(for: argumentPath[argumentPathIndex...])
+            
+            self.pathType = uniquePathType(from: argumentPath[argumentPathIndex...],
+                                           for: Encoding.validPathTypes)
         }
         
         func childEncoding(for localPath: Path) -> Encoding {
@@ -66,10 +73,11 @@ internal class Parser {
                 fatalError(.nonExistingPath)
             }
 
-            assert(validatePathLocality(for: argumentPath[argumentPathIndex...],
-                                        allowedFirstPathTypes: [.argument, .argumentBuffer, .argumentContainingArgumentBuffer],
-                                        allowedPathTypes: [.buffer, .bytes],
-                                        allowedLastPathTypes: [.buffer, .bytes, .encodableBuffer]))
+            // need validate by checking first encodable, then validating there are only 3 types,
+            // where in case of encodableBuffer it needs to be last
+            // still coupled if definition is inside this class
+//            assert(containsOnlyPathTypes(from: argumentPath[argumentPathIndex...],
+//                                         for: [.buffer, .bytes, .encodableBuffer]))
 
             return argumentPath
         }
@@ -163,7 +171,7 @@ private extension Path {
 }
 
 
-internal enum SimplePathType: CaseIterable {
+private enum SimplePathType: CaseIterable {
     case argument
     case bytes
     case buffer
@@ -173,37 +181,45 @@ internal enum SimplePathType: CaseIterable {
 }
 
 // coupling of path definition to encoder from non related code
-internal func validatePathLocality<ArgumentArray: RandomAccessCollection>(
-    for argumentPath: ArgumentArray,
-    allowedFirstPathTypes: [SimplePathType],
-    allowedPathTypes: [SimplePathType],
-    allowedLastPathTypes: [SimplePathType] = []
+private func uniquePathType<ArgumentArray: RandomAccessCollection>(
+    from argumentPath: ArgumentArray,
+    for types: [SimplePathType]
+) -> PathType
+    where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
+{
+    let path = pathTypes(from: argumentPath)
+    assert(!path.isEmpty, .invalidEncoderPath) // TODO: check input on empty path
+    
+    var candidate: PathType!
+    
+    for type in types {
+        let filtered = path.filter({ $0.simplified == type })
+        assert(filtered.count <= 1, .invalidEncoderPath)
+        
+        if !filtered.isEmpty {
+            assert(candidate == nil, .invalidEncoderPath)
+            candidate = filtered.first!
+        }
+    }
+    
+    return candidate
+}
+
+private func containsOnlyPathTypes<ArgumentArray: RandomAccessCollection>(
+    from argumentPath: ArgumentArray,
+    for types: [SimplePathType]
 ) -> Bool
     where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
 {
-    let path = pathTypes(for: argumentPath)
+    let path = pathTypes(from: argumentPath)
     assert(!path.isEmpty)
-    
-    if path.count >= 1 {
-        if !allowedFirstPathTypes.contains(path[0].simplified) {
-            assertionFailure(.invalidEncoderPath)
-        }
-    }
-    
-    if path.count >= 2 {
-        if !allowedLastPathTypes.contains(path[path.count - 1].simplified) {
-            assertionFailure(.invalidEncoderPath)
-        }
-    }
-    
-    if path.count >= 3 {
-        for pathType in path[1...path.count - 2] {
-            if !allowedPathTypes.contains(pathType.simplified) {
-                assertionFailure(.invalidEncoderPath)
-            }
-        }
-    }
 
+    for item in path {
+        if !types.contains(item.simplified) {
+            return false
+        }
+    }
+    
     return true
 }
 

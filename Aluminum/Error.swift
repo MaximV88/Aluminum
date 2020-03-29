@@ -41,6 +41,6 @@ enum AluminumError: Error {
     case pathIndexOutOfBounds(Int) // index is not in bounds of array - index of invalid path
     case invalidBufferPath(PathType) // path does not point to a buffer (actual value)
     case invalidBytesPath(PathType) // path does not point to bytes (actual value)
-    case invalidBufferEncoderPath(PathType) // path used is not compatible for configuring a buffer (i.e. pointer to indexed struct)
+    case invalidEncodableBufferPath(PathType) // path used is not compatible for configuring a buffer (i.e. pointer to indexed struct)
     case invalidChildEncoderPath(PathType) // path used is not compatible for using a child encoder
 }
