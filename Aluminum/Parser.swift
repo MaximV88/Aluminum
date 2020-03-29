@@ -36,16 +36,16 @@ internal class Parser {
                          parser: Parser,
                          argumentPathIndex: Int)
         {
-            assert(validatePathLocality(for: argumentPath[argumentPathIndex...],
-                                        allowedFirstPathTypes: [.argument, .argumentBuffer, .argumentContainingArgumentBuffer, .encodableBuffer],
-                                        allowedPathTypes: [.buffer, .bytes],
-                                        allowedLastPathTypes: [.buffer, .bytes, .encodableBuffer])) // bad implementation - allows for non related
+//            assert(validatePathLocality(for: argumentPath[argumentPathIndex...],
+//                                        allowedFirstPathTypes: [.argument, .argumentBuffer, .argumentContainingArgumentBuffer, .encodableBuffer],
+//                                        allowedPathTypes: [.buffer, .bytes],
+//                                        allowedLastPathTypes: [.buffer, .bytes, .encodableBuffer])) // bad implementation - allows for non related
 
             self.argumentPath = argumentPath
             self.parsePath = parsePath
             self.parser = parser
             self.argumentPathIndex = argumentPathIndex
-            self.pathType = firstPathType(for: argumentPath[argumentPathIndex...])
+            self.pathType = lastPathType(for: argumentPath[argumentPathIndex...])
         }
         
         func childEncoding(for localPath: Path) -> Encoding {
@@ -136,13 +136,14 @@ private extension Parser {
     }
     
     static func parseType(from pathType: PathType) -> ParseType? {
-        // dont name metalArray, atomic
         switch pathType {
         case .argument(let a): return .named(a.name)
         case .argumentContainingArgumentBuffer(let a, _): return .named(a.name)
-        case .bytes(let s, _) where s.dataType == .array: return .indexed
-        case .bytes(let s, let t) where t == .regular: return .named(s.name)
-        case .buffer(_, let t): return .named(t.name)
+        case .bytes(_, let s) where s.dataType == .array: return .indexed // contains metalArray
+        case .bytes(let t, let s) where t == .regular: return .named(s.name) // dont name metalArray, atomic
+        case .buffer(_, let s): return .named(s.name)
+        case .argumentBuffer(_, let s): return .named(s.name)
+        case .encodableBuffer(_, _, let s): return .named(s.name)
         default: return nil
         }
     }

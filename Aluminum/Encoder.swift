@@ -207,8 +207,8 @@ private class ArgumentEncoder {
     {
         let pointer: MTLPointerType
         switch encoding.pathType {
-        case .argumentBuffer(let p): pointer = p
-        case .argumentContainingArgumentBuffer(_, let p): pointer = p
+        case let .argumentBuffer(p, _): pointer = p
+        case let .argumentContainingArgumentBuffer(_, p): pointer = p
         default: fatalError("Invalid instantiation of encoder per encoding type.")
         }
         
@@ -266,7 +266,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         
         switch pathType {
         case let .buffer(p, _): fallthrough
-        case let .encodableBuffer(p, _):
+        case let .encodableBuffer(p, _, _):
 
             let pointerIndex = queryIndex(for: path, argumentPath: argumentPath)
             argumentEncoder.setBuffer(buffer, offset: offset, index: pointerIndex)
@@ -282,7 +282,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         let argumentPath = encoding.localArgumentPath(for: path)
         let childEncoding = encoding.childEncoding(for: path)
         
-        guard case let .encodableBuffer(p, _) = childEncoding.pathType else {
+        guard case let .encodableBuffer(p, _, _) = childEncoding.pathType else {
             fatalError(.invalidBufferEncoderPath(childEncoding.pathType)) // TODO: change to invalid encodable buffer ...
         }
 
