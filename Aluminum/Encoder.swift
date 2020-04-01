@@ -335,6 +335,12 @@ private func queryIndex<DataTypeArray: RandomAccessCollection>(
         case .argument(let a):
             index += a.index
             pathIndex += 1
+        case .buffer(_, let s): fallthrough
+        case .argumentBuffer(_, let s): fallthrough
+        case .encodableBuffer(_, _, let s): fallthrough
+        case .bytes(_, let s) where s.dataType != .array:
+            index += s.argumentIndex
+            pathIndex += 1
         case .bytes(let t, let s) where s.dataType == .array:
             guard case let .array(a) = t else { fatalError() }
             
@@ -342,9 +348,6 @@ private func queryIndex<DataTypeArray: RandomAccessCollection>(
             assert(inputIndex >= 0 && inputIndex < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
             
             index += a.argumentIndexStride * Int(inputIndex) + s.argumentIndex
-            pathIndex += 1
-        case .bytes(_, let s) where s.dataType != .array:
-            index += s.argumentIndex
             pathIndex += 1
         default: break
         }
@@ -368,6 +371,9 @@ private func queryOffset<DataTypeArray: RandomAccessCollection>(
     
     for dataType in dataTypePath {
         switch dataType {
+        case .buffer(_, let s): fallthrough
+        case .argumentBuffer(_, let s): fallthrough
+        case .encodableBuffer(_, _, let s): fallthrough
         case .bytes(_, let s) where s.dataType != .array:
             offset += s.offset
         case .bytes(let t, let s) where s.dataType == .array:

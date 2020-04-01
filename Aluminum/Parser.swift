@@ -55,7 +55,7 @@ internal class Parser {
                 return Encoding(dataTypePath: dataTypePath,
                                 parsePath: parsePath,
                                 parser: parser,
-                                startIndex: index)
+                                startIndex: index + 1)
             }
                         
             fatalError(.invalidEncoderPath) // TODO: path is filled with bytes 
@@ -73,7 +73,7 @@ internal class Parser {
         func localDataTypePath(to childEncoder: Encoding) -> [DataType] {
             // validate encoders share same path
             assert(childEncoder.dataTypePath[0...(dataTypePath.count - 1)] == dataTypePath[...])
-            return Array(childEncoder.dataTypePath[startIndex...(childEncoder.startIndex + 1)])
+            return Array(childEncoder.dataTypePath[startIndex...childEncoder.startIndex])
         }
     }
     
