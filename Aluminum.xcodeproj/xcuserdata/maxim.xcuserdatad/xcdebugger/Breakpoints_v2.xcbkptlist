@@ -15,5 +15,53 @@
             stopOnStyle = "0">
          </BreakpointContent>
       </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "D519EFB2-580A-4CF9-A978-1C005ED85BE8"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Aluminum/Parser.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "63"
+            endingLineNumber = "63"
+            landmarkName = "childEncoding(for:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "D519EFB2-580A-4CF9-A978-1C005ED85BE8 - a0e3f8e546b0818a"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Aluminum.Parser.Encoding.childEncoding(of: Aluminum.SimplePathType, for: Swift.Array&lt;Aluminum.PathComponent&gt;) -&gt; Aluminum.Parser.Encoding"
+                  moduleName = "Aluminum"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/maxim/Documents/Projects/Aluminum/Aluminum/Parser.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "82"
+                  endingLineNumber = "82"
+                  offsetFromSymbolStart = "1921">
+               </Location>
+               <Location
+                  uuid = "D519EFB2-580A-4CF9-A978-1C005ED85BE8 - a0e3f8e546b0818a"
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Aluminum.Parser.Encoding.childEncoding(of: Aluminum.SimplePathType, for: Swift.Array&lt;Aluminum.PathComponent&gt;) -&gt; Aluminum.Parser.Encoding"
+                  moduleName = "Aluminum"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/maxim/Documents/Projects/Aluminum/Aluminum/Parser.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "82"
+                  endingLineNumber = "82"
+                  offsetFromSymbolStart = "2461">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
    </Breakpoints>
 </Bucket>

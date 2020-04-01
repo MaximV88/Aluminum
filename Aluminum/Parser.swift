@@ -7,7 +7,7 @@
 //
 
 import Metal
-// TODO: convert parsing to PathType mapping
+
 
 internal class Parser {
     enum ParseType: Hashable {
@@ -19,40 +19,29 @@ internal class Parser {
         
     class Encoding {
         
-        // remove and replace with direct expect child type from Encoder
-        /// Valid path types that an encoder can have
-        private static let validPathTypes: [SimplePathType] = [
-            .argument,
-            .argumentBuffer,
-            .argumentContainingArgumentBuffer,
-            .encodableBuffer
-        ]
-
-        
-        let argumentPath: [Argument] // arguments from encoding root only
-        
-        var localArgumentPath: [Argument] {
-            Array(argumentPath[argumentPathIndex...])
-        }
-        
+        let argumentPath: [Argument]
         let pathType: PathType
                 
         private let parsePath: [ParseType]
         private let parser: Parser
-        private let argumentPathIndex: Int
+        private let pathTypeStartIndex: Int
+        private let pathTypeEndingIndex: Int
         
         fileprivate init(argumentPath: [Argument],
                          parsePath: ParsePath,
+                         pathType: PathType,
                          parser: Parser,
-                         argumentPathIndex: Int)
+                         pathTypeStartIndex: Int,
+                         pathTypeEndingIndex: Int)
         {
+            assert(validateEncodablePath(from: argumentPath[pathTypeStartIndex...]), .invalidEncoderPath)
+
             self.argumentPath = argumentPath
             self.parsePath = parsePath
+            self.pathType = pathType
             self.parser = parser
-            self.argumentPathIndex = argumentPathIndex
-            
-            self.pathType = uniquePathType(from: argumentPath[argumentPathIndex...],
-                                           for: Encoding.validPathTypes)
+            self.pathTypeStartIndex = pathTypeStartIndex
+            self.pathTypeEndingIndex = pathTypeEndingIndex
         }
         
         func childEncoding(for localPath: Path) -> Encoding {
@@ -61,34 +50,47 @@ internal class Parser {
             guard let argumentPath = parser.mapping[parsePath] else {
                 fatalError(.nonExistingPath)
             }
-                                    
-            return Encoding(argumentPath: argumentPath,
-                            parsePath: parsePath,
-                            parser: parser,
-                            argumentPathIndex: self.argumentPath.count)
+            
+            var iterator = PathTypeIterator(argumentPath: argumentPath[self.argumentPath.count...])
+            while !iterator.isFinished {
+                let pathType = iterator.next()!
+                if case .bytes = pathType {
+                    continue
+                }
+                                
+                return Encoding(argumentPath: argumentPath,
+                                parsePath: parsePath,
+                                pathType: pathType,
+                                parser: parser,
+                                pathTypeStartIndex: iterator.lastArgumentIndex,
+                                pathTypeEndingIndex: iterator.argumentIndex)
+            }
+            
+            fatalError(.invalidEncoderPath) // TODO: path is filled with bytes 
         }
-        
-        func argumentPath(for localPath: Path) -> [Argument] {
+                
+        func localArgumentPath(for localPath: Path, rootInclusive: Bool) -> [Argument] {
             guard let argumentPath = parser.mapping[parsePath + localPath.parsePath] else {
                 fatalError(.nonExistingPath)
             }
 
-            // need validate by checking first encodable, then validating there are only 3 types,
-            // where in case of encodableBuffer it needs to be last
-            // still coupled if definition is inside this class
-//            assert(containsOnlyPathTypes(from: argumentPath[argumentPathIndex...],
-//                                         for: [.buffer, .bytes, .encodableBuffer]))
-
-            return argumentPath
+            assert(validateEncodablePath(from: argumentPath[pathTypeEndingIndex...]), .invalidEncoderPath)
+            return Array(argumentPath[(rootInclusive ? pathTypeStartIndex : pathTypeEndingIndex)...])
         }
         
-        func localArgumentPath(for localPath: Path) -> [Argument] {
-            return Array(argumentPath(for: localPath)[self.argumentPath.count...])
+        func localArgumentPath(to childEncoder: Encoding) -> [Argument] {
+            // validate encoders share same path
+            assert(childEncoder.argumentPath[0...(argumentPath.count - 1)] == argumentPath[...])
+            return Array(childEncoder.argumentPath[pathTypeEndingIndex...(childEncoder.pathTypeEndingIndex - 1)])
         }
     }
     
+    struct Data {
+        let argumentPath: [Argument]
+        let typePath: [PathType]
+    }
     
-    fileprivate var mapping = [[ParseType]: [Argument]]()
+    fileprivate var mapping = [[ParseType]: [Argument]]() // replace with path type
 
     init(arguments: [MTLArgument]) {
         arguments.forEach {
@@ -102,10 +104,14 @@ internal class Parser {
             fatalError(.unknownArgument(argument))
         }
                 
+        var iterator = PathTypeIterator(argumentPath: argumentPath)
+
         return Encoding(argumentPath: argumentPath,
                         parsePath: parsePath,
+                        pathType: iterator.next()!,
                         parser: self,
-                        argumentPathIndex: 0)
+                        pathTypeStartIndex: 0,
+                        pathTypeEndingIndex: iterator.argumentIndex)
     }
 }
 
@@ -170,68 +176,25 @@ private extension Path {
     }
 }
 
-
-private enum SimplePathType: CaseIterable {
-    case argument
-    case bytes
-    case buffer
-    case argumentBuffer
-    case encodableBuffer
-    case argumentContainingArgumentBuffer
-}
-
-// coupling of path definition to encoder from non related code
-private func uniquePathType<ArgumentArray: RandomAccessCollection>(
-    from argumentPath: ArgumentArray,
-    for types: [SimplePathType]
-) -> PathType
-    where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
-{
-    let path = pathTypes(from: argumentPath)
-    assert(!path.isEmpty, .invalidEncoderPath) // TODO: check input on empty path
-    
-    var candidate: PathType!
-    
-    for type in types {
-        let filtered = path.filter({ $0.simplified == type })
-        assert(filtered.count <= 1, .invalidEncoderPath)
-        
-        if !filtered.isEmpty {
-            assert(candidate == nil, .invalidEncoderPath)
-            candidate = filtered.first!
-        }
-    }
-    
-    return candidate
-}
-
-private func containsOnlyPathTypes<ArgumentArray: RandomAccessCollection>(
-    from argumentPath: ArgumentArray,
-    for types: [SimplePathType]
+private func validateEncodablePath<ArgumentArray: RandomAccessCollection>(
+    from argumentPath: ArgumentArray
 ) -> Bool
     where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
 {
     let path = pathTypes(from: argumentPath)
     assert(!path.isEmpty)
+    
+    var encounteredEncodable = false
 
     for item in path {
-        if !types.contains(item.simplified) {
-            return false
+        if !item.isBytes {
+            guard !encounteredEncodable else {
+                return false
+            }
+            
+            encounteredEncodable = true
         }
     }
     
     return true
-}
-
-private extension PathType {
-    var simplified: SimplePathType {
-        switch self {
-        case .argument: return .argument
-        case .bytes: return .bytes
-        case .buffer: return .buffer
-        case .argumentBuffer: return .argumentBuffer
-        case .encodableBuffer: return .encodableBuffer
-        case .argumentContainingArgumentBuffer: return .argumentContainingArgumentBuffer
-        }
-    }
 }

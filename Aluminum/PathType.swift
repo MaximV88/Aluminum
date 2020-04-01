@@ -228,17 +228,18 @@ private struct ArgumentContainingArgumentBufferRecognizer: PathTypeRecognizer {
 
 private class IteratorPathTypeContext<ArgumentArray: RandomAccessCollection>
 where ArgumentArray.Element == Argument, ArgumentArray.Index == Int {
-    fileprivate var index = 0
+    fileprivate var index: Int
     fileprivate var lastPathType: PathType?
-    private var temporaryIndex = 0
+    fileprivate var temporaryIndex = 0
     private let argumentPath: ArgumentArray
         
     var isFinished: Bool {
-        index >= argumentPath.count
+        index >= argumentPath.endIndex - 1
     }
     
     init(argumentPath: ArgumentArray) {
         self.argumentPath = argumentPath
+        self.index = argumentPath.startIndex
     }
     
     func saveState() {
@@ -256,16 +257,16 @@ where ArgumentArray.Element == Argument, ArgumentArray.Index == Int {
 
 extension IteratorPathTypeContext: PathTypeContext {
     var currentArgument: Argument {
-        argumentPath[argumentPath.startIndex + index]
+        argumentPath[index]
     }
     
     func nextArgument() -> Argument? {
-        guard index < argumentPath.count - 1 else {
+        guard index < argumentPath.endIndex - 1 else {
             return nil
         }
         
         index += 1
-        return argumentPath[argumentPath.startIndex + index]
+        return argumentPath[index]
     }
 }
 
@@ -289,6 +290,10 @@ where ArgumentArray.Element == Argument, ArgumentArray.Index == Int {
     
     var isFinished: Bool {
         return context.isFinished
+    }
+    
+    var lastArgumentIndex: Int {
+        return context.temporaryIndex
     }
     
     var argumentIndex: Int {
@@ -340,6 +345,17 @@ where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
     }
         
     return result!
+}
+
+internal func firstPathType<ArgumentArray: RandomAccessCollection>(
+    for argumentPath: ArgumentArray
+) -> PathType
+where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
+{
+    assert(!argumentPath.isEmpty)
+
+    var iterator = PathTypeIterator(argumentPath: argumentPath)
+    return iterator.next()!
 }
 
 internal func pathTypes<ArgumentArray: RandomAccessCollection>(

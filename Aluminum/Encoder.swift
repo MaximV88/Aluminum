@@ -142,7 +142,7 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
         assert(argumentBuffer != nil, .noArgumentBuffer)
 
-        let argumentPath = encoding.argumentPath(for: path)
+        let argumentPath = encoding.localArgumentPath(for: path, rootInclusive: true)
         let pathType = lastPathType(for: argumentPath)
         assert(pathType.isBytes, .invalidBytesPath(pathType))
 
@@ -158,7 +158,7 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
-        let argumentPath = encoding.argumentPath(for: path)
+        let argumentPath = encoding.localArgumentPath(for: path, rootInclusive: true)
         let pathType = lastPathType(for: argumentPath)
         assert(pathType.isBuffer, .invalidBufferPath(pathType))
         
@@ -169,7 +169,7 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (Encoder)->()) {
-        let argumentPath = encoding.argumentPath(for: path)
+        let argumentPath = encoding.localArgumentPath(for: path, rootInclusive: true)
         let pathType = lastPathType(for: argumentPath)
         assert(pathType.isEncodableBuffer, .invalidEncodableBufferPath(pathType))
         
@@ -209,7 +209,7 @@ private class ArgumentEncoder {
         switch encoding.pathType {
         case let .argumentBuffer(p, _): pointer = p
         case let .argumentContainingArgumentBuffer(_, p): pointer = p
-        default: fatalError("Invalid instantiation of encoder per encoding type.")
+        default: fatalError("Invalid instantiation of encoder per encoding path type.")
         }
         
         self.encoding = encoding
@@ -244,7 +244,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
         validateArgumentBuffer()
         
-        let argumentPath = encoding.localArgumentPath(for: path)
+        let argumentPath = encoding.localArgumentPath(for: path, rootInclusive: false)
         let pathType = lastPathType(for: argumentPath)
         assert(pathType.isBytes, .invalidBytesPath(pathType))
         
@@ -261,7 +261,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
         validateArgumentBuffer()
 
-        let argumentPath = encoding.localArgumentPath(for: path)
+        let argumentPath = encoding.localArgumentPath(for: path, rootInclusive: false)
         let pathType = lastPathType(for: argumentPath)
         
         switch pathType {
@@ -279,7 +279,6 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (Encoder)->()) {
         validateArgumentBuffer()
 
-        let argumentPath = encoding.localArgumentPath(for: path)
         let childEncoding = encoding.childEncoding(for: path)
         
         guard case let .encodableBuffer(p, _, _) = childEncoding.pathType else {
@@ -287,16 +286,16 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         }
 
         // TODO: use encoder ...
-        let pointerIndex = queryIndex(for: path, argumentPath: argumentPath)
-        argumentEncoder.setBuffer(buffer, offset: offset, index: pointerIndex)
-        computeCommandEncoder.useResource(buffer, usage: p.access.usage)
+//        let pointerIndex = queryIndex(for: path, argumentPath: argumentPath)
+//        argumentEncoder.setBuffer(buffer, offset: offset, index: pointerIndex)
+//        computeCommandEncoder.useResource(buffer, usage: p.access.usage)
     }
 
     func childEncoder(for path: Path) -> ComputePipelineStateEncoder {
         validateArgumentBuffer()
 
         let childEncoding = encoding.childEncoding(for: path)
-        let index = queryIndex(for: path, argumentPath: childEncoding.localArgumentPath)
+        let index = queryIndex(for: path, argumentPath: encoding.localArgumentPath(to: childEncoding))
 
         return ArgumentEncoder(encoding: childEncoding,
                                encoderIndex: index,
@@ -322,6 +321,7 @@ private class BytesEncoder {
     }
 }
 
+// can modify to work with path type - reduce parameter from encoding
 private func queryIndex<ArgumentArray: RandomAccessCollection>(
     for path: Path,
     argumentPath: ArgumentArray
