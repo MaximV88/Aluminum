@@ -19,78 +19,66 @@ internal class Parser {
         
     class Encoding {
         
-        let argumentPath: [Argument]
-        let pathType: PathType
-                
+        let dataTypePath: [DataType]
+        
+        var dataType: DataType {
+            return dataTypePath[startIndex]
+        }
+        
         private let parsePath: [ParseType]
         private let parser: Parser
-        private let pathTypeStartIndex: Int
-        private let pathTypeEndingIndex: Int
+        private let startIndex: Int
         
-        fileprivate init(argumentPath: [Argument],
+        fileprivate init(dataTypePath: [DataType],
                          parsePath: ParsePath,
-                         pathType: PathType,
                          parser: Parser,
-                         pathTypeStartIndex: Int,
-                         pathTypeEndingIndex: Int)
+                         startIndex: Int)
         {
-            assert(validateEncodablePath(from: argumentPath[pathTypeStartIndex...]), .invalidEncoderPath)
+            assert(validateEncodablePath(from: dataTypePath[startIndex...]), .invalidEncoderPath)
 
-            self.argumentPath = argumentPath
+            self.dataTypePath = dataTypePath
             self.parsePath = parsePath
-            self.pathType = pathType
             self.parser = parser
-            self.pathTypeStartIndex = pathTypeStartIndex
-            self.pathTypeEndingIndex = pathTypeEndingIndex
+            self.startIndex = startIndex
         }
         
         func childEncoding(for localPath: Path) -> Encoding {
             let parsePath = self.parsePath + localPath.parsePath
             
-            guard let argumentPath = parser.mapping[parsePath] else {
+            guard let dataTypePath = parser.mapping[parsePath] else {
                 fatalError(.nonExistingPath)
             }
             
-            var iterator = PathTypeIterator(argumentPath: argumentPath[self.argumentPath.count...])
-            while !iterator.isFinished {
-                let pathType = iterator.next()!
-                if case .bytes = pathType {
-                    continue
-                }
-                                
-                return Encoding(argumentPath: argumentPath,
+            for (index, dataType) in dataTypePath[(startIndex + 1)...].enumerated() {
+                if case .bytes = dataType { continue }
+                
+                return Encoding(dataTypePath: dataTypePath,
                                 parsePath: parsePath,
-                                pathType: pathType,
                                 parser: parser,
-                                pathTypeStartIndex: iterator.lastArgumentIndex,
-                                pathTypeEndingIndex: iterator.argumentIndex)
+                                startIndex: index)
             }
-            
+                        
             fatalError(.invalidEncoderPath) // TODO: path is filled with bytes 
         }
                 
-        func localArgumentPath(for localPath: Path, rootInclusive: Bool) -> [Argument] {
-            guard let argumentPath = parser.mapping[parsePath + localPath.parsePath] else {
+        func localDataTypePath(for localPath: Path) -> [DataType] {
+            guard let dataTypePath = parser.mapping[parsePath + localPath.parsePath] else {
                 fatalError(.nonExistingPath)
             }
 
-            assert(validateEncodablePath(from: argumentPath[pathTypeEndingIndex...]), .invalidEncoderPath)
-            return Array(argumentPath[(rootInclusive ? pathTypeStartIndex : pathTypeEndingIndex)...])
+            assert(validateEncodablePath(from: dataTypePath[(startIndex + 1)...]), .invalidEncoderPath)
+            return Array(dataTypePath[startIndex...])
         }
         
-        func localArgumentPath(to childEncoder: Encoding) -> [Argument] {
+        func localDataTypePath(to childEncoder: Encoding) -> [DataType] {
             // validate encoders share same path
-            assert(childEncoder.argumentPath[0...(argumentPath.count - 1)] == argumentPath[...])
-            return Array(childEncoder.argumentPath[pathTypeEndingIndex...(childEncoder.pathTypeEndingIndex - 1)])
+            assert(childEncoder.dataTypePath[0...(dataTypePath.count - 1)] == dataTypePath[...])
+            return Array(childEncoder.dataTypePath[startIndex...(childEncoder.startIndex + 1)])
         }
     }
     
-    struct Data {
-        let argumentPath: [Argument]
-        let typePath: [PathType]
-    }
-    
-    fileprivate var mapping = [[ParseType]: [Argument]]() // replace with path type
+
+    fileprivate var mapping = [[ParseType]: [DataType]]() // replace with path type
 
     init(arguments: [MTLArgument]) {
         arguments.forEach {
@@ -100,18 +88,14 @@ internal class Parser {
         
     func encoding(for argument: String) -> Encoding {
         let parsePath: [ParseType] = [.named(argument)]
-        guard let argumentPath = mapping[parsePath] else {
+        guard let dataTypePath = mapping[parsePath] else {
             fatalError(.unknownArgument(argument))
         }
                 
-        var iterator = PathTypeIterator(argumentPath: argumentPath)
-
-        return Encoding(argumentPath: argumentPath,
+        return Encoding(dataTypePath: dataTypePath,
                         parsePath: parsePath,
-                        pathType: iterator.next()!,
                         parser: self,
-                        pathTypeStartIndex: 0,
-                        pathTypeEndingIndex: iterator.argumentIndex)
+                        startIndex: 0)
     }
 }
 
@@ -120,41 +104,44 @@ private extension Parser {
         traverseToLeaf([.argument(argument)])
     }
     
-    func traverseToLeaf(_ argumentPath: [Argument]) {
-        guard !argumentPath.last!.children().isEmpty else {
+    func traverseToLeaf(_ metalTypePath: [MetalType]) {
+        guard !metalTypePath.last!.children().isEmpty else {
             // reached leaf
-            processFromLeaf(argumentPath)
+            processFromLeaf(metalTypePath)
             return
         }
         
-        for child in argumentPath.last!.children() {
-            traverseToLeaf(argumentPath + [child])
+        for child in metalTypePath.last!.children() {
+            traverseToLeaf(metalTypePath + [child])
         }
     }
     
-    func processFromLeaf(_ argumentPath: [Argument]) {
-        assert(!argumentPath.isEmpty)
+    func processFromLeaf(_ metalTypePath: [MetalType]) {
+        assert(!metalTypePath.isEmpty)
         
-        var iterator = PathTypeIterator(argumentPath: argumentPath)
-        var aggragatePath = [ParseType]()
+        var iterator = DataTypeIterator(metalTypePath: metalTypePath)
+        var aggragateParsePath = [ParseType]()
+        var aggragateDataTypePath = [DataType]()
         
         while !iterator.isFinished {
             let result = iterator.next()!
+            aggragateDataTypePath.append(result)
+            
             if let type = Parser.parseType(from: result) {
-                aggragatePath.append(type)
+                aggragateParsePath.append(type)
             }
             
             // arguments assigned by path type processable chunks
-            mapping[aggragatePath] = Array(argumentPath[...(iterator.argumentIndex - 1)])
+            mapping[aggragateParsePath] = aggragateDataTypePath
         }
     }
     
-    static func parseType(from pathType: PathType) -> ParseType? {
+    static func parseType(from pathType: DataType) -> ParseType? {
         switch pathType {
         case .argument(let a): return .named(a.name)
         case .argumentContainingArgumentBuffer(let a, _): return .named(a.name)
-        case .bytes(_, let s) where s.dataType == .array: return .indexed // contains metalArray
-        case .bytes(let t, let s) where t == .regular: return .named(s.name) // dont name metalArray, atomic
+        case .bytes(_, let s) where s.dataType == .array: return .indexed // all array types are bytes, covers all cases
+        case .bytes(let t, let s) where t == .regular: return .named(s.name) // only name regular. TODO: check atomic in struct!
         case .buffer(_, let s): return .named(s.name)
         case .argumentBuffer(_, let s): return .named(s.name)
         case .encodableBuffer(_, _, let s): return .named(s.name)
@@ -176,12 +163,11 @@ private extension Path {
     }
 }
 
-private func validateEncodablePath<ArgumentArray: RandomAccessCollection>(
-    from argumentPath: ArgumentArray
+private func validateEncodablePath<DataTypeArray: RandomAccessCollection>(
+    from path: DataTypeArray
 ) -> Bool
-    where ArgumentArray.Element == Argument, ArgumentArray.Index == Int
+    where DataTypeArray.Element == DataType, DataTypeArray.Index == Int
 {
-    let path = pathTypes(from: argumentPath)
     assert(!path.isEmpty)
     
     var encounteredEncodable = false

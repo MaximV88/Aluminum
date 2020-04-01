@@ -39,8 +39,8 @@ enum AluminumError: Error {
     case noArgumentBuffer // did not set argument buffer for encoder
     case invalidArgumentBuffer // argument buffer is too short
     case pathIndexOutOfBounds(Int) // index is not in bounds of array - index of invalid path
-    case invalidBufferPath(PathType) // path does not point to a buffer (actual value)
-    case invalidBytesPath(PathType) // path does not point to bytes (actual value)
-    case invalidEncodableBufferPath(PathType) // path used is not compatible for configuring a buffer (i.e. pointer to indexed struct)
-    case invalidChildEncoderPath(PathType) // path used is not compatible for using a child encoder
+    case invalidBufferPath(DataType) // path does not point to a buffer (actual value)
+    case invalidBytesPath(DataType) // path does not point to bytes (actual value)
+    case invalidEncodableBufferPath(DataType) // path used is not compatible for configuring a buffer (i.e. pointer to indexed struct)
+    case invalidChildEncoderPath(DataType) // path used is not compatible for using a child encoder
 }

@@ -1,5 +1,5 @@
 //
-//  Traverser.swift
+//  MetalType.swift
 //  Aluminum
 //
 //  Created by Maxim Vainshtein on 17/02/2020.
@@ -9,7 +9,7 @@
 import Metal
 
 
-internal enum Argument: Hashable {
+internal enum MetalType: Hashable {
     case argument(MTLArgument)
     case array(MTLArrayType)
     case `struct`(MTLStructType)
@@ -17,8 +17,8 @@ internal enum Argument: Hashable {
     case structMember(MTLStructMember)
 }
 
-internal extension Argument {
-    func children() -> [Argument] {
+internal extension MetalType {
+    func children() -> [MetalType] {
         switch self {
         case .argument(let a): return childrenFromArgument(a)
         case .array(let a): return childrenFromArray(a)
@@ -29,8 +29,8 @@ internal extension Argument {
     }
 }
 
-private extension Argument {
-    func childrenFromArgument(_ argument: MTLArgument) -> [Argument] {
+private extension MetalType {
+    func childrenFromArgument(_ argument: MTLArgument) -> [MetalType] {
         switch argument.type {
         case .buffer: return [.pointer(argument.bufferPointerType!)]
         case .texture: fallthrough
@@ -40,7 +40,7 @@ private extension Argument {
         }
     }
     
-    func childrenFromPointer(_ pointer: MTLPointerType) -> [Argument] {
+    func childrenFromPointer(_ pointer: MTLPointerType) -> [MetalType] {
         switch pointer.elementType {
         case .struct: return [.struct(pointer.elementStructType()!)]
         case .array: return [.array(pointer.elementArrayType()!)]
@@ -48,7 +48,7 @@ private extension Argument {
         }
     }
     
-    func childrenFromArray(_ array: MTLArrayType) -> [Argument] {
+    func childrenFromArray(_ array: MTLArrayType) -> [MetalType] {
         switch array.elementType {
         case .struct: return [.struct(array.elementStructType()!)]
         case .pointer: return [.pointer(array.elementPointerType()!)]
@@ -57,11 +57,11 @@ private extension Argument {
         }
     }
     
-    func childrenFromStruct(_ struct: MTLStructType) -> [Argument] {
+    func childrenFromStruct(_ struct: MTLStructType) -> [MetalType] {
         return `struct`.members.map { .structMember($0) }
     }
     
-    func childrenFromStructMember(_ structMember: MTLStructMember) -> [Argument] {
+    func childrenFromStructMember(_ structMember: MTLStructMember) -> [MetalType] {
         switch structMember.dataType {
         case .array: return [.array(structMember.arrayType()!)]
         case .struct: return [.struct(structMember.structType()!)]

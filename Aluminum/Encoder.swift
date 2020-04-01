@@ -56,13 +56,13 @@ class RootEncoder {
          function: MTLFunction,
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
-        switch encoding.pathType {
+        switch encoding.dataType {
         case .argument:
             internalEncoder = RootArgumentEncoder(encoding: encoding,
                                                   function: function,
                                                   computeCommandEncoder: computeCommandEncoder)
         case .argumentContainingArgumentBuffer:
-            let index = queryIndex(for: rootPath, argumentPath: encoding.argumentPath)
+            let index = queryIndex(for: rootPath, dataTypePath: encoding.dataTypePath)
             internalEncoder = ArgumentEncoder(encoding: encoding,
                                               encoderIndex: index,
                                               argumentEncoder: function.makeArgumentEncoder(bufferIndex: index),
@@ -114,7 +114,7 @@ private class RootArgumentEncoder {
          function: MTLFunction,
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
-        guard case let .argument(argument) = encoding.pathType else {
+        guard case let .argument(argument) = encoding.dataType else {
             fatalError("RootEncoder expects an argument path that starts with an argument.")
         }
         
@@ -142,13 +142,12 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
         assert(argumentBuffer != nil, .noArgumentBuffer)
 
-        let argumentPath = encoding.localArgumentPath(for: path, rootInclusive: true)
-        let pathType = lastPathType(for: argumentPath)
-        assert(pathType.isBytes, .invalidBytesPath(pathType))
+        let dataTypePath = encoding.localDataTypePath(for: path)
+        assert(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
 
         // TODO: make sure that count is within argument length (i.e. prevent overflow)
 
-        let pathOffset = queryOffset(for: path, argumentPath: argumentPath)
+        let pathOffset = queryOffset(for: path, dataTypePath: dataTypePath)
         let destination = argumentBuffer.contents().assumingMemoryBound(to: UInt8.self)
         let source = bytes.assumingMemoryBound(to: UInt8.self)
         
@@ -158,27 +157,25 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
-        let argumentPath = encoding.localArgumentPath(for: path, rootInclusive: true)
-        let pathType = lastPathType(for: argumentPath)
-        assert(pathType.isBuffer, .invalidBufferPath(pathType))
+        let dataTypePath = encoding.localDataTypePath(for: path)
+        assert(dataTypePath.last!.isBuffer, .invalidBufferPath(dataTypePath.last!))
         
-        let index = queryIndex(for: path, argumentPath: argumentPath)
+        let index = queryIndex(for: path, dataTypePath: dataTypePath)
         assert(index != argument.index) // shouldnt override argument buffer
         
         computeCommandEncoder.setBuffer(buffer, offset: offset, index: index)
     }
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (Encoder)->()) {
-        let argumentPath = encoding.localArgumentPath(for: path, rootInclusive: true)
-        let pathType = lastPathType(for: argumentPath)
-        assert(pathType.isEncodableBuffer, .invalidEncodableBufferPath(pathType))
+        let dataTypePath = encoding.localDataTypePath(for: path)
+        assert(dataTypePath.last!.isEncodableBuffer, .invalidEncodableBufferPath(dataTypePath.last!))
         
         fatalError("Logical error. MTLArgument does not access pointer of struct (encodable buffer)")
     }
     
     func childEncoder(for path: Path) -> ComputePipelineStateEncoder {
         let childEncoding = encoding.childEncoding(for: path)
-        let index = queryIndex(for: path, argumentPath: childEncoding.argumentPath)
+        let index = queryIndex(for: path, dataTypePath: childEncoding.dataTypePath)
                         
         return ArgumentEncoder(encoding: childEncoding,
                                encoderIndex: index,
@@ -206,7 +203,7 @@ private class ArgumentEncoder {
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
         let pointer: MTLPointerType
-        switch encoding.pathType {
+        switch encoding.dataType {
         case let .argumentBuffer(p, _): pointer = p
         case let .argumentContainingArgumentBuffer(_, p): pointer = p
         default: fatalError("Invalid instantiation of encoder per encoding path type.")
@@ -244,12 +241,11 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
         validateArgumentBuffer()
         
-        let argumentPath = encoding.localArgumentPath(for: path, rootInclusive: false)
-        let pathType = lastPathType(for: argumentPath)
-        assert(pathType.isBytes, .invalidBytesPath(pathType))
+        let dataTypePath = encoding.localDataTypePath(for: path)
+        assert(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
         
         // TODO: make sure that count is within argument length (i.e. prevent overflow)
-        let bytesIndex = queryIndex(for: path, argumentPath: argumentPath)
+        let bytesIndex = queryIndex(for: path, dataTypePath: dataTypePath[1...])
         let destination = argumentEncoder.constantData(at: bytesIndex).assumingMemoryBound(to: UInt8.self)
         let source = bytes.assumingMemoryBound(to: UInt8.self)
         
@@ -261,18 +257,17 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
         validateArgumentBuffer()
 
-        let argumentPath = encoding.localArgumentPath(for: path, rootInclusive: false)
-        let pathType = lastPathType(for: argumentPath)
+        let dataTypePath = encoding.localDataTypePath(for: path)
         
-        switch pathType {
+        switch dataTypePath.last! {
         case let .buffer(p, _): fallthrough
         case let .encodableBuffer(p, _, _):
 
-            let pointerIndex = queryIndex(for: path, argumentPath: argumentPath)
+            let pointerIndex = queryIndex(for: path, dataTypePath: dataTypePath[1...])
             argumentEncoder.setBuffer(buffer, offset: offset, index: pointerIndex)
             computeCommandEncoder.useResource(buffer, usage: p.access.usage)
 
-        default: fatalError(.invalidBufferPath(pathType))
+        default: fatalError(.invalidBufferPath(dataTypePath.last!))
         }
     }
     
@@ -281,8 +276,8 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
 
         let childEncoding = encoding.childEncoding(for: path)
         
-        guard case let .encodableBuffer(p, _, _) = childEncoding.pathType else {
-            fatalError(.invalidEncodableBufferPath(childEncoding.pathType))
+        guard case let .encodableBuffer(p, _, _) = childEncoding.dataType else {
+            fatalError(.invalidEncodableBufferPath(childEncoding.dataType))
         }
 
         // TODO: use encoder ...
@@ -295,7 +290,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         validateArgumentBuffer()
 
         let childEncoding = encoding.childEncoding(for: path)
-        let index = queryIndex(for: path, argumentPath: encoding.localArgumentPath(to: childEncoding))
+        let index = queryIndex(for: path, dataTypePath: encoding.localDataTypePath(to: childEncoding)[1...])
 
         return ArgumentEncoder(encoding: childEncoding,
                                encoderIndex: index,
@@ -315,83 +310,77 @@ private class BytesEncoder {
     private let encoding: Parser.Encoding
 
     init(encoding: Parser.Encoding) {
-        assert(encoding.pathType.isEncodableBuffer)
+        assert(encoding.dataType.isEncodableBuffer)
         
         self.encoding = encoding
     }
 }
 
 // can modify to work with path type - reduce parameter from encoding
-private func queryIndex<ArgumentArray: RandomAccessCollection>(
+private func queryIndex<DataTypeArray: RandomAccessCollection>(
     for path: Path,
-    argumentPath: ArgumentArray
+    dataTypePath: DataTypeArray
 ) -> Int
-    where ArgumentArray.Element == Argument
+    where DataTypeArray.Element == DataType
 {
     assert(!path.isEmpty)
-    assert(!argumentPath.isEmpty)
+    assert(!dataTypePath.isEmpty)
 
     var index = 0
     var pathIndex: Int = 0
 
-    for item in argumentPath {
-        switch item {
+    for dataType in dataTypePath {
+        switch dataType {
+        case .argumentContainingArgumentBuffer(let a, _): fallthrough
         case .argument(let a):
             index += a.index
             pathIndex += 1
-        case .array(let a):
+        case .bytes(let t, let s) where s.dataType == .array:
+            guard case let .array(a) = t else { fatalError() }
+            
             let inputIndex = path[pathIndex].index!
-            
             assert(inputIndex >= 0 && inputIndex < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
-
-            index += a.argumentIndexStride * Int(inputIndex)
-            pathIndex += 1
-        case .structMember(let s):
-            index += s.argumentIndex
             
-            // ignore array struct as argument since they are not part of path
-            if s.dataType != .array {
-                pathIndex += 1
-            }
- 
+            index += a.argumentIndexStride * Int(inputIndex) + s.argumentIndex
+            pathIndex += 1
+        case .bytes(_, let s) where s.dataType != .array:
+            index += s.argumentIndex
+            pathIndex += 1
         default: break
         }
+        
     }
     
     return index
 }
 
-private func queryOffset<ArgumentArray: RandomAccessCollection>(
+private func queryOffset<DataTypeArray: RandomAccessCollection>(
     for path: Path,
-    argumentPath: ArgumentArray
+    dataTypePath: DataTypeArray
 ) -> Int
-    where ArgumentArray.Element == Argument
+    where DataTypeArray.Element == DataType
 {
     assert(!path.isEmpty)
-    assert(!argumentPath.isEmpty)
+    assert(!dataTypePath.isEmpty)
 
     var offset: Int = 0
     var pathIndex: Int = 0
     
-    for item in argumentPath {
-        switch item {
-        case .argument:
-            pathIndex += 1
-        case .array(let a):
+    for dataType in dataTypePath {
+        switch dataType {
+        case .bytes(_, let s) where s.dataType != .array:
+            offset += s.offset
+        case .bytes(let t, let s) where s.dataType == .array:
+            guard case let .array(a) = t else { fatalError() }
+            
             let index = path[pathIndex].index!
             assert(index >= 0 && index < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
             
             offset += Int(index) * a.stride
-            pathIndex += 1
-        case .structMember(let s):
-            offset += s.offset
-
-            // ignore array struct as argument since they are not part of path
-            if s.dataType != .array {
-                pathIndex += 1
-            }
         default: break
         }
+        
+        pathIndex += 1
     }
     
     // expect entire path iteration
@@ -400,7 +389,7 @@ private func queryOffset<ArgumentArray: RandomAccessCollection>(
     return offset
 }
 
-private extension Argument {
+private extension MetalType {
     var index: Int? {
         switch self {
         case .argument(let a): return a.index
