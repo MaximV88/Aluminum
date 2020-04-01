@@ -58,7 +58,7 @@ internal class Parser {
                                 startIndex: index + 1)
             }
                         
-            fatalError(.invalidEncoderPath) // TODO: path is filled with bytes 
+            fatalError(.invalidChildEncoderPath) // TODO: path is filled with bytes 
         }
                 
         func localDataTypePath(for localPath: Path) -> [DataType] {
