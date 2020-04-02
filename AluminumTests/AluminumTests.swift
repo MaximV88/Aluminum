@@ -75,7 +75,9 @@ class AluminumTests: XCTestCase {
             tarrEncoder.encode(UInt(1), to: [.index(i), .argument("l")])
             tarrEncoder.encode(intBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("buffer")])
             tarrEncoder.encode(trBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("tr")]) { encoder in
-                encoder.encode(UInt32(i), to: [.argument("i")])
+                encoder.encode(UInt32(i), to: "i")
+                encoder.encode(Float(2), to: "k")
+                encoder.encode(false, to: "j")
             }
             
                         

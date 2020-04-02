@@ -38,6 +38,7 @@ enum AluminumError: Error {
     case invalidEncoderPath
     case noArgumentBuffer
     case invalidArgumentBuffer
+    case invalidBuffer
     case pathIndexOutOfBounds(Int)
     case invalidBufferPath(DataType)
     case invalidBytesPath(DataType)
@@ -53,6 +54,7 @@ extension AluminumError: LocalizedError {
         case .invalidEncoderPath: return "Encoder does not support given path (extends outside of it).".padded
         case .noArgumentBuffer: return "Did not set argument buffer for encoder.".padded
         case .invalidArgumentBuffer: return "Argument buffer is too short.".padded
+        case .invalidBuffer: return "Buffer is too short".padded
         case .pathIndexOutOfBounds(let i): return "index \(i) is not in bounds of related array.".padded
         case .invalidBufferPath(let d): return "Expected buffer for path. Encountered \(d.named)".padded
         case .invalidBytesPath(let d): return "Expected assignable value for path. Encountered \(d.named)".padded

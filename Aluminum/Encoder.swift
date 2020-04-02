@@ -148,8 +148,6 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
         let dataTypePath = encoding.localDataTypePath(for: path)
         assert(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
 
-        // TODO: make sure that count is within argument length (i.e. prevent overflow)
-
         let pathOffset = queryOffset(for: path, dataTypePath: dataTypePath)
         let destination = argumentBuffer.contents().assumingMemoryBound(to: UInt8.self)
         let source = bytes.assumingMemoryBound(to: UInt8.self)
@@ -247,7 +245,6 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         let dataTypePath = encoding.localDataTypePath(for: path)
         assert(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
         
-        // TODO: make sure that count is within argument length (i.e. prevent overflow)
         let bytesIndex = queryIndex(for: path, dataTypePath: dataTypePath[1...])
         let destination = argumentEncoder.constantData(at: bytesIndex).assumingMemoryBound(to: UInt8.self)
         let source = bytes.assumingMemoryBound(to: UInt8.self)
@@ -282,6 +279,8 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         guard case let .encodableBuffer(p, _, _) = childEncoding.dataType else {
             fatalError(.invalidEncodableBufferPath(childEncoding.dataType))
         }
+        
+        assert(buffer.length - offset >= p.dataSize, .invalidBuffer)
 
         let pointerIndex = queryIndex(for: path, dataTypePath: encoding.localDataTypePath(to: childEncoding)[1...])
         argumentEncoder.setBuffer(buffer, offset: offset, index: pointerIndex)
@@ -331,8 +330,6 @@ extension EncodableBufferEncoder: Encoder {
         let dataTypePath = encoding.localDataTypePath(for: path)
         assert(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
 
-        // TODO: make sure that count is within argument length (i.e. prevent overflow)
-
         let pathOffset = queryOffset(for: path, dataTypePath: dataTypePath[1...])
         let destination = encodableBuffer.contents().assumingMemoryBound(to: UInt8.self)
         let source = bytes.assumingMemoryBound(to: UInt8.self)
@@ -343,11 +340,13 @@ extension EncodableBufferEncoder: Encoder {
     }
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
-        
+        // need reference to argument encoder
+        fatalError("Find case")
     }
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (Encoder)->()) {
-        
+        // need reference to argument encoder
+        fatalError("Find case")
     }
 }
 
