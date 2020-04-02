@@ -72,6 +72,7 @@ internal extension DataType {
 
 private protocol DataTypeContext {
     var currentMetalType: MetalType { get }
+    var pendingMetalType: MetalType? { get }
     var lastDataType: DataType? { get }
     
     @discardableResult
@@ -180,7 +181,7 @@ private struct EncodableBufferRecognizer: DataTypeRecognizer {
             case let .structMember(s) = context.nextMetalType(),
             case let .pointer(p) = context.nextMetalType(),
             !p.elementIsArgumentBuffer,
-            case let .struct(st) = context.nextMetalType()
+            case let .struct(st) = context.pendingMetalType
             else
         {
             return nil
@@ -270,6 +271,14 @@ where MetalTypeArray.Element == MetalType, MetalTypeArray.Index == Int {
 extension IteratorDataTypeContext: DataTypeContext {
     var currentMetalType: MetalType {
         metalTypePath[index]
+    }
+    
+    var pendingMetalType: MetalType? {
+        guard index < metalTypePath.endIndex - 1 else {
+            return nil
+        }
+
+        return metalTypePath[index + 1]
     }
     
     func nextMetalType() -> MetalType? {

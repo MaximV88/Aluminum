@@ -13,7 +13,7 @@ struct TestStruct {
     uint i;
     float k;
     bool j;
-    device int * buf;
+//    device int * buf;
 };
 typedef struct TestStruct TestStruct;
 

@@ -74,7 +74,10 @@ class AluminumTests: XCTestCase {
 
             tarrEncoder.encode(UInt(1), to: [.index(i), .argument("l")])
             tarrEncoder.encode(intBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("buffer")])
-            tarrEncoder.encode(trBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("tr")])
+            tarrEncoder.encode(trBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("tr")]) { encoder in
+                encoder.encode(UInt32(i), to: [.argument("i")])
+            }
+            
                         
             let t1Encoder = tarrEncoder.childEncoder(for: [.index(i), .argument("t1")])
             t1Encoder.setArgumentBuffer(t1Buffers[Int(i)])

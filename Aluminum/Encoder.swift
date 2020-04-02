@@ -15,7 +15,6 @@ public protocol Encoder {
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path)
     
-    // TODO: throw if not struct
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (Encoder)->())
 
     // TODO: missing stubs for texture/...
@@ -33,6 +32,10 @@ public protocol ComputePipelineStateEncoder: Encoder {
 public extension Encoder {
     func encode(_ buffer: MTLBuffer, to path: Path)  {
         encode(buffer, offset: 0, to: path)
+    }
+    
+    func encode(_ buffer: MTLBuffer, to path: Path, _ encoderClosure: (Encoder)->()) {
+        encode(buffer, offset: 0, to: path, encoderClosure)
     }
 
     func encode<T>(_ parameter: T, to path: Path) {
@@ -280,10 +283,13 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
             fatalError(.invalidEncodableBufferPath(childEncoding.dataType))
         }
 
-        // TODO: use encoder ...
-//        let pointerIndex = queryIndex(for: path, argumentPath: argumentPath)
-//        argumentEncoder.setBuffer(buffer, offset: offset, index: pointerIndex)
-//        computeCommandEncoder.useResource(buffer, usage: p.access.usage)
+        let pointerIndex = queryIndex(for: path, dataTypePath: encoding.localDataTypePath(to: childEncoding)[1...])
+        argumentEncoder.setBuffer(buffer, offset: offset, index: pointerIndex)
+        computeCommandEncoder.useResource(buffer, usage: p.access.usage)
+        
+        encoderClosure(EncodableBufferEncoder(encoding: childEncoding,
+                                              encodableBuffer: buffer,
+                                              offset: offset))
     }
 
     func childEncoder(for path: Path) -> ComputePipelineStateEncoder {
@@ -306,17 +312,45 @@ private extension ArgumentEncoder {
     }
 }
 
-private class BytesEncoder {
+private class EncodableBufferEncoder {
     private let encoding: Parser.Encoding
+    private let encodableBuffer: MTLBuffer
+    private let offset: Int
 
-    init(encoding: Parser.Encoding) {
+    init(encoding: Parser.Encoding, encodableBuffer: MTLBuffer, offset: Int) {
         assert(encoding.dataType.isEncodableBuffer)
         
         self.encoding = encoding
+        self.encodableBuffer = encodableBuffer
+        self.offset = offset
     }
 }
 
-// can modify to work with path type - reduce parameter from encoding
+extension EncodableBufferEncoder: Encoder {
+    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
+        let dataTypePath = encoding.localDataTypePath(for: path)
+        assert(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
+
+        // TODO: make sure that count is within argument length (i.e. prevent overflow)
+
+        let pathOffset = queryOffset(for: path, dataTypePath: dataTypePath[1...])
+        let destination = encodableBuffer.contents().assumingMemoryBound(to: UInt8.self)
+        let source = bytes.assumingMemoryBound(to: UInt8.self)
+        
+        for i in 0 ..< count {
+            destination[offset + pathOffset + i] = source[i]
+        }
+    }
+    
+    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
+        
+    }
+    
+    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (Encoder)->()) {
+        
+    }
+}
+
 private func queryIndex<DataTypeArray: RandomAccessCollection>(
     for path: Path,
     dataTypePath: DataTypeArray
