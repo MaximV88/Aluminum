@@ -107,16 +107,18 @@ class AluminumTests: XCTestCase {
             encoder.setArgumentBuffer(buffer)
             
             (0 ..< 10).forEach {
-                encoder.encode(Int32($0), to: [.argument("i_arr"), .index(UInt($0))])
+                encoder.encode(Int32($0), to: "i_arr[\($0)]")
                 encoder.encode(UInt32($0), to: [.argument("ui_arr"), .index(UInt($0))])
             }
+            
+            encoder.encode(UInt(10), to: [.argument("j")])
             
             let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
             resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
             resultEncoder.setArgumentBuffer(resultBuffer)
         }
         
-        XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(90))
+        XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(100))
     }
     
     func testArgumentBuffer() {

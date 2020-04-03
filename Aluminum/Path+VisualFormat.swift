@@ -10,8 +10,8 @@ import Metal
 
 
 private extension Path {
-    private static let argumentPattern = "[[:alpha:]]+"
-    private static let indexPattern = "[[\\d]+]"
+    private static let argumentPattern = "[a-zA-Z0-9_]+"
+    private static let indexPattern = "\\[[\\d]+\\]"
     private static let regex = try! NSRegularExpression(pattern: "(?<argument>\(argumentPattern))|(?<index>\(indexPattern))")
 }
 
@@ -26,7 +26,7 @@ private extension Path {
             if let argument = format.substring(with: argumentRange) {
                 return .argument(argument)
             } else if let rawIndex = format.substring(with: indexRange) {
-                return .index(UInt(rawIndex)!) // regex gurantees conversion
+                return .index(UInt(rawIndex.substring(with: NSMakeRange(1, rawIndex.count - 2))!)!) // ignore '[', ']'
             } else {
                 return nil
             }

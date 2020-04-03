@@ -48,6 +48,7 @@ kernel void test_argument_struct(device ArgumentStruct& argument_struct,
 struct ArgumentComplexStruct {
     int i_arr[10];
     metal::array<uint, 10> ui_arr;
+    uint j;
 };
 
 kernel void test_argument_complex_struct(device ArgumentComplexStruct& argument_complex_struct,
@@ -57,6 +58,8 @@ kernel void test_argument_complex_struct(device ArgumentComplexStruct& argument_
     {
         *result += argument_complex_struct.i_arr[i] + argument_complex_struct.ui_arr[i];
     }
+    
+    *result += argument_complex_struct.j;
 }
 
 #pragma mark - Test Argument Buffer
