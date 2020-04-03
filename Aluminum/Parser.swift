@@ -138,7 +138,7 @@ private extension Parser {
     
     static func parseType(from pathType: DataType) -> ParseType? {
         switch pathType {
-        case .argument(let a): return .named(a.name)
+        case .argument(let a): fallthrough
         case .argumentContainingArgumentBuffer(let a, _): return .named(a.name)
         case .bytes(_, let s) where s.dataType == .array: return .indexed // all array types are bytes, covers all cases
         case .bytes(let t, let s) where t == .regular: return .named(s.name) // only name regular. TODO: check atomic in struct!

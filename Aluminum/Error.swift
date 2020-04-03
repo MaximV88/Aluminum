@@ -8,6 +8,7 @@
 
 import Foundation
 
+
 func fatalError(_ error: AluminumError) -> Never {
     fatalError(error.localizedDescription)
 }

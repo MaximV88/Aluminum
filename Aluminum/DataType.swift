@@ -102,9 +102,7 @@ private struct BytesFromMetalArrayRecognizer: DataTypeRecognizer {
 private struct BytesFromAtomicVariableRecognizer: DataTypeRecognizer {
     func recognize(_ context: DataTypeContext) -> DataType? {
         guard
-            case let .pointer(p) = context.currentMetalType, // TODO: check if applicable because in root
-            !p.elementIsArgumentBuffer,
-            case .struct = context.nextMetalType(),
+            case .struct = context.currentMetalType,
             case let .structMember(s) = context.nextMetalType(),
             s.name == "__s"
             else
@@ -118,7 +116,12 @@ private struct BytesFromAtomicVariableRecognizer: DataTypeRecognizer {
 
 private struct ArgumentRecognizer: DataTypeRecognizer {
     func recognize(_ context: DataTypeContext) -> DataType? {
-        guard case let .argument(a) = context.currentMetalType else {
+        guard
+            case let .argument(a) = context.currentMetalType,
+            case let .pointer(p) = context.nextMetalType(),
+            !p.elementIsArgumentBuffer
+            else
+        {
             return nil
         }
         
@@ -236,7 +239,6 @@ private struct ArgumentContainingArgumentBufferRecognizer: DataTypeRecognizer {
         
         return .argumentContainingArgumentBuffer(a, p)
     }
-
 }
 
 private class IteratorDataTypeContext<MetalTypeArray: RandomAccessCollection>

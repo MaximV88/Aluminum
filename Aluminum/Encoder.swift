@@ -10,7 +10,7 @@ import Metal
 
 
 public protocol Encoder {
-    
+
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path)
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path)
@@ -22,9 +22,13 @@ public protocol Encoder {
 }
 
 public protocol ComputePipelineStateEncoder: Encoder {
-    var encodedLength: Int { get }
+    var encodedLength: Int { get } 
 
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int)
+    
+    // issue warning if bytes is above 4k (i.e. count or enoder call)
+    func encode(_ bytes: UnsafeRawPointer, count: Int) // copy bytes to root
+    // throw when in argument buffer
     
     func childEncoder(for path: Path) -> ComputePipelineStateEncoder
 }
@@ -48,6 +52,12 @@ public extension Encoder {
 public extension ComputePipelineStateEncoder {
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer) {
         setArgumentBuffer(argumentBuffer, offset: 0)
+    }
+    
+    func encode<T>(_ parameter: T) {
+        withUnsafePointer(to: parameter) { ptr in
+            encode(ptr, count: MemoryLayout<T>.size * 5)
+        }
     }
 }
 
@@ -85,6 +95,10 @@ extension RootEncoder: ComputePipelineStateEncoder {
         internalEncoder.setArgumentBuffer(argumentBuffer, offset: offset)
     }
     
+    func encode(_ bytes: UnsafeRawPointer, count: Int) {
+        internalEncoder.encode(bytes, count: count)
+    }
+    
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
         internalEncoder.encode(bytes, count: count, to: path)
     }
@@ -112,6 +126,7 @@ private class RootArgumentEncoder {
     private weak var argumentBuffer: MTLBuffer!
     
     private var bufferOffset: Int = 0
+    private var didCopyBytes = false
 
     init(encoding: Parser.Encoding,
          function: MTLFunction,
@@ -120,10 +135,10 @@ private class RootArgumentEncoder {
         guard case let .argument(argument) = encoding.dataType else {
             fatalError("RootEncoder expects an argument path that starts with an argument.")
         }
-        
+
         self.encoding = encoding
-        self.argument = argument
         self.function = function
+        self.argument = argument
         self.computeCommandEncoder = computeCommandEncoder
     }
 }
@@ -141,14 +156,31 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
         
         computeCommandEncoder.setBuffer(argumentBuffer, offset: offset, index: argument.index)
     }
+
+    func encode(_ bytes: UnsafeRawPointer, count: Int) {
+        if let argumentBuffer = argumentBuffer {
+            let destination = argumentBuffer.contents().assumingMemoryBound(to: UInt8.self)
+            let source = bytes.assumingMemoryBound(to: UInt8.self)
+
+            for i in 0 ..< count {
+                destination[bufferOffset + i] = source[i]
+            }
+        } else {
+            computeCommandEncoder.setBytes(bytes, length: count, index: argument.index)
+            didCopyBytes = true
+        }
+    }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
+        assert(!didCopyBytes) // TODO: add error that setting value to specific location after using encode will override previous data
         assert(argumentBuffer != nil, .noArgumentBuffer)
 
+        // get index of path and make copyBytes ...  that will override previos call
+        
         let dataTypePath = encoding.localDataTypePath(for: path)
         assert(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
 
-        let pathOffset = queryOffset(for: path, dataTypePath: dataTypePath)
+        let pathOffset = queryOffset(for: path, dataTypePath: dataTypePath[1...])
         let destination = argumentBuffer.contents().assumingMemoryBound(to: UInt8.self)
         let source = bytes.assumingMemoryBound(to: UInt8.self)
         
@@ -237,6 +269,10 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         } else {
             computeCommandEncoder.setBuffer(argumentBuffer, offset: offset, index: encoderIndex)
         }
+    }
+    
+    func encode(_ bytes: UnsafeRawPointer, count: Int) {
+        fatalError() // TODO: add error regarding inability of argument buffer encoder to use setBytes since its an argument buffer
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
@@ -454,15 +490,5 @@ private extension MTLArgumentAccess {
         case .readWrite: return [.read, .write]
         default: fatalError("Unknown usage.")
         }
-    }
-}
-
-private extension Int {
-    func aligned(by alignment: Int) -> Int {
-        return (((self + (alignment - 1)) / alignment) * alignment)
-    }
-    
-    mutating func align(by alignment: Int) {
-        self = aligned(by: alignment)
     }
 }

@@ -9,6 +9,81 @@
 #import <metal_stdlib>
 using namespace metal;
 
+#pragma mark - Test Argument Pointer
+
+kernel void test_argument_pointer(device uint * buffer,
+                                  device uint * result)
+{
+    *result = *buffer;
+}
+
+#pragma mark - Test Argument Array
+
+kernel void test_argument_array(device metal::array<int, 10> & array,
+                                device uint * result)
+{
+    for (int i = 0, end = array.size() ; i < end ; i++)
+    {
+        *result += array[i];
+    }
+}
+
+#pragma mark - Test Argument Struct
+
+struct ArgumentStruct {
+    int i;
+    uint j;
+    bool k;
+    float l;
+};
+
+kernel void test_argument_struct(device ArgumentStruct& argument_struct,
+                                 device uint * result)
+{
+    *result = argument_struct.i + argument_struct.j + argument_struct.k + argument_struct.l;
+}
+
+#pragma mark - Test Argument Complex Struct
+
+struct ArgumentComplexStruct {
+    int i_arr[10];
+    metal::array<uint, 10> ui_arr;
+};
+
+kernel void test_argument_complex_struct(device ArgumentComplexStruct& argument_complex_struct,
+                                         device uint * result)
+{
+    for (int i = 0, end = 10 ; i < end ; i++)
+    {
+        *result += argument_complex_struct.i_arr[i] + argument_complex_struct.ui_arr[i];
+    }
+}
+
+
+#pragma mark - Test Argument Buffer
+
+struct ArgumentBuffer {
+    constant int * buff;
+    int i;
+    uint j;
+};
+
+kernel void test_argument_buffer(device ArgumentBuffer& argument_buffer,
+                                 device uint * result)
+{
+    // assume buffer length
+    for (int i = 0, end = 10 ; i < end ; i++)
+    {
+        *result += argument_buffer.buff[i];
+    }
+
+    *result += argument_buffer.i;
+    *result += argument_buffer.j;
+}
+
+
+
+
 #import "AluminumTestsUniforms.h"
 #import "AluminumArgumentBuffer.h"
 
@@ -39,8 +114,8 @@ typedef struct C C;
 
 
 kernel void test_array_argument(device metal::array<C, 40> & arr,
-                                device metal::array<TestArgumentsBuffer, 40> & tarr [[ buffer(1) ]],
-                                device atomic_uint * result [[ buffer(2) ]])
+                                device metal::array<TestArgumentsBuffer, 40> & tarr,
+                                device atomic_uint * result)
 {
     for (int i = 0, end = 40 ; i < end ; i++)
     {

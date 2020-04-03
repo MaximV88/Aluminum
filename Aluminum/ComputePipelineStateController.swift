@@ -31,7 +31,7 @@ public class ComputePipelineStateController {
         self.parser = Parser(arguments: reflection!.arguments)
     }
     
-    public func makeEncoder(for argument: String, with computeCommandEncoder: MTLComputeCommandEncoder) throws -> ComputePipelineStateEncoder {
+    public func makeEncoder(for argument: String, with computeCommandEncoder: MTLComputeCommandEncoder) -> ComputePipelineStateEncoder {
         let encoding = parser.encoding(for: argument)
                 
         computeCommandEncoder.setComputePipelineState(computePipelineState)
