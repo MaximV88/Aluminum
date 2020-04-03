@@ -56,7 +56,7 @@ public extension ComputePipelineStateEncoder {
     
     func encode<T>(_ parameter: T) {
         withUnsafePointer(to: parameter) { ptr in
-            encode(ptr, count: MemoryLayout<T>.size * 5)
+            encode(ptr, count: MemoryLayout<T>.stride)
         }
     }
 }

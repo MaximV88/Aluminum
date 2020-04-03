@@ -45,13 +45,13 @@ kernel void test_argument_struct(device ArgumentStruct& argument_struct,
 
 #pragma mark - Test Argument Complex Struct
 
-struct ArgumentComplexStruct {
+struct ComplexStruct {
     int i_arr[10];
     metal::array<uint, 10> ui_arr;
     uint j;
 };
 
-kernel void test_argument_complex_struct(device ArgumentComplexStruct& argument_complex_struct,
+kernel void test_argument_complex_struct(device ComplexStruct& argument_complex_struct,
                                          device uint * result)
 {
     for (int i = 0, end = 10 ; i < end ; i++)
@@ -73,7 +73,6 @@ struct ArgumentBuffer {
 kernel void test_argument_buffer(device ArgumentBuffer& argument_buffer,
                                  device uint * result)
 {
-    // assume buffer length
     for (int i = 0, end = 10 ; i < end ; i++)
     {
         *result += argument_buffer.buff[i];
@@ -83,7 +82,59 @@ kernel void test_argument_buffer(device ArgumentBuffer& argument_buffer,
     *result += argument_buffer.j;
 }
 
+#pragma mark - Test Argument Buffer Array
 
+kernel void test_argument_buffer_array(device metal::array<ArgumentBuffer, 10> & argument_buffer_array,
+                                       device uint * result)
+{
+    for (int i = 0, end = argument_buffer_array.size() ; i < end ; i++) {
+        for (int j = 0, end = 10 ; j < end ; j++)
+        {
+            *result += argument_buffer_array[i].buff[j];
+        }
+        
+        *result += argument_buffer_array[i].i;
+        *result += argument_buffer_array[i].j;
+    }
+}
+
+#pragma mark - Test Argument Buffer With Nested Argument Buffer
+
+struct ArgumentBufferContainer {
+    int i;
+    constant ArgumentBuffer * child;
+};
+
+kernel void test_argument_buffer_with_nested_argument_buffer(device ArgumentBufferContainer& argument_buffer,
+                                                             device uint * result)
+{
+    *result += argument_buffer.i;
+    constant ArgumentBuffer& child = *argument_buffer.child;
+    
+    for (int i = 0, end = 10 ; i < end ; i++)
+    {
+        *result += child.buff[i];
+    }
+
+    *result += child.i;
+    *result += child.j;
+}
+
+#pragma mark - Test Argument Buffer Array With Nested Array
+
+struct ArgumentBufferWithArray {
+    constant ArgumentBuffer *i;
+    metal::array<ArgumentBuffer, 2> j;
+};
+
+kernel void test_argument_buffer_array_with_nested_array(device metal::array<ArgumentBufferWithArray, 10> & argument_buffer,
+                                                         device uint * result)
+{
+    for (int i = 0, end = argument_buffer.size() ; i < end ; i++)
+    {
+        
+    }
+}
 
 
 #import "AluminumTestsUniforms.h"

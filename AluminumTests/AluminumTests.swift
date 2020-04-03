@@ -39,7 +39,7 @@ class AluminumTests: XCTestCase {
             resultEncoder.setArgumentBuffer(resultBuffer)
         }
         
-        XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(1))
+        XCTAssertEqual(resultBuffer.value(), 1)
     }
     
     func testArgumentPointerWithCopyBytes() {
@@ -54,7 +54,7 @@ class AluminumTests: XCTestCase {
             resultEncoder.setArgumentBuffer(resultBuffer)
         }
         
-        XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(1))
+        XCTAssertEqual(resultBuffer.value(), 1)
     }
         
     func testArgumentArray() {
@@ -74,7 +74,7 @@ class AluminumTests: XCTestCase {
             resultEncoder.setArgumentBuffer(resultBuffer)
         }
         
-        XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(45))
+        XCTAssertEqual(resultBuffer.value(), 45)
     }
 
     func testArgumentStruct() {
@@ -85,17 +85,17 @@ class AluminumTests: XCTestCase {
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
 
-            encoder.encode(1, to: [.argument("i")])
-            encoder.encode(2, to: [.argument("j")])
-            encoder.encode(true, to: [.argument("k")])
-            encoder.encode(Float(3), to: [.argument("l")])
+            encoder.encode(1, to: "i")
+            encoder.encode(2, to: "j")
+            encoder.encode(true, to: "k")
+            encoder.encode(Float(3), to: "l")
             
             let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
             resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
             resultEncoder.setArgumentBuffer(resultBuffer)
         }
         
-        XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(7))
+        XCTAssertEqual(resultBuffer.value(), 7)
     }
     
     func testArgumentComplexStruct() {
@@ -118,9 +118,9 @@ class AluminumTests: XCTestCase {
             resultEncoder.setArgumentBuffer(resultBuffer)
         }
         
-        XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(100))
+        XCTAssertEqual(resultBuffer.value(), 100)
     }
-    
+        
     func testArgumentBuffer() {
         var resultBuffer: MTLBuffer!
 
@@ -133,7 +133,6 @@ class AluminumTests: XCTestCase {
             let intBufferPtr = intBuffer.contents().assumingMemoryBound(to: Int32.self)
             (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
             
-
             encoder.encode(intBuffer, to: [.argument("buff")])
             encoder.encode(11, to: [.argument("i")])
             encoder.encode(12, to: [.argument("j")])
@@ -143,17 +142,71 @@ class AluminumTests: XCTestCase {
             resultEncoder.setArgumentBuffer(resultBuffer)
         }
         
-        XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(68))
+        XCTAssertEqual(resultBuffer.value(), 68)
+    }
+        
+    func testArgumentBufferArray() {
+        var resultBuffer: MTLBuffer!
+
+        dispatchController(with: "test_argument_buffer_array") { controller, computeCommandEncoder in
+            let encoder = controller.makeEncoder(for: "argument_buffer_array", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            encoder.setArgumentBuffer(buffer)
+
+            let intBuffers: [MTLBuffer] = (0..<10).map { _ in makeBuffer(length: MemoryLayout<Int32>.size * 10) }
+            intBuffers.forEach {
+                let intBufferPtr = $0.contents().assumingMemoryBound(to: Int32.self)
+                (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
+            }
+            
+            for i in 0 ..< 10 {
+                encoder.encode(intBuffers[i], to: "[\(i)].buff")
+                encoder.encode(11, to: [.index(UInt(i)), .argument("i")])
+                encoder.encode(12, to: [.index(UInt(i)), .argument("j")])
+            }
+            
+            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
+            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
+            resultEncoder.setArgumentBuffer(resultBuffer)
+        }
+        
+        XCTAssertEqual(resultBuffer.value(), 680)
+    }
+
+    func testArgumentBufferWithNestedArgumentBuffer() {
+        var resultBuffer: MTLBuffer!
+
+        dispatchController(with: "test_argument_buffer_with_nested_argument_buffer") { controller, computeCommandEncoder in
+            let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            encoder.setArgumentBuffer(buffer)
+            
+            encoder.encode(100, to: "i")
+            
+            let childEncoder = encoder.childEncoder(for: "child")
+            let childArgumentBuffer = makeBuffer(length: childEncoder.encodedLength)
+            childEncoder.setArgumentBuffer(childArgumentBuffer)
+            
+            let intBuffer = makeBuffer(length: MemoryLayout<Int32>.size * 10)
+            let intBufferPtr = intBuffer.contents().assumingMemoryBound(to: Int32.self)
+            (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
+            
+            childEncoder.encode(intBuffer, to: [.argument("buff")])
+            childEncoder.encode(11, to: [.argument("i")])
+            childEncoder.encode(12, to: [.argument("j")])
+            
+            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
+            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
+            resultEncoder.setArgumentBuffer(resultBuffer)
+        }
+        
+        XCTAssertEqual(resultBuffer.value(), 168)
+    }
+
+    func testArgumentBufferArrayWithNestedArray() {
+        
     }
     
-
-    // test complex struct ...
-    // toDO: check with complex struct that there cant be a case wheres the an argument encoder where an Argument dataType is at
-
-    
-    func testArgumentBufferArray() { }
-    func testArgumentBufferWithPointer() { }
-    func testArgumentBufferArrayWithNestedArray() { }
     func testArgumentBufferArrayWithNestedArgumentBuffer() { }
     func testArgumentBufferArrayWithNestedArgumentBufferAndArray() { }
     
@@ -266,5 +319,11 @@ private extension AluminumTests {
         buffer.contents().assumingMemoryBound(to: T.self).pointee = value
         
         return buffer
+    }
+}
+
+private extension MTLBuffer {
+    func value<T>() -> T {
+        return contents().assumingMemoryBound(to: T.self).pointee
     }
 }
