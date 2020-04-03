@@ -59,7 +59,6 @@ kernel void test_argument_complex_struct(device ArgumentComplexStruct& argument_
     }
 }
 
-
 #pragma mark - Test Argument Buffer
 
 struct ArgumentBuffer {

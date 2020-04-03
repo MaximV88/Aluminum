@@ -51,6 +51,7 @@ internal class Parser {
             
             for (index, dataType) in dataTypePath[(startIndex + 1)...].enumerated() {
                 if case .bytes = dataType { continue }
+                if case .bytesContainer = dataType { continue }
                 
                 return Encoding(dataTypePath: dataTypePath,
                                 parsePath: parsePath,
@@ -125,27 +126,31 @@ private extension Parser {
         
         while !iterator.isFinished {
             let result = iterator.next()!
-            aggragateDataTypePath.append(result)
+             aggragateDataTypePath.append(result)
             
-            if let type = Parser.parseType(from: result) {
-                aggragateParsePath.append(type)
-            }
+            let types = Parser.parseTypes(from: result)
+            aggragateParsePath.append(contentsOf: types)
             
             // arguments assigned by path type processable chunks
             mapping[aggragateParsePath] = aggragateDataTypePath
         }
     }
     
-    static func parseType(from pathType: DataType) -> ParseType? {
+    static func parseTypes(from pathType: DataType) -> [ParseType] {
         switch pathType {
         case .argument(let a): fallthrough
-        case .argumentContainingArgumentBuffer(let a, _): return .named(a.name)
-        case .bytes(_, let s) where s.dataType == .array: return .indexed // all array types are bytes, covers all cases
-        case .bytes(let t, let s) where t == .regular: return .named(s.name) // only name regular. TODO: check atomic in struct!
-        case .buffer(_, let s): return .named(s.name)
-        case .argumentBuffer(_, let s): return .named(s.name)
-        case .encodableBuffer(_, _, let s): return .named(s.name)
-        default: return nil
+        case .argumentContainingArgumentBuffer(let a, _): return [.named(a.name)]
+        case .bytesContainer(let s): return [.named(s.name)]
+        case .bytes(let t, let s) :
+            switch t {
+            case .regular: return [.named(s.name)]
+            case .atomic: return []
+            case .array: return [.named(s.name), .indexed]
+            case .metalArray: return[.indexed]
+            }
+        case .buffer(_, let s): return [.named(s.name)]
+        case .argumentBuffer(_, let s): return [.named(s.name)]
+        case .encodableBuffer(_, _, let s): return [.named(s.name)]
         }
     }
 }
@@ -173,7 +178,7 @@ private func validateEncodablePath<DataTypeArray: RandomAccessCollection>(
     var encounteredEncodable = false
 
     for item in path {
-        if !item.isBytes {
+        if !(item.isBytes || item.isBytesContainer) {
             guard !encounteredEncodable else {
                 return false
             }

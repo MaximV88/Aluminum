@@ -407,20 +407,23 @@ private func queryIndex<DataTypeArray: RandomAccessCollection>(
         case .buffer(_, let s): fallthrough
         case .argumentBuffer(_, let s): fallthrough
         case .encodableBuffer(_, _, let s): fallthrough
-        case .bytes(_, let s) where s.dataType != .array:
+        case .bytesContainer(let s):
             index += s.argumentIndex
             pathIndex += 1
-        case .bytes(let t, let s) where s.dataType == .array:
-            guard case let .array(a) = t else { fatalError() }
-            
-            let inputIndex = path[pathIndex].index!
-            assert(inputIndex >= 0 && inputIndex < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
-            
-            index += a.argumentIndexStride * Int(inputIndex) + s.argumentIndex
+        case .bytes(let t, let s):
+                switch t {
+                case .array(let a):
+                    pathIndex += 1 // array name
+                    fallthrough
+                case .metalArray(let a):
+                    let inputIndex = path[pathIndex].index!
+                    assert(inputIndex >= 0 && inputIndex < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
+                    index += a.argumentIndexStride * Int(inputIndex) + s.argumentIndex
+                default: index += s.argumentIndex
+                }
             pathIndex += 1
         default: break
         }
-        
     }
     
     return index
@@ -443,15 +446,18 @@ private func queryOffset<DataTypeArray: RandomAccessCollection>(
         case .buffer(_, let s): fallthrough
         case .argumentBuffer(_, let s): fallthrough
         case .encodableBuffer(_, _, let s): fallthrough
-        case .bytes(_, let s) where s.dataType != .array:
-            offset += s.offset
-        case .bytes(let t, let s) where s.dataType == .array:
-            guard case let .array(a) = t else { fatalError() }
-            
-            let index = path[pathIndex].index!
-            assert(index >= 0 && index < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
-            
-            offset += Int(index) * a.stride
+        case .bytesContainer(let s): offset += s.offset
+        case .bytes(let t, let s):
+            switch t {
+            case .array(let a):
+                pathIndex += 1 // array name
+                fallthrough
+            case .metalArray(let a):
+                let index = path[pathIndex].index!
+                assert(index >= 0 && index < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
+                offset += Int(index) * a.stride
+            default:  offset += s.offset
+            }
         default: break
         }
         

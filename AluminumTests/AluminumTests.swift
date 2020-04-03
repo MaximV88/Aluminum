@@ -116,7 +116,7 @@ class AluminumTests: XCTestCase {
             resultEncoder.setArgumentBuffer(resultBuffer)
         }
         
-        XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(68))
+        XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(90))
     }
     
     func testArgumentBuffer() {

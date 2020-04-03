@@ -14,10 +14,12 @@ internal enum DataType: Equatable {
         case regular
         case atomic
         case array(MTLArrayType)
+        case metalArray(MTLArrayType)
     }
     
     case argument(MTLArgument)
     case bytes(BytesType, MTLStructMember)
+    case bytesContainer(MTLStructMember)
     case buffer(MTLPointerType, MTLStructMember)
     case argumentBuffer(MTLPointerType, MTLStructMember)
     case encodableBuffer(MTLPointerType, MTLStructType, MTLStructMember)
@@ -35,6 +37,13 @@ internal extension DataType {
     
     var isBytes: Bool {
         if case .bytes = self {
+            return true
+        }
+        return false
+    }
+    
+    var isBytesContainer: Bool {
+        if case .bytesContainer = self {
             return true
         }
         return false
@@ -83,7 +92,7 @@ private protocol DataTypeRecognizer {
     func recognize(_ context: DataTypeContext) -> DataType?
 }
 
-private struct BytesFromMetalArrayRecognizer: DataTypeRecognizer {
+private struct ArrayBytesRecognizer: DataTypeRecognizer {
     func recognize(_ context: DataTypeContext) -> DataType? {
         guard
             case .struct = context.currentMetalType,
@@ -95,11 +104,11 @@ private struct BytesFromMetalArrayRecognizer: DataTypeRecognizer {
             return nil
         }
                 
-        return .bytes(.array(a), s)
+        return .bytes(s.name == "__elems" ? .metalArray(a) : .array(a), s)
     }
 }
 
-private struct BytesFromAtomicVariableRecognizer: DataTypeRecognizer {
+private struct AtomicVariableBytesRecognizer: DataTypeRecognizer {
     func recognize(_ context: DataTypeContext) -> DataType? {
         guard
             case .struct = context.currentMetalType,
@@ -129,21 +138,20 @@ private struct ArgumentRecognizer: DataTypeRecognizer {
     }
 }
 
-//private struct ArrayAsBytesRecognizer: DataTypeRecognizer {
-//    func recognize(_ context: DataTypeContext) -> DataType? {
-//        guard
-//            case .struct = context.currentMetalType,
-//            case let .structMember(s) = context.nextMetalType(),
-//            s.dataType == .array,
-//            case let .array(a) = context.nextMetalType()
-//            else
-//        {
-//            return nil
-//        }
-//
-//        return .bytes(.array(a), s)
-//    }
-//}
+private struct BytesContainerRecognizer: DataTypeRecognizer {
+    func recognize(_ context: DataTypeContext) -> DataType? {
+        guard
+            case .struct = context.currentMetalType,
+            case let .structMember(s) = context.nextMetalType(),
+            case .struct = context.pendingMetalType
+            else
+        {
+            return nil
+        }
+        
+        return .bytesContainer(s)
+    }
+}
 
 private struct BytesRecognizer: DataTypeRecognizer {
     func recognize(_ context: DataTypeContext) -> DataType? {
@@ -300,11 +308,11 @@ where MetalTypeArray.Element == MetalType, MetalTypeArray.Index == Int {
     private let context: IteratorDataTypeContext<MetalTypeArray>
     
     private let recognizers: [DataTypeRecognizer] = [
-        BytesFromMetalArrayRecognizer(),
-        BytesFromAtomicVariableRecognizer(),
+        ArrayBytesRecognizer(),
+        AtomicVariableBytesRecognizer(),
         ArgumentContainingArgumentBufferRecognizer(),
         ArgumentRecognizer(),
-//        ArrayAsBytesRecognizer(),
+        BytesContainerRecognizer(),
         BytesRecognizer(),
         EncodableBytesRecognizer(),
         EncodableBufferRecognizer(),
