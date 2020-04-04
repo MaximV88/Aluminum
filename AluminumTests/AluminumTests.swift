@@ -204,11 +204,175 @@ class AluminumTests: XCTestCase {
     }
 
     func testArgumentBufferArrayWithNestedArray() {
+        var resultBuffer: MTLBuffer!
+
+        dispatchController(with: "test_argument_buffer_array_with_nested_array") { controller, computeCommandEncoder in
+            let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            encoder.setArgumentBuffer(buffer)
+            
+            for i: UInt in 0 ..< 10 {
+                encoder.encode(UInt32(i), to: "[\(i)].i")
+                
+                for j: UInt in 0 ..< 2 {
+                    encoder.encode(UInt32(i), to: "[\(i)].j[\(j)].j")
+                    
+                    (0 ..< 10).forEach {
+                        encoder.encode(Int32($0), to: "[\(i)].j[\(j)].i_arr[\($0)]")
+                        encoder.encode(UInt32($0), to: "[\(i)].j[\(j)].ui_arr[\($0)]")
+                    }
+                }
+                
+                let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
+                resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
+                resultEncoder.setArgumentBuffer(resultBuffer)
+            }
+        }
         
+        XCTAssertEqual(resultBuffer.value(), 1935)
     }
     
-    func testArgumentBufferArrayWithNestedArgumentBuffer() { }
-    func testArgumentBufferArrayWithNestedArgumentBufferAndArray() { }
+    func testArgumentBufferArrayWithNestedArgumentBuffer() {
+        var resultBuffer: MTLBuffer!
+
+        dispatchController(with: "test_argument_buffer_array_with_nested_argument_buffer") { controller, computeCommandEncoder in
+            
+            let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            encoder.setArgumentBuffer(buffer)
+            
+            let intBuffer = makeBuffer(length: MemoryLayout<Int32>.size * 10)
+            let intBufferPtr = intBuffer.contents().assumingMemoryBound(to: Int32.self)
+            (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
+
+            for i: UInt in 0 ..< 10 {
+                let childEncoder = encoder.childEncoder(for: "[\(i)].i")
+                let childEncoderBuffer = makeBuffer(length: childEncoder.encodedLength)
+                childEncoder.setArgumentBuffer(childEncoderBuffer)
+                
+                childEncoder.encode(intBuffer, to: "buff")
+                childEncoder.encode(Int32(11), to: "i")
+                childEncoder.encode(UInt32(12), to: "j")
+            }
+            
+            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
+            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
+            resultEncoder.setArgumentBuffer(resultBuffer)
+        }
+        
+        XCTAssertEqual(resultBuffer.value(), 680)
+    }
+
+    func testArgumentBufferArrayWithNestedArgumentBufferArray() {
+        var resultBuffer: MTLBuffer!
+
+        dispatchController(with: "test_argument_buffer_array_with_nested_argument_buffer_array") { controller, computeCommandEncoder in
+            let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            encoder.setArgumentBuffer(buffer)
+            
+            let intBuffer = makeBuffer(length: MemoryLayout<Int32>.size * 10)
+            let intBufferPtr = intBuffer.contents().assumingMemoryBound(to: Int32.self)
+            (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
+
+            for i: UInt in 0 ..< 10 {
+                encoder.encode(UInt32(i), to: [.index(i), .argument("i")])
+                
+                encoder.encode(intBuffer, to: "[\(i)].j[0].buff")
+                encoder.encode(Int32(11), to: "[\(i)].j[0].i")
+                encoder.encode(UInt32(12), to: "[\(i)].j[0].j")
+                
+                encoder.encode(intBuffer, to: "[\(i)].j[1].buff")
+                encoder.encode(Int32(11), to: "[\(i)].j[1].i")
+                encoder.encode(UInt32(12), to: "[\(i)].j[1].j")
+            }
+            
+            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
+            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
+            resultEncoder.setArgumentBuffer(resultBuffer)
+        }
+        
+        XCTAssertEqual(resultBuffer.value(), 1405)
+    }
+        
+    func testArgumentBufferArrayWithNestedArgumentBufferAndArray() {
+        var resultBuffer: MTLBuffer!
+
+        dispatchController(with: "test_argument_buffer_array_with_nested_argument_buffer_and_array") {
+            controller, computeCommandEncoder in
+            
+            let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            encoder.setArgumentBuffer(buffer)
+            
+            let intBuffer = makeBuffer(length: MemoryLayout<Int32>.size * 10)
+            let intBufferPtr = intBuffer.contents().assumingMemoryBound(to: Int32.self)
+            (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
+
+            for i: UInt in 0 ..< 10 {
+                (0 ..< 10).forEach {
+                    encoder.encode(Int32($0), to: "[\(i)].i_arr[\($0)]")
+                    encoder.encode(UInt32($0), to: "[\(i)].ui_arr[\($0)]")
+                }
+
+                let childEncoder = encoder.childEncoder(for: "[\(i)].i")
+                let childEncoderBuffer = makeBuffer(length: childEncoder.encodedLength)
+                childEncoder.setArgumentBuffer(childEncoderBuffer)
+                
+                childEncoder.encode(intBuffer, to: "buff")
+                childEncoder.encode(Int32(11), to: "i")
+                childEncoder.encode(UInt32(12), to: "j")
+            }
+            
+            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
+            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
+            resultEncoder.setArgumentBuffer(resultBuffer)
+        }
+        
+        XCTAssertEqual(resultBuffer.value(), 1580)
+    }
+    
+    func testArgumentBufferArrayWithNestedArgumentBufferAndArgumentBufferArray() {
+        var resultBuffer: MTLBuffer!
+
+        dispatchController(with: "test_argument_buffer_array_with_nested_argument_buffer_and_argument_buffer_array") {
+            controller, computeCommandEncoder in
+            
+            let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            encoder.setArgumentBuffer(buffer)
+            
+            let intBuffer = makeBuffer(length: MemoryLayout<Int32>.size * 10)
+            let intBufferPtr = intBuffer.contents().assumingMemoryBound(to: Int32.self)
+            (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
+
+            for i: UInt in 0 ..< 10 {
+                let childEncoder = encoder.childEncoder(for: "[\(i)].i")
+                let childEncoderBuffer = makeBuffer(length: childEncoder.encodedLength)
+                childEncoder.setArgumentBuffer(childEncoderBuffer)
+                
+                childEncoder.encode(intBuffer, to: "buff")
+                childEncoder.encode(Int32(11), to: "i")
+                childEncoder.encode(UInt32(12), to: "j")
+                
+                encoder.encode(intBuffer, to: "[\(i)].j[0].buff")
+                encoder.encode(Int32(11), to: "[\(i)].j[0].i")
+                encoder.encode(UInt32(12), to: "[\(i)].j[0].j")
+                
+                encoder.encode(intBuffer, to: "[\(i)].j[1].buff")
+                encoder.encode(Int32(11), to: "[\(i)].j[1].i")
+                encoder.encode(UInt32(12), to: "[\(i)].j[1].j")
+            }
+            
+            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
+            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
+            resultEncoder.setArgumentBuffer(resultBuffer)
+        }
+        
+        XCTAssertEqual(resultBuffer.value(), 2040)
+    }
+    
+    // there cant be an argument buffer inside a metal array, so its an encoded buffer?
     
     func testArrayArgument() {
         
