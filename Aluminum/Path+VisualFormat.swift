@@ -53,6 +53,10 @@ public extension Encoder {
         encode(buffer, offset: offset, to: Path.path(withVisualFormat: path))
     }
 
+    func encode(_ buffer: MTLBuffer, to path: String, _ encoderClosure: (Encoder)->()) {
+        encode(buffer, to: Path.path(withVisualFormat: path), encoderClosure)
+    }
+    
     func encode(_ buffer: MTLBuffer, offset: Int, to path: String, _ encoderClosure: (Encoder)->()) {
         encode(buffer, offset: offset, to: Path.path(withVisualFormat: path), encoderClosure)
     }

@@ -56,7 +56,7 @@ internal class Parser {
                 return Encoding(dataTypePath: dataTypePath,
                                 parsePath: parsePath,
                                 parser: parser,
-                                startIndex: index + 1)
+                                startIndex: startIndex + index + 1)
             }
                         
             fatalError(.invalidChildEncoderPath) // TODO: path is filled with bytes 

@@ -233,74 +233,91 @@ kernel void test_argument_buffer_array_with_nested_argument_buffer_and_argument_
     }
 }
 
-#pragma mark - Test Argument Buffer Array With Nested Argument Buffer With Nested Argument Buffer
+#pragma mark - Test Argument Buffer With Multi Nested Argument Buffer
 
-
-
-
-#import "AluminumTestsUniforms.h"
-#import "AluminumArgumentBuffer.h"
-
-struct Composite {
-//    device float * t;
-    float b;
-    uint a;
-    GridRegion d;
-
+struct MultiNestedC {
+    constant ArgumentBuffer * i;
 };
 
-typedef struct Composite Composite;
-
-struct C {
-    
-    uint k[4];
-    uint a;
-    device float * t;
-    metal::array<uint, 9> arr;
-    ushort c;
-    metal::array<Composite, 9> d;
+struct MultiNestedB {
+    constant MultiNestedC * c;
 };
-typedef struct C C;
 
+struct MultiNestedA {
+    constant MultiNestedB * b;
+};
 
-
-kernel void test_array_argument(device metal::array<C, 40> & arr,
-                                device metal::array<TestArgumentsBuffer, 40> & tarr,
-                                device atomic_uint * result)
+kernel void test_argument_buffer_with_multi_nested_argument_buffer(device MultiNestedA & argument_buffer,
+                                                                   device uint * result)
 {
-    for (int i = 0, end = 40 ; i < end ; i++)
+    *result += argument_buffer.b->c->i->i + argument_buffer.b->c->i->j;
+    
+    for (int i = 0 ; i < 10 ; i++)
     {
-        atomic_fetch_add_explicit(result, *arr[i].t
-                                  + arr[i].a
-                                  + arr[i].c
-                                  + arr[i].arr[0]
-                                  + arr[i].arr[1]
-                                  + tarr[i].l
-                                  + *tarr[i].arr_t[0].buffer
-                                  + tarr[i].arr_t[0].tr->i
-                                  + tarr[i].arr_t[0].tr->k
-                                  + tarr[i].arr_t[0].tr->j
-                                  + *tarr[i].t1->buffer,
-                                  memory_order_relaxed);
+        *result += argument_buffer.b->c->i->buff[i];
     }
 }
 
-kernel void test_argument(device uint * source [[ buffer(0) ]],
-                          device uint * destination [[ buffer(1) ]],
-                          uint gid [[ thread_position_in_grid ]])
+#pragma mark - Test Argument Buffer Array With Multi Nested Argument Buffer
+
+kernel void test_argument_buffer_array_with_multi_nested_argument_buffer(device metal::array<MultiNestedA, 10> & argument_buffer,
+                                                                         device uint * result)
 {
-    destination[gid] = source[gid];
+    for (int i = 0 ; i < 10 ; i++)
+    {
+        *result += argument_buffer[i].b->c->i->i + argument_buffer[i].b->c->i->j;
+        
+        for (int j = 0 ; j < 10 ; j++)
+        {
+            *result += argument_buffer[i].b->c->i->buff[i];
+        }
+    }
 }
 
-kernel void multiple_arguments(device metal::array<float, 3> * arr [[ buffer(1) ]],
-                               threadgroup metal::array<float, 2> * k [[ threadgroup(5) ]],
-                               array<texture2d<float>, 10> constarr [[ texture(3) ]],
-                               texture_buffer<float> testarr [[ texture(0) ]],
-                               texture1d_array<float, metal::access::read> testtextarr [[ texture(1) ]],
-                               device float * buff [[ buffer(2) ]],
-                               constant TestArgumentsUniforms &uniforms [[ buffer(3) ]],
-                               device TestArgumentsBuffer & argumentBuffer [[ buffer(4) ]],
-                               texture2d<float> tex [[ texture(2) ]])
+#pragma mark - Test Argument Buffer Encodable Buffer
+
+struct EncodableStruct {
+    int i;
+    uint j;
+    bool k;
+};
+
+struct ArgumentBufferWithEncodableStruct {
+    device EncodableStruct * i;
+};
+
+kernel void test_argument_buffer_encodable_buffer(device ArgumentBufferWithEncodableStruct & argument_buffer,
+                                                  device uint * result)
 {
-    
+    *result += argument_buffer.i->i + argument_buffer.i->j + argument_buffer.i->k;
 }
+
+#pragma mark - Test Encodable Struct Array
+
+struct ArgumentBufferWithEncodableStructArray {
+    metal::array<device EncodableStruct *, 10> arr;
+};
+
+kernel void test_argument_buffer_encodable_buffer_array(device ArgumentBufferWithEncodableStructArray & argument_buffer,
+                                                        device uint * result)
+{
+    for (int i = 0 ; i < 10 ; i++)
+    {
+        device EncodableStruct& encodable = *argument_buffer.arr[i];
+        *result += encodable.i + encodable.j + encodable.k;
+    }
+}
+
+
+//kernel void multiple_arguments(device metal::array<float, 3> * arr [[ buffer(1) ]],
+//                               threadgroup metal::array<float, 2> * k [[ threadgroup(5) ]],
+//                               array<texture2d<float>, 10> constarr [[ texture(3) ]],
+//                               texture_buffer<float> testarr [[ texture(0) ]],
+//                               texture1d_array<float, metal::access::read> testtextarr [[ texture(1) ]],
+//                               device float * buff [[ buffer(2) ]],
+//                               constant TestArgumentsUniforms &uniforms [[ buffer(3) ]],
+//                               device TestArgumentsBuffer & argumentBuffer [[ buffer(4) ]],
+//                               texture2d<float> tex [[ texture(2) ]])
+//{
+//
+//}

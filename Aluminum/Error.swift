@@ -70,7 +70,7 @@ private extension DataType {
         switch self {
         case .argument(let a): fallthrough
         case .argumentContainingArgumentBuffer(let a, _): return "root argument named \(a)"
-        case .argumentBuffer(_, let s): return "argument named \(s.name)"
+        case .argumentBuffer(_, let s): return "argument buffer named \(s.name)"
         case .buffer(_, let s): return "buffer named \(s.name)"
         case .bytesContainer(let s): return "parent of assignable value named \(s.name)"
         case .bytes(_, let s): return "assignable value named \(s.name)"
