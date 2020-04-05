@@ -496,6 +496,60 @@ class AluminumTests: XCTestCase {
         XCTAssertEqual(resultBuffer.value(), 60)
     }
     
+    func testArgumentBufferArrayEncodableBufferArray() {
+        var resultBuffer: MTLBuffer!
+
+        dispatchController(with: "test_argument_buffer_array_encodable_buffer_array") { controller, computeCommandEncoder in
+            let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength, value: UInt32(1))
+            encoder.setArgumentBuffer(buffer)
+            
+            for i: UInt in 0 ..< 10 {
+                for j: UInt in 0 ..< 10 {
+                    let encodableBuffer = makeBuffer(length: 12)
+                    encoder.encode(encodableBuffer, to: [.index(i), .argument("arr"), .index(j)]) { encoder in
+                        encoder.encode(true, to: "k")
+                        encoder.encode(Int32(2), to: "i")
+                        encoder.encode(UInt32(3), to: "j")
+                    }
+                }
+            }
+            
+            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
+            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
+            resultEncoder.setArgumentBuffer(resultBuffer)
+        }
+        
+        XCTAssertEqual(resultBuffer.value(), 600)
+    }
+    
+    func testArgumentBufferInternalArray() {
+        var resultBuffer: MTLBuffer!
+
+        dispatchController(with: "test_argument_buffer_internal_array") { controller, computeCommandEncoder in
+            let encoder = controller.makeEncoder(for: "argument", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength, value: UInt32(1))
+            encoder.setArgumentBuffer(buffer)
+            
+            let intBuffer = makeBuffer(length: MemoryLayout<Int32>.size * 10)
+            let intBufferPtr = intBuffer.contents().assumingMemoryBound(to: Int32.self)
+            (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
+
+            for i: UInt in 0 ..< 10 {
+                encoder.encode(intBuffer, to: "arr[\(i)].buff")
+                encoder.encode(Int32(11), to: "arr[\(i)].i")
+                encoder.encode(UInt32(12), to: "arr[\(i)].j")
+            }
+            
+            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
+            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
+            resultEncoder.setArgumentBuffer(resultBuffer)
+        }
+        
+        XCTAssertEqual(resultBuffer.value(), 680)
+
+    }
+    
     // there cant be an argument buffer inside a metal array, so its an encoded buffer?
     
 }

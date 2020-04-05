@@ -292,7 +292,7 @@ kernel void test_argument_buffer_encodable_buffer(device ArgumentBufferWithEncod
     *result += argument_buffer.i->i + argument_buffer.i->j + argument_buffer.i->k;
 }
 
-#pragma mark - Test Encodable Struct Array
+#pragma mark - Test Argument Buffer Encodable Buffer Array
 
 struct ArgumentBufferWithEncodableStructArray {
     metal::array<device EncodableStruct *, 10> arr;
@@ -307,6 +307,45 @@ kernel void test_argument_buffer_encodable_buffer_array(device ArgumentBufferWit
         *result += encodable.i + encodable.j + encodable.k;
     }
 }
+
+#pragma mark - Test Argument Buffer Array Encodable Buffer Array
+
+kernel void test_argument_buffer_array_encodable_buffer_array(device metal::array<ArgumentBufferWithEncodableStructArray, 10> & argument_buffer,
+                                                              device uint * result)
+{
+    for (int i = 0 ; i < 10 ; i++)
+    {
+        for (int j = 0 ; j < 10 ; j++)
+        {
+            device EncodableStruct& encodable = *argument_buffer[i].arr[j];
+            *result += encodable.i + encodable.j + encodable.k;
+        }
+    }
+}
+
+#pragma mark - Test Argument Buffer Internal Array
+
+struct ArgumentBufferArray {
+    ArgumentBuffer arr[10];
+};
+
+kernel void test_argument_buffer_internal_array(device ArgumentBufferArray * argument,
+                                                device uint * result)
+{
+    for (int i = 0 ; i < 10 ; i++)
+    {
+        device ArgumentBuffer& encodable = argument->arr[i];
+
+        for (int i = 0, end = 10 ; i < end ; i++)
+        {
+            *result += encodable.buff[i];
+        }
+
+        *result += encodable.i;
+        *result += encodable.j;
+    }
+}
+
 
 //kernel void multiple_arguments(device metal::array<float, 3> * arr [[ buffer(1) ]],
 //                               threadgroup metal::array<float, 2> * k [[ threadgroup(5) ]],
