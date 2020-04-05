@@ -50,16 +50,15 @@ internal class Parser {
             }
             
             for (index, dataType) in dataTypePath[(startIndex + 1)...].enumerated() {
-                if case .bytes = dataType { continue }
-                if case .bytesContainer = dataType { continue }
-                
+                if !dataType.isEncodable { continue }
+
                 return Encoding(dataTypePath: dataTypePath,
                                 parsePath: parsePath,
                                 parser: parser,
                                 startIndex: startIndex + index + 1)
             }
                         
-            fatalError(.invalidChildEncoderPath) // TODO: path is filled with bytes 
+            fatalError(.invalidChildEncoderPath)
         }
                 
         func localDataTypePath(for localPath: Path) -> [DataType] {
@@ -79,7 +78,7 @@ internal class Parser {
     }
     
 
-    fileprivate var mapping = [[ParseType]: [DataType]]() // replace with path type
+    fileprivate var mapping = [[ParseType]: [DataType]]()
 
     init(arguments: [MTLArgument]) {
         arguments.forEach {
@@ -140,17 +139,9 @@ private extension Parser {
         switch pathType {
         case .argument(let a): fallthrough
         case .argumentContainingArgumentBuffer(let a, _): return [.named(a.name)]
-        case .bytesContainer(let s): return [.named(s.name)]
-        case .bytes(let t, let s) :
-            switch t {
-            case .regular: return [.named(s.name)]
-            case .atomic: return []
-            case .array: return [.named(s.name), .indexed]
-            case .metalArray: return[.indexed]
-            }
-        case .buffer(_, let s): return [.named(s.name)]
-        case .argumentBuffer(_, let s): return [.named(s.name)]
-        case .encodableBuffer(_, _, let s): return [.named(s.name)]
+        case .structMember(let s): return [.named(s.name)]
+        case .array, .metalArray: return [.indexed]
+        default: return []
         }
     }
 }
@@ -178,7 +169,7 @@ private func validateEncodablePath<DataTypeArray: RandomAccessCollection>(
     var encounteredEncodable = false
 
     for item in path {
-        if !(item.isBytes || item.isBytesContainer) {
+        if item.isEncodable {
             guard !encounteredEncodable else {
                 return false
             }
@@ -188,4 +179,13 @@ private func validateEncodablePath<DataTypeArray: RandomAccessCollection>(
     }
     
     return true
+}
+
+extension DataType {
+    var isEncodable: Bool {
+        return isEncodableBuffer
+            || isArgumentBuffer
+            || isArgument
+            || isArgumentContainingArgumentBuffer
+    }
 }

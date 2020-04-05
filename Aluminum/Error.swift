@@ -47,6 +47,7 @@ enum AluminumError: Error {
     case invalidChildEncoderPath
 }
 
+// TODO: path description does not provide any usefull information
 extension AluminumError: LocalizedError {
     var localizedDescription: String {
         switch self {
@@ -55,12 +56,12 @@ extension AluminumError: LocalizedError {
         case .invalidEncoderPath: return "Encoder does not support given path (extends outside of it).".padded
         case .noArgumentBuffer: return "Did not set argument buffer for encoder.".padded
         case .invalidArgumentBuffer: return "Argument buffer is too short.".padded
-        case .invalidBuffer: return "Buffer is too short".padded
+        case .invalidBuffer: return "Buffer is too short.".padded
         case .pathIndexOutOfBounds(let i): return "index \(i) is not in bounds of related array.".padded
-        case .invalidBufferPath(let d): return "Expected buffer for path. Encountered \(d.named)".padded
-        case .invalidBytesPath(let d): return "Expected assignable value for path. Encountered \(d.named)".padded
-        case .invalidEncodableBufferPath(let d): return "Expected encodable buffer for path. Encountered \(d.named)".padded
-        case .invalidChildEncoderPath: return "Path used is not compatible for using a child encoder".padded
+        case .invalidBufferPath(let d): return "Expected buffer for path. Encountered \(d.named).".padded
+        case .invalidBytesPath(let d): return "Expected assignable value for path. Encountered \(d.named).".padded
+        case .invalidEncodableBufferPath(let d): return "Expected encodable buffer for path. Encountered \(d.named).".padded
+        case .invalidChildEncoderPath: return "Path used is not compatible for using a child encoder.".padded
         }
     }
 }
@@ -70,11 +71,13 @@ private extension DataType {
         switch self {
         case .argument(let a): fallthrough
         case .argumentContainingArgumentBuffer(let a, _): return "root argument named \(a)"
-        case .argumentBuffer(_, let s): return "argument buffer named \(s.name)"
-        case .buffer(_, let s): return "buffer named \(s.name)"
-        case .bytesContainer(let s): return "parent of assignable value named \(s.name)"
-        case .bytes(_, let s): return "assignable value named \(s.name)"
-        case .encodableBuffer(_, _, let s): return "encodable buffer named \(s.name)"
+        case .argumentBuffer: return "argument buffer"
+        case .array, .metalArray: return "array"
+        case .structMember(let s) where s.dataType != .pointer: return "assignable value named \(s.name)"
+        case .structMember(let s): return "buffer container named \(s.name)"
+        case .atomicVariable: return "atomic assignable value"
+        case .encodableBuffer: return "encodable buffer"
+        case .buffer: return "buffer"
         }
     }
 }

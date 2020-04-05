@@ -481,7 +481,7 @@ class AluminumTests: XCTestCase {
             
             for i: UInt in 0 ..< 10 {
                 let encodableBuffer = makeBuffer(length: 12)
-                encoder.encode(encodableBuffer, to: [.index(i), .argument("i")]) { encoder in
+                encoder.encode(encodableBuffer, to: [.argument("arr"), .index(i)]) { encoder in
                     encoder.encode(true, to: "k")
                     encoder.encode(Int32(2), to: "i")
                     encoder.encode(UInt32(3), to: "j")
@@ -493,77 +493,11 @@ class AluminumTests: XCTestCase {
             resultEncoder.setArgumentBuffer(resultBuffer)
         }
         
-        XCTAssertEqual(resultBuffer.value(), 7)
+        XCTAssertEqual(resultBuffer.value(), 60)
     }
     
     // there cant be an argument buffer inside a metal array, so its an encoded buffer?
     
-    func testArrayArgument() {
-        
-        let commandBuffer = commandQueue.makeCommandBuffer()!
-        let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()!
-        
-        let controller = try! makeComputePipelineState(functionName: "test_array_argument")
-        let arrEncoder = controller.makeEncoder(for: "arr", with: computeCommandEncoder)
-        let tarrEncoder = controller.makeEncoder(for: "tarr", with: computeCommandEncoder)
-        let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-                
-        let arrBuffer = device.makeBuffer(length: arrEncoder.encodedLength, options: .storageModeShared)!
-        let tarrBuffer = device.makeBuffer(length: tarrEncoder.encodedLength, options: .storageModeShared)!
-        let resultBuffer = device.makeBuffer(length: MemoryLayout<UInt32>.stride * 1 , options: .storageModeShared)!
-        
-        let testBufferArr: [MTLBuffer] = (0..<40).map { _ in
-            return device.makeBuffer(length: MemoryLayout<Float>.stride * 4 , options: .storageModeShared)!
-        }
-        
-        let intBuffer = device.makeBuffer(length: MemoryLayout<Int>.stride, options: .storageModeShared)!
-        intBuffer.contents().assumingMemoryBound(to: Int.self).pointee = 5
-    
-        let trBuffer = device.makeBuffer(length: 1000, options: .storageModeShared)!
-        trBuffer.contents().assumingMemoryBound(to: UInt.self).pointee = 0
-        
-        let t1Buffers: [MTLBuffer] = (0..<40).map { _ in
-            return device.makeBuffer(length: 128, options: .storageModeShared)!
-        }
-        
-        for i in 0 ..< 40 {
-            testBufferArr[i].contents().assumingMemoryBound(to: Float.self).pointee = Float(i)
-        }
-                
-        
-        arrEncoder.setArgumentBuffer(arrBuffer)
-        tarrEncoder.setArgumentBuffer(tarrBuffer)
-        resultEncoder.setArgumentBuffer(resultBuffer)
-                
-        for i: UInt in 0 ..< 40 {
-            arrEncoder.encode(UInt32(i), to: [.index(i), .argument("a")])
-            arrEncoder.encode(UInt16(i), to: [.index(i), .argument("c")])
-            arrEncoder.encode(UInt32(i), to: [.index(i), .argument("arr"), .index(0)])
-            arrEncoder.encode(UInt32(1), to: [.index(i), .argument("arr"), .index(1)])
-            arrEncoder.encode(testBufferArr[Int(i)], to: [.index(i), .argument("t")])
-
-            tarrEncoder.encode(UInt(1), to: [.index(i), .argument("l")])
-            tarrEncoder.encode(intBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("buffer")])
-            tarrEncoder.encode(trBuffer, to: [.index(i), .argument("arr_t"), .index(0), .argument("tr")]) { encoder in
-                encoder.encode(UInt32(i), to: "i")
-                encoder.encode(Float(2), to: "k")
-                encoder.encode(false, to: "j")
-            }
-            
-                        
-            let t1Encoder = tarrEncoder.childEncoder(for: [.index(i), .argument("t1")])
-            t1Encoder.setArgumentBuffer(t1Buffers[Int(i)])
-
-            t1Encoder.encode(intBuffer, to: [.argument("buffer")])
-        }
-        
-        
-        dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
-        
-        XCTAssertEqual(resultBuffer.contents().assumingMemoryBound(to: UInt32.self).pointee, UInt32(138))
-        
-        
-    }
 }
 
 private extension AluminumTests {

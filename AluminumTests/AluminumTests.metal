@@ -308,7 +308,6 @@ kernel void test_argument_buffer_encodable_buffer_array(device ArgumentBufferWit
     }
 }
 
-
 //kernel void multiple_arguments(device metal::array<float, 3> * arr [[ buffer(1) ]],
 //                               threadgroup metal::array<float, 2> * k [[ threadgroup(5) ]],
 //                               array<texture2d<float>, 10> constarr [[ texture(3) ]],

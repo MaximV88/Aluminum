@@ -34,30 +34,33 @@ private extension Path {
     }
 }
 
+// MARK: - VisualPath support extension
+
+public extension BytesEncoder {
+    func encode<T>(_ parameter: T, to path: String) {
+        encode(parameter, to: Path.path(withVisualFormat: path))
+    }
+
+    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: String) {
+        encode(bytes, count: count, to: Path.path(withVisualFormat: path))
+    }
+    
+}
+
 public extension Encoder {
     func encode(_ buffer: MTLBuffer, to path: String) {
         encode(buffer, to: Path.path(withVisualFormat: path))
     }
-
-    func encode<T>(_ parameter: T, to path: String) {
-        encode(parameter, to: Path.path(withVisualFormat: path))
-    }
-}
-
-public extension Encoder {
-    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: String) {
-        encode(bytes, count: count, to: Path.path(withVisualFormat: path))
-    }
-
+    
     func encode(_ buffer: MTLBuffer, offset: Int, to path: String) {
         encode(buffer, offset: offset, to: Path.path(withVisualFormat: path))
     }
 
-    func encode(_ buffer: MTLBuffer, to path: String, _ encoderClosure: (Encoder)->()) {
+    func encode(_ buffer: MTLBuffer, to path: String, _ encoderClosure: (BytesEncoder)->()) {
         encode(buffer, to: Path.path(withVisualFormat: path), encoderClosure)
     }
     
-    func encode(_ buffer: MTLBuffer, offset: Int, to path: String, _ encoderClosure: (Encoder)->()) {
+    func encode(_ buffer: MTLBuffer, offset: Int, to path: String, _ encoderClosure: (BytesEncoder)->()) {
         encode(buffer, offset: offset, to: Path.path(withVisualFormat: path), encoderClosure)
     }
 }
