@@ -29,9 +29,7 @@ public protocol ComputePipelineStateEncoder: Encoder {
 
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int)
     
-    // issue warning if bytes is above 4k (i.e. count or enoder call)
-    func encode(_ bytes: UnsafeRawPointer, count: Int) // copy bytes to root
-    // throw when in argument buffer
+    func encode(_ bytes: UnsafeRawPointer, count: Int)
     
     func childEncoder(for path: Path) -> ComputePipelineStateEncoder
 }
@@ -163,6 +161,8 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     }
 
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
+        // TODO: issue warning if bytes is above 4k (i.e. count or enoder call)
+
         if let argumentBuffer = argumentBuffer {
             let destination = argumentBuffer.contents().assumingMemoryBound(to: UInt8.self)
             let source = bytes.assumingMemoryBound(to: UInt8.self)
@@ -177,10 +177,8 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
-        assert(!didCopyBytes) // TODO: add error that setting value to specific location after using encode will override previous data
+        assert(!didCopyBytes, .overridesSingleUseData)
         assert(argumentBuffer != nil, .noArgumentBuffer)
-
-        // get index of path and make copyBytes ...  that will override previos call
         
         let dataTypePath = encoding.localDataTypePath(for: path)
         assert(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
@@ -267,7 +265,6 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
         hasArgumentBuffer = true
         argumentEncoder.setArgumentBuffer(argumentBuffer, offset: offset)
         
-        // TODO: check if required
         if let parentArgumentEncoder = parentArgumentEncoder {
             parentArgumentEncoder.setBuffer(argumentBuffer, offset: offset, index: encoderIndex)
             computeCommandEncoder.useResource(argumentBuffer, usage: pointer.access.usage)
@@ -277,7 +274,7 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
-        fatalError() // TODO: add error regarding inability of argument buffer encoder to use setBytes since its an argument buffer
+        fatalError(.noArgumentBufferSupportForSingleUseData)
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {

@@ -45,9 +45,11 @@ enum AluminumError: Error {
     case invalidBytesPath(DataType)
     case invalidEncodableBufferPath(DataType)
     case invalidChildEncoderPath
+    case noArgumentBufferSupportForSingleUseData
+    case overridesSingleUseData
 }
 
-// TODO: path description does not provide any usefull information
+// TODO: path description does not provide any useful information
 extension AluminumError: LocalizedError {
     var localizedDescription: String {
         switch self {
@@ -62,6 +64,8 @@ extension AluminumError: LocalizedError {
         case .invalidBytesPath(let d): return "Expected assignable value for path. Encountered \(d.named).".padded
         case .invalidEncodableBufferPath(let d): return "Expected encodable buffer for path. Encountered \(d.named).".padded
         case .invalidChildEncoderPath: return "Path used is not compatible for using a child encoder.".padded
+        case .noArgumentBufferSupportForSingleUseData: return "Argument buffer cannot set single use data storage.".padded
+        case .overridesSingleUseData: return "Removes single use data that was already set."
         }
     }
 }
