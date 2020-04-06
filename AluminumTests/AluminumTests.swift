@@ -27,40 +27,28 @@ class AluminumTests: XCTestCase {
     }
         
     func testArgumentPointerWithArgumentBuffer() {
-        var resultBuffer: MTLBuffer!
-
-        dispatchController(with: "test_argument_pointer") { controller, computeCommandEncoder in
+        runTestController(for: "test_argument_pointer", expected: 1)
+        { controller, computeCommandEncoder in
+            
             let encoder = controller.makeEncoder(for: "buffer", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength, value: UInt32(1))
             encoder.setArgumentBuffer(buffer)
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 1)
     }
     
     func testArgumentPointerWithCopyBytes() {
-        var resultBuffer: MTLBuffer!
+        runTestController(for: "test_argument_pointer", expected: 1)
+        { controller, computeCommandEncoder in
 
-        dispatchController(with: "test_argument_pointer") { controller, computeCommandEncoder in
             let encoder = controller.makeEncoder(for: "buffer", with: computeCommandEncoder)
             encoder.encode(UInt32(1))
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 1)
     }
         
     func testArgumentArray() {
-        var resultBuffer: MTLBuffer!
+        runTestController(for: "test_argument_array", expected: 45)
+        { controller, computeCommandEncoder in
 
-        dispatchController(with: "test_argument_array") { controller, computeCommandEncoder in
             let encoder = controller.makeEncoder(for: "array", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
@@ -68,19 +56,13 @@ class AluminumTests: XCTestCase {
             for i: UInt in 0 ..< 10 {
                 encoder.encode(UInt32(i), to: [.index(i)])
             }
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 45)
     }
 
     func testArgumentStruct() {
-        var resultBuffer: MTLBuffer!
+        runTestController(for: "test_argument_struct", expected: 7)
+        { controller, computeCommandEncoder in
 
-        dispatchController(with: "test_argument_struct") { controller, computeCommandEncoder in
             let encoder = controller.makeEncoder(for: "argument_struct", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
@@ -89,19 +71,13 @@ class AluminumTests: XCTestCase {
             encoder.encode(2, to: "j")
             encoder.encode(true, to: "k")
             encoder.encode(Float(3), to: "l")
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 7)
     }
     
     func testArgumentComplexStruct() {
-        var resultBuffer: MTLBuffer!
+        runTestController(for: "test_argument_complex_struct", expected: 100)
+        { controller, computeCommandEncoder in
 
-        dispatchController(with: "test_argument_complex_struct") { controller, computeCommandEncoder in
             let encoder = controller.makeEncoder(for: "argument_complex_struct", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
@@ -112,19 +88,13 @@ class AluminumTests: XCTestCase {
             }
             
             encoder.encode(UInt(10), to: [.argument("j")])
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 100)
     }
         
     func testArgumentBuffer() {
-        var resultBuffer: MTLBuffer!
+        runTestController(for: "test_argument_buffer", expected: 68)
+        { controller, computeCommandEncoder in
 
-        dispatchController(with: "test_argument_buffer") { controller, computeCommandEncoder in
             let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
@@ -136,19 +106,13 @@ class AluminumTests: XCTestCase {
             encoder.encode(intBuffer, to: [.argument("buff")])
             encoder.encode(11, to: [.argument("i")])
             encoder.encode(12, to: [.argument("j")])
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 68)
     }
         
     func testArgumentBufferArray() {
-        var resultBuffer: MTLBuffer!
+        runTestController(for: "test_argument_buffer_array", expected: 680)
+        { controller, computeCommandEncoder in
 
-        dispatchController(with: "test_argument_buffer_array") { controller, computeCommandEncoder in
             let encoder = controller.makeEncoder(for: "argument_buffer_array", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
@@ -164,19 +128,13 @@ class AluminumTests: XCTestCase {
                 encoder.encode(11, to: [.index(UInt(i)), .argument("i")])
                 encoder.encode(12, to: [.index(UInt(i)), .argument("j")])
             }
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 680)
     }
 
     func testArgumentBufferWithNestedArgumentBuffer() {
-        var resultBuffer: MTLBuffer!
+        runTestController(for: "test_argument_buffer_with_nested_argument_buffer", expected: 168)
+        { controller, computeCommandEncoder in
 
-        dispatchController(with: "test_argument_buffer_with_nested_argument_buffer") { controller, computeCommandEncoder in
             let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
@@ -194,19 +152,13 @@ class AluminumTests: XCTestCase {
             childEncoder.encode(intBuffer, to: [.argument("buff")])
             childEncoder.encode(11, to: [.argument("i")])
             childEncoder.encode(12, to: [.argument("j")])
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 168)
     }
 
     func testArgumentBufferArrayWithNestedArray() {
-        var resultBuffer: MTLBuffer!
-
-        dispatchController(with: "test_argument_buffer_array_with_nested_array") { controller, computeCommandEncoder in
+        runTestController(for: "test_argument_buffer_array_with_nested_array", expected: 1935)
+        { controller, computeCommandEncoder in
+            
             let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
@@ -222,21 +174,14 @@ class AluminumTests: XCTestCase {
                         encoder.encode(UInt32($0), to: "[\(i)].j[\(j)].ui_arr[\($0)]")
                     }
                 }
-                
-                let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-                resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-                resultEncoder.setArgumentBuffer(resultBuffer)
             }
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 1935)
     }
     
     func testArgumentBufferArrayWithNestedArgumentBuffer() {
-        var resultBuffer: MTLBuffer!
+        runTestController(for: "test_argument_buffer_array_with_nested_argument_buffer", expected: 680)
+        { controller, computeCommandEncoder in
 
-        dispatchController(with: "test_argument_buffer_array_with_nested_argument_buffer") { controller, computeCommandEncoder in
-            
             let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
@@ -254,19 +199,13 @@ class AluminumTests: XCTestCase {
                 childEncoder.encode(Int32(11), to: "i")
                 childEncoder.encode(UInt32(12), to: "j")
             }
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 680)
     }
 
     func testArgumentBufferArrayWithNestedArgumentBufferArray() {
-        var resultBuffer: MTLBuffer!
+        runTestController(for: "test_argument_buffer_array_with_nested_argument_buffer_array", expected: 1405)
+        { controller, computeCommandEncoder in
 
-        dispatchController(with: "test_argument_buffer_array_with_nested_argument_buffer_array") { controller, computeCommandEncoder in
             let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
@@ -286,20 +225,12 @@ class AluminumTests: XCTestCase {
                 encoder.encode(Int32(11), to: "[\(i)].j[1].i")
                 encoder.encode(UInt32(12), to: "[\(i)].j[1].j")
             }
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 1405)
     }
         
     func testArgumentBufferArrayWithNestedArgumentBufferAndArray() {
-        var resultBuffer: MTLBuffer!
-
-        dispatchController(with: "test_argument_buffer_array_with_nested_argument_buffer_and_array") {
-            controller, computeCommandEncoder in
+        runTestController(for: "test_argument_buffer_array_with_nested_argument_buffer_and_array", expected: 1580)
+        { controller, computeCommandEncoder in
             
             let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength)
@@ -323,20 +254,12 @@ class AluminumTests: XCTestCase {
                 childEncoder.encode(Int32(11), to: "i")
                 childEncoder.encode(UInt32(12), to: "j")
             }
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 1580)
     }
     
     func testArgumentBufferArrayWithNestedArgumentBufferAndArgumentBufferArray() {
-        var resultBuffer: MTLBuffer!
-
-        dispatchController(with: "test_argument_buffer_array_with_nested_argument_buffer_and_argument_buffer_array") {
-            controller, computeCommandEncoder in
+        runTestController(for: "test_argument_buffer_array_with_nested_argument_buffer_and_argument_buffer_array", expected: 2040)
+        { controller, computeCommandEncoder in
             
             let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength)
@@ -363,20 +286,13 @@ class AluminumTests: XCTestCase {
                 encoder.encode(Int32(11), to: "[\(i)].j[1].i")
                 encoder.encode(UInt32(12), to: "[\(i)].j[1].j")
             }
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 2040)
     }
     
     func testArgumentBufferWithMultiNestedArgumentBuffer() {
-        var resultBuffer: MTLBuffer!
+        runTestController(for: "test_argument_buffer_with_multi_nested_argument_buffer", expected: 68)
+        { controller, computeCommandEncoder in
 
-        dispatchController(with: "test_argument_buffer_with_multi_nested_argument_buffer") { controller, computeCommandEncoder in
-            
             let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
@@ -400,20 +316,13 @@ class AluminumTests: XCTestCase {
             childEncoderMain.encode(intBuffer, to: "buff")
             childEncoderMain.encode(Int32(11), to: "i")
             childEncoderMain.encode(UInt32(12), to: "j")
-
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 68)
     }
     
     func testArgumentBufferArrayWithMultiNestedArgumentBuffer() {
-        var resultBuffer: MTLBuffer!
+        runTestController(for: "test_argument_buffer_array_with_multi_nested_argument_buffer", expected: 680)
+        { controller, computeCommandEncoder in
 
-        dispatchController(with: "test_argument_buffer_array_with_multi_nested_argument_buffer") { controller, computeCommandEncoder in
-            
             let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
@@ -438,20 +347,14 @@ class AluminumTests: XCTestCase {
                 childEncoderMain.encode(intBuffer, to: "buff")
                 childEncoderMain.encode(Int32(11), to: "i")
                 childEncoderMain.encode(UInt32(12), to: "j")
-                
-                let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-                resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-                resultEncoder.setArgumentBuffer(resultBuffer)
             }
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 680)
     }
     
     func testArgumentBufferEncodableBuffer() {
-        var resultBuffer: MTLBuffer!
+        runTestController(for: "test_argument_buffer_encodable_buffer", expected: 6)
+        { controller, computeCommandEncoder in
 
-        dispatchController(with: "test_argument_buffer_encodable_buffer") { controller, computeCommandEncoder in
             let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength, value: UInt32(1))
             encoder.setArgumentBuffer(buffer)
@@ -462,19 +365,13 @@ class AluminumTests: XCTestCase {
                 encoder.encode(Int32(2), to: "i")
                 encoder.encode(UInt32(3), to: "j")
             }
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 6)
     }
     
     func testArgumentBufferEncodableBufferArray() {
-        var resultBuffer: MTLBuffer!
+        runTestController(for: "test_argument_buffer_encodable_buffer_array", expected: 60)
+        { controller, computeCommandEncoder in
 
-        dispatchController(with: "test_argument_buffer_encodable_buffer_array") { controller, computeCommandEncoder in
             let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength, value: UInt32(1))
             encoder.setArgumentBuffer(buffer)
@@ -487,19 +384,13 @@ class AluminumTests: XCTestCase {
                     encoder.encode(UInt32(3), to: "j")
                 }
             }
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 60)
     }
     
     func testArgumentBufferArrayEncodableBufferArray() {
-        var resultBuffer: MTLBuffer!
+        runTestController(for: "test_argument_buffer_array_encodable_buffer_array", expected: 600)
+        { controller, computeCommandEncoder in
 
-        dispatchController(with: "test_argument_buffer_array_encodable_buffer_array") { controller, computeCommandEncoder in
             let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength, value: UInt32(1))
             encoder.setArgumentBuffer(buffer)
@@ -514,19 +405,12 @@ class AluminumTests: XCTestCase {
                     }
                 }
             }
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 600)
     }
     
-    func testArgumentBufferInternalArray() {
-        var resultBuffer: MTLBuffer!
-
-        dispatchController(with: "test_argument_buffer_internal_array") { controller, computeCommandEncoder in
+    func testArgumentBufferStructArray() {
+        runTestController(for: "test_argument_buffer_struct_array", expected: 680)
+        { controller, computeCommandEncoder in
             let encoder = controller.makeEncoder(for: "argument", with: computeCommandEncoder)
             let buffer = makeBuffer(length: encoder.encodedLength, value: UInt32(1))
             encoder.setArgumentBuffer(buffer)
@@ -540,33 +424,48 @@ class AluminumTests: XCTestCase {
                 encoder.encode(Int32(11), to: "arr[\(i)].i")
                 encoder.encode(UInt32(12), to: "arr[\(i)].j")
             }
-            
-            let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-            resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-            resultEncoder.setArgumentBuffer(resultBuffer)
         }
-        
-        XCTAssertEqual(resultBuffer.value(), 680)
-
     }
     
-    // there cant be an argument buffer inside a metal array, so its an encoded buffer?
-    
+    func testArgumentBufferPointerArray() {
+        runTestController(for: "test_argument_buffer_pointer_array", expected: 450)
+        { controller, computeCommandEncoder in
+
+            let encoder = controller.makeEncoder(for: "argument", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength, value: UInt32(1))
+            encoder.setArgumentBuffer(buffer)
+            
+            let intBuffer = makeBuffer(length: MemoryLayout<Int32>.size * 10)
+            let intBufferPtr = intBuffer.contents().assumingMemoryBound(to: Int32.self)
+            (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
+
+            for i: UInt in 0 ..< 10 {
+                encoder.encode(intBuffer, to: [.argument("arr"), .index(i)])
+            }
+        }
+    }
+        
 }
 
 private extension AluminumTests {
-    func dispatchController(with functionName: String,
-                            threadCount: Int = 1,
-                            _ configurationBlock: (ComputePipelineStateController, MTLComputeCommandEncoder)->())
+    func runTestController<T: Equatable>(for functionName: String,
+                                         expected: T,
+                                         _ configurationBlock: (ComputePipelineStateController, MTLComputeCommandEncoder)->())
     {
         let controller = try! makeComputePipelineState(functionName: functionName)
         let commandBuffer = commandQueue.makeCommandBuffer()!
         let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()!
 
+        let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
+        let resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
+        resultEncoder.setArgumentBuffer(resultBuffer)
+        
         configurationBlock(controller, computeCommandEncoder)
-        dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: threadCount)
+        dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
+
+        XCTAssertEqual(resultBuffer.value(), expected)
     }
-    
+        
     func makeComputePipelineState(functionName: String) throws -> ComputePipelineStateController {
         guard let function = library.makeFunction(name: functionName) else {
             throw TestError.noFunctionForName

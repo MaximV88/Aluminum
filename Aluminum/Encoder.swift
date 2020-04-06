@@ -20,6 +20,8 @@ public protocol Encoder: BytesEncoder {
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder)->())
 
+    // TODO: add buffer array method that uses setBuffers
+    
     // TODO: missing stubs for texture/...
 
 }
@@ -413,6 +415,9 @@ private func queryIndex<DataTypeArray: RandomAccessCollection>(
         }
     }
     
+    // expect entire path iteration
+    assert(pathIndex == path.count)
+    
     return index
 }
 
@@ -446,24 +451,6 @@ private func queryOffset<DataTypeArray: RandomAccessCollection>(
     assert(pathIndex == path.count)
     
     return offset
-}
-
-private extension MetalType {
-    var index: Int? {
-        switch self {
-        case .argument(let a): return a.index
-        case .structMember(let s): return s.argumentIndex
-        default: return nil
-        }
-    }
-    
-    var pointer: MTLPointerType? {
-        guard case let .pointer(p) = self else {
-            return nil
-        }
-        
-        return p
-    }
 }
 
 private extension MTLArgumentAccess {
