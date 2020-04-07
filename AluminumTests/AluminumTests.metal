@@ -366,9 +366,20 @@ kernel void test_argument_buffer_pointer_array(device ArgumentBufferPointerArray
     }
 }
 
+#pragma mark - Test Texture Argument
 
-// test for buffer array
-
+kernel void test_texture_argument(texture2d<uint, access::read> argument,
+                                  device uint * result)
+{
+    for (ushort i = 0 ; i < 10 ; i++)
+    {
+        for (ushort j = 0 ; j < 10 ; j++)
+        {
+            auto value = argument.read(ushort2(i, j));
+            *result += value.x;// + value.y + value.z + value.w;
+        }
+    }
+}
 
 //kernel void multiple_arguments(device metal::array<float, 3> * arr [[ buffer(1) ]],
 //                               threadgroup metal::array<float, 2> * k [[ threadgroup(5) ]],

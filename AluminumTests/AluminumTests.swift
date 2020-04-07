@@ -444,6 +444,17 @@ class AluminumTests: XCTestCase {
             }
         }
     }
+    
+    func testTextureArgument() {
+        runTestController(for: "test_texture_argument", expected: 0)
+        { controller, computeCommandEncoder in
+
+            let encoder = controller.makeEncoder(for: "argument", with: computeCommandEncoder)
+            let texture = makeTexture(width: 10, height: 10, value: 1)
+            
+            encoder.encode(texture)
+        }
+    }
         
 }
 
@@ -455,7 +466,7 @@ private extension AluminumTests {
         let controller = try! makeComputePipelineState(functionName: functionName)
         let commandBuffer = commandQueue.makeCommandBuffer()!
         let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()!
-
+        
         let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
         let resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
         resultEncoder.setArgumentBuffer(resultBuffer)
@@ -494,6 +505,31 @@ private extension AluminumTests {
         buffer.contents().assumingMemoryBound(to: T.self).pointee = value
         
         return buffer
+    }
+    
+    func makeTexture(width: Int, height: Int) -> MTLTexture {
+        let descriptor = MTLTextureDescriptor()
+        descriptor.pixelFormat = .bgra8Unorm
+        descriptor.width = 10
+        descriptor.height = 10
+        
+        return device.makeTexture(descriptor: descriptor)!
+    }
+    
+    func makeTexture<T>(width: Int, height: Int, value: T) -> MTLTexture {
+        let texture = makeTexture(width: width, height: height)
+        let region = MTLRegion(origin: MTLOrigin(x: 0, y: 0, z: 0),
+                               size: MTLSize(width: width, height: height, depth: 1))
+        
+        let data = UnsafeMutableRawPointer.allocate(byteCount: width * height * 4, alignment: 4)
+        defer { data.deallocate() }
+
+        texture.replace(region: region,
+                        mipmapLevel: 0,
+                        withBytes: data,
+                        bytesPerRow: 4 * width)
+
+        return texture
     }
 }
 

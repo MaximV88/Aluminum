@@ -12,6 +12,7 @@ import Metal
 internal enum DataType: Equatable {
     case argument(MTLArgument)
     case argumentContainingArgumentBuffer(MTLArgument, MTLPointerType)
+    case argumentTexture(MTLArgument)
     case argumentBuffer(MTLPointerType)
     case structMember(MTLStructMember)
     case array(MTLArrayType)
@@ -41,6 +42,7 @@ private struct ArgumentRecognizer: DataTypeRecognizer {
     func recognize(_ context: DataTypeContext) -> DataType? {
         guard
             case let .argument(a) = context.currentMetalType,
+            case .buffer = a.type,
             case let .pointer(p) = context.nextMetalType(),
             !p.elementIsArgumentBuffer
             else
@@ -56,6 +58,7 @@ private struct ArgumentContainingArgumentBufferRecognizer: DataTypeRecognizer {
     func recognize(_ context: DataTypeContext) -> DataType? {
         guard
             case let .argument(a) = context.currentMetalType,
+            case .buffer = a.type,
             case let .pointer(p) = context.nextMetalType(),
             p.elementIsArgumentBuffer
             else
@@ -64,6 +67,20 @@ private struct ArgumentContainingArgumentBufferRecognizer: DataTypeRecognizer {
         }
         
         return .argumentContainingArgumentBuffer(a, p)
+    }
+}
+
+private struct ArgumentTextureRecognizer: DataTypeRecognizer {
+    func recognize(_ context: DataTypeContext) -> DataType? {
+        guard
+            case let .argument(a) = context.currentMetalType,
+            case .texture = a.type
+            else
+        {
+            return nil
+        }
+        
+        return .argumentTexture(a)
     }
 }
 
@@ -229,6 +246,7 @@ where MetalTypeArray.Element == MetalType, MetalTypeArray.Index == Int {
         AtomicVariableRecognizer(),
         ArgumentContainingArgumentBufferRecognizer(),
         ArgumentRecognizer(),
+        ArgumentTextureRecognizer(),
         StructMemberRecognizer(),
         EncodableBufferRecognizer(),
         BufferRecognizer(),
@@ -280,6 +298,13 @@ internal extension DataType {
     
     var isArgumentContainingArgumentBuffer: Bool {
         if case .argumentContainingArgumentBuffer = self {
+            return true
+        }
+        return false
+    }
+    
+    var isArgumentTexture: Bool {
+        if case .argumentTexture = self {
             return true
         }
         return false

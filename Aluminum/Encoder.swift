@@ -8,6 +8,7 @@
 
 import Metal
 
+
 public protocol BytesEncoder {
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path)
@@ -32,6 +33,8 @@ public protocol ComputePipelineStateEncoder: Encoder {
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int)
     
     func encode(_ bytes: UnsafeRawPointer, count: Int)
+    
+    func encode(_ texture: MTLTexture)
     
     func childEncoder(for path: Path) -> ComputePipelineStateEncoder
 }
@@ -66,58 +69,82 @@ public extension ComputePipelineStateEncoder {
     }
 }
 
-class RootEncoder {
-    private let internalEncoder: ComputePipelineStateEncoder
-        
-    init(encoding: Parser.Encoding,
-         rootPath: Path,
-         function: MTLFunction,
-         computeCommandEncoder: MTLComputeCommandEncoder)
-    {
-        switch encoding.dataType {
-        case .argument:
-            internalEncoder = RootArgumentEncoder(encoding: encoding,
-                                                  function: function,
-                                                  computeCommandEncoder: computeCommandEncoder)
-        case .argumentContainingArgumentBuffer:
-            let index = queryIndex(for: rootPath, dataTypePath: encoding.dataTypePath)
-            internalEncoder = ArgumentEncoder(encoding: encoding,
-                                              encoderIndex: index,
-                                              argumentEncoder: function.makeArgumentEncoder(bufferIndex: index),
-                                              parentArgumentEncoder: nil,
-                                              computeCommandEncoder: computeCommandEncoder)
-        default: fatalError("RootEncoder must start with an argument.")
-        }
+internal func makeComputePipelineStateEncoder(
+    for encoding: Parser.Encoding,
+    rootPath: Path,
+    function: MTLFunction,
+    computeCommandEncoder: MTLComputeCommandEncoder
+) -> ComputePipelineStateEncoder
+{
+    switch encoding.dataType {
+    case .argument:
+        return RootArgumentEncoder(encoding: encoding,
+                                   function: function,
+                                   computeCommandEncoder: computeCommandEncoder)
+    case .argumentTexture:
+        return RootTextureEncoder(encoding: encoding,
+                                  computeCommandEncoder: computeCommandEncoder)
+    case .argumentContainingArgumentBuffer:
+        let index = queryIndex(for: rootPath, dataTypePath: encoding.dataTypePath)
+        return ArgumentEncoder(encoding: encoding,
+                               encoderIndex: index,
+                               argumentEncoder: function.makeArgumentEncoder(bufferIndex: index),
+                               parentArgumentEncoder: nil,
+                               computeCommandEncoder: computeCommandEncoder)
+    default: fatalError("RootEncoder must start with an argument.")
     }
 }
 
-extension RootEncoder: ComputePipelineStateEncoder {
+private class RootTextureEncoder {
+    private let encoding: Parser.Encoding
+    private let argument: MTLArgument
+    private weak var computeCommandEncoder: MTLComputeCommandEncoder!
+    
+    init(encoding: Parser.Encoding,
+         computeCommandEncoder: MTLComputeCommandEncoder)
+    {
+        guard case let .argumentTexture(argument) = encoding.dataType else {
+            fatalError("RootTextureEncoder expects an argument path that starts with an argument texture.")
+        }
+        
+        self.encoding = encoding
+        self.argument = argument
+        self.computeCommandEncoder = computeCommandEncoder
+    }
+}
+
+extension RootTextureEncoder: ComputePipelineStateEncoder {
     var encodedLength: Int {
-        return internalEncoder.encodedLength
+        // TODO: assert that texture argument doesnt have encoded length
+        return 0
     }
     
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
-        internalEncoder.setArgumentBuffer(argumentBuffer, offset: offset)
+        fatalError()
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
-        internalEncoder.encode(bytes, count: count)
+        fatalError()
+    }
+    
+    func encode(_ texture: MTLTexture) {
+        computeCommandEncoder.setTexture(texture, index: argument.index)
+    }
+
+    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder) -> ()) {
+        fatalError()
+    }
+    
+    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
+        fatalError()
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
-        internalEncoder.encode(bytes, count: count, to: path)
-    }
-
-    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
-        internalEncoder.encode(buffer, offset: offset, to: path)
+        fatalError()
     }
     
-    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder) -> ()) {
-        internalEncoder.encode(buffer, offset: offset, to: path, encoderClosure)
-    }
-
     func childEncoder(for path: Path) -> ComputePipelineStateEncoder {
-        return internalEncoder.childEncoder(for: path)
+        fatalError()
     }
 }
 
@@ -138,7 +165,7 @@ private class RootArgumentEncoder {
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
         guard case let .argument(argument) = encoding.dataType else {
-            fatalError("RootEncoder expects an argument path that starts with an argument.")
+            fatalError("RootArgumentEncoder expects an argument path that starts with an argument.")
         }
 
         self.encoding = encoding
@@ -176,6 +203,10 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
             computeCommandEncoder.setBytes(bytes, length: count, index: argument.index)
             didCopyBytes = true
         }
+    }
+    
+    func encode(_ texture: MTLTexture) {
+        fatalError()
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
@@ -277,6 +308,10 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
         fatalError(.noArgumentBufferSupportForSingleUseData)
+    }
+    
+    func encode(_ texture: MTLTexture) {
+        fatalError()
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {

@@ -138,6 +138,7 @@ private extension Parser {
     static func parseTypes(from pathType: DataType) -> [ParseType] {
         switch pathType {
         case .argument(let a): fallthrough
+        case .argumentTexture(let a): fallthrough
         case .argumentContainingArgumentBuffer(let a, _): return [.named(a.name)]
         case .structMember(let s): return [.named(s.name)]
         case .array, .metalArray: return [.indexed]

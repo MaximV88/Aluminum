@@ -75,6 +75,7 @@ private extension DataType {
         switch self {
         case .argument(let a): fallthrough
         case .argumentContainingArgumentBuffer(let a, _): return "root argument named \(a)"
+        case .argumentTexture(let a): return "root argument of texture named \(a)"
         case .argumentBuffer: return "argument buffer"
         case .array, .metalArray: return "array"
         case .structMember(let s) where s.dataType != .pointer: return "assignable value named \(s.name)"

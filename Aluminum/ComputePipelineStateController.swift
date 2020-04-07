@@ -36,9 +36,9 @@ public class ComputePipelineStateController {
                 
         computeCommandEncoder.setComputePipelineState(computePipelineState)
         
-        return RootEncoder(encoding: encoding,
-                           rootPath: [.argument(argument)],
-                           function: function,
-                           computeCommandEncoder: computeCommandEncoder)
+        return makeComputePipelineStateEncoder(for: encoding,
+                                               rootPath: [.argument(argument)],
+                                               function: function,
+                                               computeCommandEncoder: computeCommandEncoder)
     }
 }
