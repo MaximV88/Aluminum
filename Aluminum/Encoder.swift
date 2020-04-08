@@ -156,7 +156,7 @@ extension TextureRootEncoder: RootEncoder {
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
-        fatalError(.onlyTextureSupported)
+        fatalError(.noExistingBuffer)
     }
     
     func encode(_ texture: MTLTexture) {
@@ -174,19 +174,19 @@ extension TextureRootEncoder: RootEncoder {
     }
 
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder) -> ()) {
-        fatalError(.onlyTextureSupported)
+        fatalError(.noExistingBuffer)
     }
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
-        fatalError(.onlyTextureSupported)
+        fatalError(.noExistingBuffer)
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
-        fatalError(.onlyTextureSupported)
+        fatalError(.noExistingBuffer)
     }
     
     func childEncoder(for path: Path) -> ArgumentBufferEncoder {
-        fatalError(.onlyTextureSupported)
+        fatalError(.noChildEncoderExists)
     }
 }
 
@@ -275,31 +275,15 @@ extension ArgumentRootEncoder: RootEncoder {
     }
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
-        let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isBuffer, .invalidBufferPath(dataTypePath.last!))
-        
-        let index = queryIndex(for: path, dataTypePath: dataTypePath)
-        assert(index != argument.index) // shouldnt override argument buffer
-        
-        computeCommandEncoder.setBuffer(buffer, offset: offset, index: index)
+        fatalError(.noExistingBuffer)
     }
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder)->()) {
-        let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isEncodableBuffer, .invalidEncodableBufferPath(dataTypePath.last!))
-        
-        fatalError("Logical error. MTLArgument does not access pointer of struct (encodable buffer)")
+        fatalError(.noExistingBuffer)
     }
     
     func childEncoder(for path: Path) -> ArgumentBufferEncoder {
-        let childEncoding = encoding.childEncoding(for: path)
-        let index = queryIndex(for: path, dataTypePath: childEncoding.dataTypePath)
-                        
-        return ArgumentBufferRootEncoder(encoding: childEncoding,
-                                         encoderIndex: index,
-                                         argumentEncoder: function.makeArgumentEncoder(bufferIndex: index),
-                                         parentArgumentEncoder: nil,
-                                         computeCommandEncoder: computeCommandEncoder)
+        fatalError(.noChildEncoderExists)
     }
 }
 
