@@ -15,7 +15,7 @@ public protocol BytesEncoder {
 
 }
 
-public protocol Encoder: BytesEncoder {
+public protocol ResourceEncoder: BytesEncoder {
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path)
     
@@ -23,20 +23,26 @@ public protocol Encoder: BytesEncoder {
 
     func encode(_ texture: MTLTexture, to path: Path)
     
-    // TODO: missing stubs for texture/...
+    // TODO: add stubs for buffer/texture arrays
+    
+}
+
+public protocol ArgumentBufferEncoder: ResourceEncoder {
+    
+    var encodedLength: Int { get }
+
+    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int)
+
+    func childEncoder(for path: Path) -> ArgumentBufferEncoder
 
 }
 
-public protocol ComputePipelineStateEncoder: Encoder {
-    var encodedLength: Int { get } 
-
-    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int)
+public protocol RootEncoder: ArgumentBufferEncoder {
     
     func encode(_ bytes: UnsafeRawPointer, count: Int)
     
     func encode(_ texture: MTLTexture)
     
-    func childEncoder(for path: Path) -> ComputePipelineStateEncoder
 }
 
 public extension BytesEncoder {
@@ -47,7 +53,7 @@ public extension BytesEncoder {
     }
 }
 
-public extension Encoder {
+public extension ResourceEncoder {
     func encode(_ buffer: MTLBuffer, to path: Path)  {
         encode(buffer, offset: 0, to: path)
     }
@@ -71,13 +77,13 @@ public extension Encoder {
     }
 }
 
-public extension ComputePipelineStateEncoder {
+public extension ArgumentBufferEncoder {
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer) {
         setArgumentBuffer(argumentBuffer, offset: 0)
     }
 }
 
-public extension ComputePipelineStateEncoder {
+public extension RootEncoder {
     func encode<T>(_ parameter: T) {
         withUnsafePointer(to: parameter) { ptr in
             encode(ptr, count: MemoryLayout<T>.stride)
@@ -96,33 +102,33 @@ public extension ComputePipelineStateEncoder {
     }
 }
 
-internal func makeComputePipelineStateEncoder(
+internal func makeRootEncoder(
     for encoding: Parser.Encoding,
     rootPath: Path,
     function: MTLFunction,
     computeCommandEncoder: MTLComputeCommandEncoder
-) -> ComputePipelineStateEncoder
+) -> RootEncoder
 {
     switch encoding.dataType {
     case .argument:
-        return RootArgumentEncoder(encoding: encoding,
+        return ArgumentRootEncoder(encoding: encoding,
                                    function: function,
                                    computeCommandEncoder: computeCommandEncoder)
     case .argumentTexture:
-        return RootTextureEncoder(encoding: encoding,
+        return TextureRootEncoder(encoding: encoding,
                                   computeCommandEncoder: computeCommandEncoder)
     case .argumentContainingArgumentBuffer:
         let index = queryIndex(for: rootPath, dataTypePath: encoding.dataTypePath)
-        return ArgumentEncoder(encoding: encoding,
-                               encoderIndex: index,
-                               argumentEncoder: function.makeArgumentEncoder(bufferIndex: index),
-                               parentArgumentEncoder: nil,
-                               computeCommandEncoder: computeCommandEncoder)
+        return ArgumentBufferRootEncoder(encoding: encoding,
+                                         encoderIndex: index,
+                                         argumentEncoder: function.makeArgumentEncoder(bufferIndex: index),
+                                         parentArgumentEncoder: nil,
+                                         computeCommandEncoder: computeCommandEncoder)
     default: fatalError("RootEncoder must start with an argument.")
     }
 }
 
-private class RootTextureEncoder {
+private class TextureRootEncoder {
     private let encoding: Parser.Encoding
     private let argument: MTLArgument
     private weak var computeCommandEncoder: MTLComputeCommandEncoder!
@@ -140,7 +146,7 @@ private class RootTextureEncoder {
     }
 }
 
-extension RootTextureEncoder: ComputePipelineStateEncoder {
+extension TextureRootEncoder: RootEncoder {
     var encodedLength: Int {
         // TODO: assert that texture argument doesnt have encoded length
         return 0
@@ -180,13 +186,13 @@ extension RootTextureEncoder: ComputePipelineStateEncoder {
         fatalError()
     }
     
-    func childEncoder(for path: Path) -> ComputePipelineStateEncoder {
+    func childEncoder(for path: Path) -> ArgumentBufferEncoder {
         fatalError()
     }
 }
 
 
-private class RootArgumentEncoder {
+private class ArgumentRootEncoder {
     private let encoding: Parser.Encoding
     private let argument: MTLArgument
     private let function: MTLFunction
@@ -212,7 +218,7 @@ private class RootArgumentEncoder {
     }
 }
 
-extension RootArgumentEncoder: ComputePipelineStateEncoder {
+extension ArgumentRootEncoder: RootEncoder {
     var encodedLength: Int {
         return argument.bufferDataSize
     }
@@ -283,19 +289,19 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
         fatalError("Logical error. MTLArgument does not access pointer of struct (encodable buffer)")
     }
     
-    func childEncoder(for path: Path) -> ComputePipelineStateEncoder {
+    func childEncoder(for path: Path) -> ArgumentBufferEncoder {
         let childEncoding = encoding.childEncoding(for: path)
         let index = queryIndex(for: path, dataTypePath: childEncoding.dataTypePath)
                         
-        return ArgumentEncoder(encoding: childEncoding,
-                               encoderIndex: index,
-                               argumentEncoder: function.makeArgumentEncoder(bufferIndex: index),
-                               parentArgumentEncoder: nil,
-                               computeCommandEncoder: computeCommandEncoder)
+        return ArgumentBufferRootEncoder(encoding: childEncoding,
+                                         encoderIndex: index,
+                                         argumentEncoder: function.makeArgumentEncoder(bufferIndex: index),
+                                         parentArgumentEncoder: nil,
+                                         computeCommandEncoder: computeCommandEncoder)
     }
 }
 
-private class ArgumentEncoder {
+private class ArgumentBufferRootEncoder {
     private let encoding: Parser.Encoding
     private let encoderIndex: Int
     
@@ -328,7 +334,8 @@ private class ArgumentEncoder {
     }
 }
 
-extension ArgumentEncoder: ComputePipelineStateEncoder {
+// TODO: does not consider argument index when is root, need to subclass ...
+extension ArgumentBufferRootEncoder: RootEncoder {
     var encodedLength: Int {
         return argumentEncoder.encodedLength
     }
@@ -352,11 +359,17 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func encode(_ texture: MTLTexture) {
-        fatalError()
+        fatalError() // error about that a texture is not an argument buffer
     }
     
     func encode(_ texture: MTLTexture, to path: Path) {
-        fatalError()
+        validateArgumentBuffer()
+        
+        let dataTypePath = encoding.localDataTypePath(for: path)
+        assert(dataTypePath.last!.isTexture, .invalidTexturePath(dataTypePath.last!))
+
+        let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
+        argumentEncoder.setTexture(texture, index: index)
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
@@ -411,21 +424,21 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
                                               offset: offset))
     }
 
-    func childEncoder(for path: Path) -> ComputePipelineStateEncoder {
+    func childEncoder(for path: Path) -> ArgumentBufferEncoder {
         validateArgumentBuffer()
 
         let childEncoding = encoding.childEncoding(for: path)
         let index = queryIndex(for: path, dataTypePath: encoding.localDataTypePath(to: childEncoding)[1...])
-
-        return ArgumentEncoder(encoding: childEncoding,
-                               encoderIndex: index,
-                               argumentEncoder: argumentEncoder.makeArgumentEncoderForBuffer(atIndex: index)!,
-                               parentArgumentEncoder: argumentEncoder,
-                               computeCommandEncoder: computeCommandEncoder)
+        
+        return ArgumentBufferRootEncoder(encoding: childEncoding,
+                                         encoderIndex: index,
+                                         argumentEncoder: argumentEncoder.makeArgumentEncoderForBuffer(atIndex: index)!,
+                                         parentArgumentEncoder: argumentEncoder,
+                                         computeCommandEncoder: computeCommandEncoder)
     }
 }
 
-private extension ArgumentEncoder {
+private extension ArgumentBufferRootEncoder {
     func validateArgumentBuffer() {
         assert(hasArgumentBuffer, .noArgumentBuffer)
     }

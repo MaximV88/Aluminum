@@ -31,14 +31,14 @@ public class ComputePipelineStateController {
         self.parser = Parser(arguments: reflection!.arguments)
     }
     
-    public func makeEncoder(for argument: String, with computeCommandEncoder: MTLComputeCommandEncoder) -> ComputePipelineStateEncoder {
+    public func makeEncoder(for argument: String, with computeCommandEncoder: MTLComputeCommandEncoder) -> RootEncoder {
         let encoding = parser.encoding(for: argument)
                 
         computeCommandEncoder.setComputePipelineState(computePipelineState)
         
-        return makeComputePipelineStateEncoder(for: encoding,
-                                               rootPath: [.argument(argument)],
-                                               function: function,
-                                               computeCommandEncoder: computeCommandEncoder)
+        return makeRootEncoder(for: encoding,
+                               rootPath: [.argument(argument)],
+                               function: function,
+                               computeCommandEncoder: computeCommandEncoder)
     }
 }

@@ -364,7 +364,15 @@ extension DataType {
     var isBytes: Bool {
         switch self {
         case .array, .metalArray, .atomicVariable: return true
-        case .structMember(let s) where s.dataType != .pointer: return true
+        case .structMember(let s) where s.dataType != .pointer && s.dataType != .texture: return true
+        default: return false
+        }
+    }
+    
+    var isTexture: Bool {
+        switch self {
+        case .array, .metalArray, .atomicVariable: return true
+        case .structMember(let s) where s.dataType == .texture: return true
         default: return false
         }
     }

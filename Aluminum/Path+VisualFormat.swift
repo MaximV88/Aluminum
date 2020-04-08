@@ -44,10 +44,9 @@ public extension BytesEncoder {
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: String) {
         encode(bytes, count: count, to: Path.path(withVisualFormat: path))
     }
-    
 }
 
-public extension Encoder {
+public extension ResourceEncoder {
     func encode(_ buffer: MTLBuffer, to path: String) {
         encode(buffer, to: Path.path(withVisualFormat: path))
     }
@@ -63,10 +62,14 @@ public extension Encoder {
     func encode(_ buffer: MTLBuffer, offset: Int, to path: String, _ encoderClosure: (BytesEncoder)->()) {
         encode(buffer, offset: offset, to: Path.path(withVisualFormat: path), encoderClosure)
     }
+    
+    func encode(_ texture: MTLTexture, to path: String) {
+        encode(texture, to: Path.path(withVisualFormat: path))
+    }
 }
 
-public extension ComputePipelineStateEncoder {
-    func childEncoder(for path: String) -> ComputePipelineStateEncoder {
+public extension ArgumentBufferEncoder {
+    func childEncoder(for path: String) -> ArgumentBufferEncoder {
         childEncoder(for: Path.path(withVisualFormat: path))
     }
 }
