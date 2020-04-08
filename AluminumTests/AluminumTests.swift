@@ -18,12 +18,14 @@ class AluminumTests: XCTestCase {
     private var device: MTLDevice!
     private var library: MTLLibrary!
     private var commandQueue: MTLCommandQueue!
+    private var texture: MTLTexture!
     
 
     override func setUp() {
         device = MTLCreateSystemDefaultDevice()
         library = try! device.makeDefaultLibrary(bundle: Bundle(for: AluminumTests.self))
         commandQueue = device.makeCommandQueue()
+        texture = makeTexture(width: 10, height: 10)
     }
         
     func testArgumentPointerWithArgumentBuffer() {
@@ -99,8 +101,8 @@ class AluminumTests: XCTestCase {
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
             
-            let intBuffer = makeBuffer(length: MemoryLayout<Int32>.size * 10)
-            let intBufferPtr = intBuffer.contents().assumingMemoryBound(to: Int32.self)
+            let intBuffer = device.makeBuffer(length: MemoryLayout<Int32>.size * 10, options: .storageModeShared)
+            let intBufferPtr = intBuffer!.contents().assumingMemoryBound(to: Int32.self)
             (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
             
             encoder.encode(intBuffer, to: [.argument("buff")])
@@ -446,22 +448,23 @@ class AluminumTests: XCTestCase {
     }
     
     func testTextureArgument() {
-        runTestController(for: "test_texture_argument", expected: 0)
+        runTestController(for: "test_texture_argument", expected: 5050)
         { controller, computeCommandEncoder in
 
             let encoder = controller.makeEncoder(for: "argument", with: computeCommandEncoder)
-            let texture = makeTexture(width: 10, height: 10, value: 1)
-            
             encoder.encode(texture)
         }
     }
         
+
 }
 
 private extension AluminumTests {
-    func runTestController<T: Equatable>(for functionName: String,
-                                         expected: T,
-                                         _ configurationBlock: (ComputePipelineStateController, MTLComputeCommandEncoder)->())
+    func runTestController<T: Equatable>(
+        for functionName: String,
+        expected: T,
+        _ configurationBlock: (ComputePipelineStateController, MTLComputeCommandEncoder)->()
+    )
     {
         let controller = try! makeComputePipelineState(functionName: functionName)
         let commandBuffer = commandQueue.makeCommandBuffer()!
@@ -476,7 +479,7 @@ private extension AluminumTests {
 
         XCTAssertEqual(resultBuffer.value(), expected)
     }
-        
+    
     func makeComputePipelineState(functionName: String) throws -> ComputePipelineStateController {
         guard let function = library.makeFunction(name: functionName) else {
             throw TestError.noFunctionForName
@@ -508,27 +511,24 @@ private extension AluminumTests {
     }
     
     func makeTexture(width: Int, height: Int) -> MTLTexture {
-        let descriptor = MTLTextureDescriptor()
-        descriptor.pixelFormat = .bgra8Unorm
-        descriptor.width = 10
-        descriptor.height = 10
+        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r32Uint,
+                                                                  width: width,
+                                                                  height: height,
+                                                                  mipmapped: false)
         
-        return device.makeTexture(descriptor: descriptor)!
-    }
-    
-    func makeTexture<T>(width: Int, height: Int, value: T) -> MTLTexture {
-        let texture = makeTexture(width: width, height: height)
-        let region = MTLRegion(origin: MTLOrigin(x: 0, y: 0, z: 0),
-                               size: MTLSize(width: width, height: height, depth: 1))
+        let texture = device.makeTexture(descriptor: descriptor)!
+
+        let commandBuffer = commandQueue.makeCommandBuffer()!
+        let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()!
+
+        let function = library.makeFunction(name: "fill_test_texture")!
+        let state = try! device.makeComputePipelineState(function: function)
         
-        let data = UnsafeMutableRawPointer.allocate(byteCount: width * height * 4, alignment: 4)
-        defer { data.deallocate() }
-
-        texture.replace(region: region,
-                        mipmapLevel: 0,
-                        withBytes: data,
-                        bytesPerRow: 4 * width)
-
+        computeCommandEncoder.setComputePipelineState(state)
+        computeCommandEncoder.setTexture(texture, index: 0)
+        
+        dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
+        
         return texture
     }
 }

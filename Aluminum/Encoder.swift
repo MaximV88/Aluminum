@@ -69,6 +69,23 @@ public extension ComputePipelineStateEncoder {
     }
 }
 
+// unintentional override fix
+public extension ComputePipelineStateEncoder {
+    func encode<T: MTLTexture>(_ parameter: T?) {
+        switch parameter {
+        case .some(let some): encode(some as MTLTexture)
+        case .none: fatalError()
+        }
+    }
+    
+    func encode<T: MTLBuffer>(_ parameter: T?, to path: Path) {
+        switch parameter {
+        case .some(let some): encode(some as MTLBuffer, to: path)
+        case .none: fatalError()
+        }
+    }
+}
+
 internal func makeComputePipelineStateEncoder(
     for encoding: Parser.Encoding,
     rootPath: Path,
