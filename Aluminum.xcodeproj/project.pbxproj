@@ -48,11 +48,9 @@
 		9453C91C23D32ADF00E7FCFE /* AluminumTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AluminumTests.swift; sourceTree = "<group>"; };
 		9453C91E23D32ADF00E7FCFE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		9453C92523D32B7100E7FCFE /* AluminumTests.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = AluminumTests.metal; sourceTree = "<group>"; };
-		9453C92723D32BB300E7FCFE /* AluminumTestsUniforms.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AluminumTestsUniforms.h; sourceTree = "<group>"; };
 		9453C92823D32E0B00E7FCFE /* AluminumTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AluminumTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		9453C92923D60C9800E7FCFE /* Parser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Parser.swift; sourceTree = "<group>"; };
 		9453C92D23D613EA00E7FCFE /* Encoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Encoder.swift; sourceTree = "<group>"; };
-		9453C92F23D6D94800E7FCFE /* AluminumArgumentBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AluminumArgumentBuffer.h; sourceTree = "<group>"; };
 		9497B83123FB1006000C8085 /* MetalType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalType.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -125,8 +123,6 @@
 			isa = PBXGroup;
 			children = (
 				9453C91C23D32ADF00E7FCFE /* AluminumTests.swift */,
-				9453C92723D32BB300E7FCFE /* AluminumTestsUniforms.h */,
-				9453C92F23D6D94800E7FCFE /* AluminumArgumentBuffer.h */,
 				9453C92523D32B7100E7FCFE /* AluminumTests.metal */,
 				9453C91E23D32ADF00E7FCFE /* Info.plist */,
 				9453C92823D32E0B00E7FCFE /* AluminumTests-Bridging-Header.h */,

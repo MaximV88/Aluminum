@@ -417,6 +417,16 @@ kernel void test_texture_in_argument_buffer(device ArgumentBufferWithTexture * a
     *result = sum_of_values_in_texture(argument_buffer->tex);
 }
 
+kernel void test_texture_in_argument_buffer_array(device metal::array<ArgumentBufferWithTexture, 10> & argument_buffer,
+                                                  device uint * result)
+{
+    for (int i = 0, end = argument_buffer.size() ; i < end ; i++)
+    {
+        *result += sum_of_values_in_texture(argument_buffer[i].tex);
+    }
+}
+
+
 #pragma mark - Utility
 
 kernel void fill_test_texture(texture2d<uint, access::write> texture)
@@ -433,16 +443,3 @@ kernel void fill_test_texture(texture2d<uint, access::write> texture)
     }
 
 }
-
-//kernel void multiple_arguments(device metal::array<float, 3> * arr [[ buffer(1) ]],
-//                               threadgroup metal::array<float, 2> * k [[ threadgroup(5) ]],
-//                               array<texture2d<float>, 10> constarr [[ texture(3) ]],
-//                               texture_buffer<float> testarr [[ texture(0) ]],
-//                               texture1d_array<float, metal::access::read> testtextarr [[ texture(1) ]],
-//                               device float * buff [[ buffer(2) ]],
-//                               constant TestArgumentsUniforms &uniforms [[ buffer(3) ]],
-//                               device TestArgumentsBuffer & argumentBuffer [[ buffer(4) ]],
-//                               texture2d<float> tex [[ texture(2) ]])
-//{
-//
-//}

@@ -479,6 +479,21 @@ class AluminumTests: XCTestCase {
             encoder.encode(texture, to: [.argument("tex")])
         }
     }
+    
+    func testTextureInArgumentBufferArray() {
+        runTestController(for: "test_texture_in_argument_buffer_array", expected: 50500)
+        { controller, computeCommandEncoder in
+            
+            let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            encoder.setArgumentBuffer(buffer)
+
+            for i: UInt in 0 ..< 10 {
+                encoder.encode(texture, to: [.index(i), .argument("tex")])
+            }
+        }
+    }
+
 }
 
 private extension AluminumTests {

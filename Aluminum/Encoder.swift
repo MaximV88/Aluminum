@@ -334,7 +334,6 @@ private class ArgumentBufferRootEncoder {
     }
 }
 
-// TODO: does not consider argument index when is root, need to subclass ...
 extension ArgumentBufferRootEncoder: RootEncoder {
     var encodedLength: Int {
         return argumentEncoder.encodedLength
