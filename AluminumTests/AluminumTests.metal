@@ -417,6 +417,8 @@ kernel void test_texture_in_argument_buffer(device ArgumentBufferWithTexture * a
     *result = sum_of_values_in_texture(argument_buffer->tex);
 }
 
+#pragma mark - Test Texture In Argument Buffer Array
+
 kernel void test_texture_in_argument_buffer_array(device metal::array<ArgumentBufferWithTexture, 10> & argument_buffer,
                                                   device uint * result)
 {
@@ -425,6 +427,22 @@ kernel void test_texture_in_argument_buffer_array(device metal::array<ArgumentBu
         *result += sum_of_values_in_texture(argument_buffer[i].tex);
     }
 }
+
+#pragma mark - Text Texture Array In Argument Buffer
+
+struct ArgumentBufferWithTextureArray {
+    metal::array<texture2d<int, access::read>, 10> arr;
+};
+
+kernel void test_texture_array_in_argument_buffer(device ArgumentBufferWithTextureArray * argument_buffer,
+                                                  device uint * result)
+{
+    for (int i = 0, end = argument_buffer->arr.size() ; i < end ; i++)
+    {
+        *result += sum_of_values_in_texture(argument_buffer->arr[i]);
+    }
+}
+
 
 
 #pragma mark - Utility

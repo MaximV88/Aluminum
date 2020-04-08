@@ -493,6 +493,20 @@ class AluminumTests: XCTestCase {
             }
         }
     }
+    
+    func testTextureArrayInArgumentBuffer() {
+        runTestController(for: "test_texture_array_in_argument_buffer", expected: 50500)
+        { controller, computeCommandEncoder in
+            
+            let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            encoder.setArgumentBuffer(buffer)
+
+            for i: UInt in 0 ..< 10 {
+                encoder.encode(texture, to: [.argument("arr"), .index(i)])
+            }
+        }
+    }
 
 }
 

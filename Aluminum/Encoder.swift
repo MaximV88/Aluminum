@@ -148,16 +148,15 @@ private class TextureRootEncoder {
 
 extension TextureRootEncoder: RootEncoder {
     var encodedLength: Int {
-        // TODO: assert that texture argument doesnt have encoded length
-        return 0
+        fatalError(.noArgumentBufferRequired)
     }
     
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
-        fatalError()
+        fatalError(.noArgumentBufferRequired)
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
-        fatalError()
+        fatalError(.onlyTextureSupported)
     }
     
     func encode(_ texture: MTLTexture) {
@@ -175,19 +174,19 @@ extension TextureRootEncoder: RootEncoder {
     }
 
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder) -> ()) {
-        fatalError()
+        fatalError(.onlyTextureSupported)
     }
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
-        fatalError()
+        fatalError(.onlyTextureSupported)
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
-        fatalError()
+        fatalError(.onlyTextureSupported)
     }
     
     func childEncoder(for path: Path) -> ArgumentBufferEncoder {
-        fatalError()
+        fatalError(.onlyTextureSupported)
     }
 }
 
@@ -249,11 +248,14 @@ extension ArgumentRootEncoder: RootEncoder {
     }
     
     func encode(_ texture: MTLTexture) {
-        fatalError()
+        // another root encoder class is taking care of encoding texture at root level to simplify assertions,
+        // shouldnt reach here unless client made incorrect call
+        fatalError(.noExistingTexture)
     }
     
     func encode(_ texture: MTLTexture, to path: Path) {
-        fatalError()
+         // struct from root that contains a texture must be an argument buffer
+        fatalError(.noExistingTexture)
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
@@ -358,7 +360,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
     }
     
     func encode(_ texture: MTLTexture) {
-        fatalError() // error about that a texture is not an argument buffer
+        fatalError(.noSupportForTextureWithoutPath)
     }
     
     func encode(_ texture: MTLTexture, to path: Path) {

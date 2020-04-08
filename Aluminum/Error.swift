@@ -48,6 +48,10 @@ enum AluminumError: Error {
     case invalidChildEncoderPath
     case noArgumentBufferSupportForSingleUseData
     case overridesSingleUseData
+    case noSupportForTextureWithoutPath
+    case noExistingTexture
+    case onlyTextureSupported
+    case noArgumentBufferRequired
 }
 
 // TODO: path description does not provide any useful information
@@ -67,7 +71,11 @@ extension AluminumError: LocalizedError {
         case .invalidTexturePath(let d): return "Expected texture for path. Encountered \(d.named).".padded
         case .invalidChildEncoderPath: return "Path used is not compatible for using a child encoder.".padded
         case .noArgumentBufferSupportForSingleUseData: return "Argument buffer cannot set single use data storage.".padded
-        case .overridesSingleUseData: return "Removes single use data that was already set."
+        case .overridesSingleUseData: return "Removes single use data that was already set.".padded
+        case .noSupportForTextureWithoutPath: return "Argument configuration requires a path to set texture.".padded
+        case .noExistingTexture: return "Encoder does not contain a texture in it's local path.".padded
+        case .onlyTextureSupported: return "Encoder supports only textures".padded
+        case .noArgumentBufferRequired: return "Encoder does not require an argument buffer.".padded
         }
     }
 }
