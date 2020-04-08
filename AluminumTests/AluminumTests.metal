@@ -381,6 +381,25 @@ kernel void test_texture_argument(texture2d<int, access::read> argument,
     }
 }
 
+#pragma mark - Test Texture Argument Array
+
+kernel void test_texture_argument_array(metal::array<texture2d<int, access::read>, 10> argument,
+                                        device uint * result)
+{
+    for (ushort arr_index = 0 ; arr_index < 10 ; arr_index++)
+    {
+        for (ushort i = 0 ; i < 10 ; i++)
+        {
+            for (ushort j = 0 ; j < 10 ; j++)
+            {
+                auto value = argument[arr_index].read(ushort2(i, j));
+                *result += value.x;
+            }
+        }
+    }
+}
+
+
 #pragma mark - Utility
 
 kernel void fill_test_texture(texture2d<uint, access::write> texture)

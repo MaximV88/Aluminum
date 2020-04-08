@@ -44,6 +44,7 @@ enum AluminumError: Error {
     case invalidBufferPath(DataType)
     case invalidBytesPath(DataType)
     case invalidEncodableBufferPath(DataType)
+    case invalidTexturePath(DataType)
     case invalidChildEncoderPath
     case noArgumentBufferSupportForSingleUseData
     case overridesSingleUseData
@@ -63,6 +64,7 @@ extension AluminumError: LocalizedError {
         case .invalidBufferPath(let d): return "Expected buffer for path. Encountered \(d.named).".padded
         case .invalidBytesPath(let d): return "Expected assignable value for path. Encountered \(d.named).".padded
         case .invalidEncodableBufferPath(let d): return "Expected encodable buffer for path. Encountered \(d.named).".padded
+        case .invalidTexturePath(let d): return "Expected texture for path. Encountered \(d.named).".padded
         case .invalidChildEncoderPath: return "Path used is not compatible for using a child encoder.".padded
         case .noArgumentBufferSupportForSingleUseData: return "Argument buffer cannot set single use data storage.".padded
         case .overridesSingleUseData: return "Removes single use data that was already set."

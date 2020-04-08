@@ -456,7 +456,17 @@ class AluminumTests: XCTestCase {
         }
     }
         
+    func testTextureArgumentArray() {
+        runTestController(for: "test_texture_argument_array", expected: 50500)
+        { controller, computeCommandEncoder in
 
+            let encoder = controller.makeEncoder(for: "argument", with: computeCommandEncoder)
+            
+            for i: UInt in 0 ..< 10 {
+                encoder.encode(texture, to: [.index(i)])
+            }
+        }
+    }
 }
 
 private extension AluminumTests {

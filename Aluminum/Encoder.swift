@@ -21,7 +21,7 @@ public protocol Encoder: BytesEncoder {
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder)->())
 
-    // TODO: add buffer array method that uses setBuffers
+    func encode(_ texture: MTLTexture, to path: Path)
     
     // TODO: missing stubs for texture/...
 
@@ -52,6 +52,20 @@ public extension Encoder {
         encode(buffer, offset: 0, to: path)
     }
     
+    func encode<T: MTLBuffer>(_ parameter: T?, to path: Path) {
+        switch parameter {
+        case .some(let some): encode(some as MTLBuffer, to: path)
+        case .none: fatalError()
+        }
+    }
+    
+    func encode<T: MTLTexture>(_ parameter: T?, to path: Path) {
+        switch parameter {
+        case .some(let some): encode(some as MTLTexture, to: path)
+        case .none: fatalError()
+        }
+    }
+    
     func encode(_ buffer: MTLBuffer, to path: Path, _ encoderClosure: (BytesEncoder)->()) {
         encode(buffer, offset: 0, to: path, encoderClosure)
     }
@@ -61,26 +75,22 @@ public extension ComputePipelineStateEncoder {
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer) {
         setArgumentBuffer(argumentBuffer, offset: 0)
     }
-    
+}
+
+public extension ComputePipelineStateEncoder {
     func encode<T>(_ parameter: T) {
         withUnsafePointer(to: parameter) { ptr in
             encode(ptr, count: MemoryLayout<T>.stride)
         }
     }
-}
+    
+    func encode<T: MTLBuffer>(_ parameter: T?) {
+        fatalError() // TODO: notify setting a buffer for given encoder should be done via setArgument
+    }
 
-// unintentional override fix
-public extension ComputePipelineStateEncoder {
     func encode<T: MTLTexture>(_ parameter: T?) {
         switch parameter {
         case .some(let some): encode(some as MTLTexture)
-        case .none: fatalError()
-        }
-    }
-    
-    func encode<T: MTLBuffer>(_ parameter: T?, to path: Path) {
-        switch parameter {
-        case .some(let some): encode(some as MTLBuffer, to: path)
         case .none: fatalError()
         }
     }
@@ -145,7 +155,17 @@ extension RootTextureEncoder: ComputePipelineStateEncoder {
     }
     
     func encode(_ texture: MTLTexture) {
+        // texture array cannot be set using a single texture assignment
+        assert(argument.arrayLength == 1, .nonExistingPath) // TODO: send a more informative error that the given argument is array
         computeCommandEncoder.setTexture(texture, index: argument.index)
+    }
+    
+    func encode(_ texture: MTLTexture, to path: Path) {
+        let dataTypePath = encoding.localDataTypePath(for: path)
+        assert(dataTypePath.last!.isArgumentTexture, .invalidTexturePath(dataTypePath.last!))
+        
+        let index = queryIndex(for: path, dataTypePath: dataTypePath)
+        computeCommandEncoder.setTextures([texture], range: index ..< index + 1)
     }
 
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder) -> ()) {
@@ -223,6 +243,10 @@ extension RootArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func encode(_ texture: MTLTexture) {
+        fatalError()
+    }
+    
+    func encode(_ texture: MTLTexture, to path: Path) {
         fatalError()
     }
     
@@ -328,6 +352,10 @@ extension ArgumentEncoder: ComputePipelineStateEncoder {
     }
     
     func encode(_ texture: MTLTexture) {
+        fatalError()
+    }
+    
+    func encode(_ texture: MTLTexture, to path: Path) {
         fatalError()
     }
     
@@ -447,8 +475,17 @@ private func queryIndex<DataTypeArray: RandomAccessCollection>(
     for dataType in dataTypePath {
         switch dataType {
         case .argumentContainingArgumentBuffer(let a, _): fallthrough
+        case .argumentTexture(let a): fallthrough
         case .argument(let a):
             index += a.index
+            
+            // TODO: replace parse naming rules in naming iteration
+            if a.arrayLength > 1 {
+                let inputIndex = path[pathIndex].index!
+                assert(inputIndex >= 0 && inputIndex < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
+                index += Int(inputIndex)
+            }
+            
             pathIndex += 1
         case .structMember(let s):
             index += s.argumentIndex

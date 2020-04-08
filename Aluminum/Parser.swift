@@ -126,11 +126,17 @@ private extension Parser {
         while !iterator.isFinished {
             let result = iterator.next()!
              aggragateDataTypePath.append(result)
-            
+                        
             let types = Parser.parseTypes(from: result)
+            
+            // parse path should be mapped for every item in path to it's path
+            for itemIndex in 0 ..< types.count {
+                let currentParsePath = aggragateParsePath + types[0 ... itemIndex]
+                mapping[currentParsePath] = aggragateDataTypePath
+            }
+            
             aggragateParsePath.append(contentsOf: types)
             
-            // arguments assigned by path type processable chunks
             mapping[aggragateParsePath] = aggragateDataTypePath
         }
     }
@@ -139,7 +145,8 @@ private extension Parser {
         switch pathType {
         case .argument(let a): fallthrough
         case .argumentTexture(let a): fallthrough
-        case .argumentContainingArgumentBuffer(let a, _): return [.named(a.name)]
+        case .argumentContainingArgumentBuffer(let a, _):
+            return a.arrayLength > 1 ? [.named(a.name), .indexed] : [.named(a.name)]
         case .structMember(let s): return [.named(s.name)]
         case .array, .metalArray: return [.indexed]
         default: return []
@@ -165,7 +172,7 @@ private func validateEncodablePath<DataTypeArray: RandomAccessCollection>(
 ) -> Bool
     where DataTypeArray.Element == DataType, DataTypeArray.Index == Int
 {
-    assert(!path.isEmpty)
+    guard !path.isEmpty else { return true }
     
     var encounteredEncodable = false
 
