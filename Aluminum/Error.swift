@@ -49,6 +49,7 @@ enum AluminumError: Error {
     case noArgumentBufferSupportForSingleUseData
     case overridesSingleUseData
     case noSupportForTextureWithoutPath
+    case requiresArrayReference
     case noExistingTexture
     case noExistingBuffer
     case noArgumentBufferRequired
@@ -74,6 +75,7 @@ extension AluminumError: LocalizedError {
         case .noArgumentBufferSupportForSingleUseData: return "Argument buffer cannot set single use data storage.".padded
         case .overridesSingleUseData: return "Removes single use data that was already set.".padded
         case .noSupportForTextureWithoutPath: return "Argument configuration requires a path to set texture.".padded
+        case .requiresArrayReference: return "Argument configuration requires an array path reference.".padded
         case .noExistingTexture: return "Encoder does not contain a texture.".padded
         case .noExistingBuffer: return "Encoder does not contain a buffer.".padded
         case .noArgumentBufferRequired: return "Encoder does not require an argument buffer.".padded

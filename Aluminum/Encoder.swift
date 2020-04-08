@@ -161,7 +161,7 @@ extension TextureRootEncoder: RootEncoder {
     
     func encode(_ texture: MTLTexture) {
         // texture array cannot be set using a single texture assignment
-        assert(argument.arrayLength == 1, .nonExistingPath) // TODO: send a more informative error that the given argument is array
+        assert(argument.arrayLength == 1, .requiresArrayReference) 
         computeCommandEncoder.setTexture(texture, index: argument.index)
     }
     
