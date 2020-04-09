@@ -457,7 +457,7 @@ class AluminumTests: XCTestCase {
         }
     }
     
-    func testArgumentBufferPointerArrayWithRange() {
+    func testArgumentBufferPointerArrayWithArrayFromIndex() {
         runTestController(for: "test_argument_buffer_pointer_array", expected: 450)
         { controller, computeCommandEncoder in
 
@@ -557,6 +557,37 @@ class AluminumTests: XCTestCase {
             }
         }
     }
+    
+    func testSamplerInArgumentBuffer() {
+        runTestController(for: "test_sampler_in_argument_buffer", expected: 9010)
+        { controller, computeCommandEncoder in
+            
+            let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            let sampler = makeSampler()
+            
+            encoder.setArgumentBuffer(buffer)
+            
+            encoder.encode(sampler, to: [.argument("s")])
+            encoder.encode(texture, to: [.argument("tex")])
+        }
+    }
+    
+    func testSamplerArrayInArgumentBuffer() {
+        runTestController(for: "test_sampler_array_in_argument_buffer", expected: 90100)
+        { controller, computeCommandEncoder in
+            
+            let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            let sampler = makeSampler()
+            
+            encoder.setArgumentBuffer(buffer)
+            
+            let samplerArray = [MTLSamplerState](repeating: sampler, count: 10)
+            encoder.encode(samplerArray, to: [.argument("s"), .index(0)])
+            encoder.encode(texture, to: [.argument("tex")])
+        }
+    }
 }
 
 private extension AluminumTests {
@@ -630,6 +661,11 @@ private extension AluminumTests {
         dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
         
         return texture
+    }
+    
+    func makeSampler() -> MTLSamplerState {
+        let descriptor = MTLSamplerDescriptor()
+        return device.makeSamplerState(descriptor: descriptor)!
     }
 }
 

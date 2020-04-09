@@ -162,7 +162,27 @@ extension ArgumentBufferRootEncoder: RootEncoder {
                                               encodableBuffer: buffer,
                                               offset: offset))
     }
+    
+    func encode(_ sampler: MTLSamplerState, to path: Path) {
+        validateArgumentBuffer()
 
+        let dataTypePath = encoding.localDataTypePath(for: path)
+        assert(dataTypePath.last!.isSampler, .invalidSamplerPath(dataTypePath.last!))
+
+        let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
+        argumentEncoder.setSamplerState(sampler, index: index)
+    }
+
+    func encode(_ samplers: [MTLSamplerState], to path: Path) {
+        validateArgumentBuffer()
+
+        let dataTypePath = encoding.localDataTypePath(for: path)
+        assert(dataTypePath.last!.isSampler, .invalidSamplerPath(dataTypePath.last!))
+
+        let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
+        argumentEncoder.setSamplerStates(samplers, range: index ..< index + samplers.count)
+    }
+    
     func childEncoder(for path: Path) -> ArgumentBufferEncoder {
         validateArgumentBuffer()
 

@@ -27,10 +27,10 @@ public protocol ResourceEncoder: BytesEncoder {
         
     func encode(_ textures: [MTLTexture], to path: Path)
 
-    
-//    func encode(_ sampler: MTLSamplerState, to path: Path)
+    func encode(_ sampler: MTLSamplerState, to path: Path)
 
-    
+    func encode(_ samplers: [MTLSamplerState], to path: Path)
+
     
 }
 
@@ -76,14 +76,14 @@ public extension ResourceEncoder {
     func encode<T: MTLBuffer>(_ parameter: T?, to path: Path) {
         switch parameter {
         case .some(let some): encode(some as MTLBuffer, to: path)
-        case .none: fatalError()
+        case .none: fatalError(.nilValuesAreInvalid)
         }
     }
     
     func encode<T: MTLTexture>(_ parameter: T?, to path: Path) {
         switch parameter {
         case .some(let some): encode(some as MTLTexture, to: path)
-        case .none: fatalError()
+        case .none: fatalError(.nilValuesAreInvalid)
         }
     }
     
@@ -114,14 +114,14 @@ public extension RootEncoder {
     func encode<T: MTLBuffer>(_ parameter: T?) {
         switch parameter {
         case .some(let some): encode(some as MTLBuffer)
-        case .none: fatalError()
+        case .none: fatalError(.nilValuesAreInvalid)
         }
     }
 
     func encode<T: MTLTexture>(_ parameter: T?) {
         switch parameter {
         case .some(let some): encode(some as MTLTexture)
-        case .none: fatalError()
+        case .none: fatalError(.nilValuesAreInvalid)
         }
     }
 }

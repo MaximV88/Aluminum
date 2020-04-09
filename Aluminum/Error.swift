@@ -45,6 +45,7 @@ enum AluminumError: Error {
     case invalidBytesPath(DataType)
     case invalidEncodableBufferPath(DataType)
     case invalidTexturePath(DataType)
+    case invalidSamplerPath(DataType)
     case invalidChildEncoderPath
     case noArgumentBufferSupportForSingleUseData
     case overridesSingleUseData
@@ -52,8 +53,10 @@ enum AluminumError: Error {
     case requiresArrayReference
     case noExistingTexture
     case noExistingBuffer
+    case noExistingSampler
     case noArgumentBufferRequired
     case noChildEncoderExists
+    case nilValuesAreInvalid
 }
 
 // TODO: path description does not provide any useful information
@@ -71,6 +74,7 @@ extension AluminumError: LocalizedError {
         case .invalidBytesPath(let d): return "Expected assignable value for path. Encountered \(d.named)."
         case .invalidEncodableBufferPath(let d): return "Expected encodable buffer for path. Encountered \(d.named)."
         case .invalidTexturePath(let d): return "Expected texture for path. Encountered \(d.named)."
+        case .invalidSamplerPath(let d): return "Expected sampler for path. Encountered \(d.named)."
         case .invalidChildEncoderPath: return "Path used is not compatible for using a child encoder."
         case .noArgumentBufferSupportForSingleUseData: return "Argument buffer cannot set single use data storage."
         case .overridesSingleUseData: return "Removes single use data that was already set."
@@ -78,8 +82,10 @@ extension AluminumError: LocalizedError {
         case .requiresArrayReference: return "Argument configuration requires an array path reference."
         case .noExistingTexture: return "Encoder does not contain a texture."
         case .noExistingBuffer: return "Encoder does not contain a buffer."
+        case .noExistingSampler: return "Encoder does not contain a sampler."
         case .noArgumentBufferRequired: return "Encoder does not require an argument buffer."
         case .noChildEncoderExists: return "Encoder does not contain child encoders."
+        case .nilValuesAreInvalid: return "Encoder does not support encoding nil values."
         }
     }
 }

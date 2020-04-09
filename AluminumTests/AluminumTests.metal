@@ -443,6 +443,53 @@ kernel void test_texture_array_in_argument_buffer(device ArgumentBufferWithTextu
     }
 }
 
+#pragma mark - Test Sampler In Argument Buffer
+
+uint sum_of_values_in_texture_with_sampler(texture2d<int, access::sample> texture, sampler s)
+{
+    uint result = 0;
+    
+    ushort width = texture.get_width();
+    ushort height = texture.get_height();
+    
+    for (ushort i = 0 ; i < width ; i++)
+    {
+        for (ushort j = 0 ; j < height ; j++)
+        {
+            auto value = texture.sample(s, float2(i, j));
+            result += value.x;
+        }
+    }
+    
+    return result;
+}
+
+struct ArgumentBufferWithSampler {
+    sampler s;
+    texture2d<int, access::sample> tex;
+};
+
+kernel void test_sampler_in_argument_buffer(device ArgumentBufferWithSampler * argument_buffer,
+                                            device uint * result)
+{
+    *result = sum_of_values_in_texture_with_sampler(argument_buffer->tex, argument_buffer->s);
+}
+
+#pragma mark - Test Sampler Array In Argument Buffer
+
+struct ArgumentBufferWithSamplerArray {
+    metal::array<sampler, 10> s;
+    texture2d<int, access::sample> tex;
+};
+
+kernel void test_sampler_array_in_argument_buffer(device ArgumentBufferWithSamplerArray * argument_buffer,
+                                                  device uint * result)
+{
+    for (ushort i = 0 ; i < 10 ; i++)
+    {
+        *result += sum_of_values_in_texture_with_sampler(argument_buffer->tex, argument_buffer->s[i]);
+    }
+}
 
 
 #pragma mark - Utility

@@ -35,6 +35,14 @@ extension ResourceEncoder {
     func encode(_ textures: [MTLTexture], to path: Path) {
         fatalError(.noExistingTexture)
     }
+    
+    func encode(_ sampler: MTLSamplerState, to path: Path) {
+        fatalError(.noExistingSampler)
+    }
+
+    func encode(_ samplers: [MTLSamplerState], to path: Path) {
+        fatalError(.noExistingSampler)
+    }
 }
 
 extension ArgumentBufferEncoder {

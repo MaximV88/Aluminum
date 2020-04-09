@@ -381,17 +381,34 @@ internal extension DataType {
 
 extension DataType {
     var isBytes: Bool {
+        let dataType: MTLDataType
         switch self {
-        case .array, .metalArray, .atomicVariable: return true
-        case .structMember(let s) where s.dataType != .pointer && s.dataType != .texture: return true
+        case .array(let a), .metalArray(let a, _): dataType = a.elementType
+        case .atomicVariable(let s): dataType = s.dataType
+        case .structMember(let s): dataType = s.dataType
         default: return false
+        }
+        
+        switch dataType {
+        case .pointer, .texture, .sampler: return false
+        default: return true
         }
     }
     
     var isTexture: Bool {
         switch self {
-        case .array, .metalArray, .atomicVariable: return true
-        case .structMember(let s) where s.dataType == .texture: return true
+        case .array(let a), .metalArray(let a, _): return a.elementType == .texture
+        case .atomicVariable(let s): return s.dataType == .texture
+        case .structMember(let s): return s.dataType == .texture
+        default: return false
+        }
+    }
+    
+    var isSampler: Bool {
+        switch self {
+        case .array(let a), .metalArray(let a, _): return a.elementType == .sampler
+        case .atomicVariable(let s): return s.dataType == .sampler
+        case .structMember(let s): return s.dataType == .sampler
         default: return false
         }
     }
