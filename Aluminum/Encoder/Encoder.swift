@@ -61,6 +61,8 @@ public protocol RootEncoder: ArgumentBufferEncoder {
 
     func encode(_ samplers: [MTLSamplerState], lodMinClamps: [Float], lodMaxClamps: [Float])
 
+    // TODO: check index association
+//    func setThreadgroupMemoryLength(_ length: Int, index: Int)
 }
 
 public extension BytesEncoder {
@@ -142,6 +144,13 @@ public extension RootEncoder {
     func encode<T: MTLSamplerState>(_ parameter: T?) {
         switch parameter {
         case .some(let some): encode(some as MTLSamplerState)
+        case .none: fatalError(.nilValuesAreInvalid)
+        }
+    }
+    
+    func encode<T: MTLSamplerState>(_ parameter: T?, lodMinClamp: Float, lodMaxClamp: Float) {
+        switch parameter {
+        case .some(let some): encode(some as MTLSamplerState, lodMinClamp: lodMinClamp, lodMaxClamp: lodMaxClamp)
         case .none: fatalError(.nilValuesAreInvalid)
         }
     }
