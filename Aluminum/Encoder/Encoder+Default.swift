@@ -56,11 +56,19 @@ extension RootEncoder {
         fatalError(.noExistingBuffer)
     }
 
+    func encode(_ buffers: [MTLBuffer], offsets: [Int]) {
+        fatalError(.requiresChildEncoderExistance)
+    }
+    
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
         fatalError(.noExistingBuffer)
     }
     
     func encode(_ texture: MTLTexture) {
+        fatalError(.noExistingTexture)
+    }
+    
+    func encode(_ textures: [MTLTexture]) {
         fatalError(.noExistingTexture)
     }
 }

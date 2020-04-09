@@ -101,8 +101,7 @@
 				9453C90923D32A3B00E7FCFE /* Aluminum.h */,
 				9453C90A23D32A3B00E7FCFE /* Info.plist */,
 				9453C91123D32AA600E7FCFE /* ComputePipelineStateController.swift */,
-				9453C92D23D613EA00E7FCFE /* Encoder.swift */,
-				94A52E5C243F1348006806D3 /* Encoder+Default.swift */,
+				94A52E5E243F1659006806D3 /* Encoder */,
 				9453C92923D60C9800E7FCFE /* Parser.swift */,
 				9402317024250C6A002242B3 /* DataType.swift */,
 				9402316E2424BC77002242B3 /* Error.swift */,
@@ -131,6 +130,15 @@
 				9453C92823D32E0B00E7FCFE /* AluminumTests-Bridging-Header.h */,
 			);
 			path = AluminumTests;
+			sourceTree = "<group>";
+		};
+		94A52E5E243F1659006806D3 /* Encoder */ = {
+			isa = PBXGroup;
+			children = (
+				9453C92D23D613EA00E7FCFE /* Encoder.swift */,
+				94A52E5C243F1348006806D3 /* Encoder+Default.swift */,
+			);
+			path = Encoder;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

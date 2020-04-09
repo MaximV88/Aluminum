@@ -162,7 +162,7 @@ private extension Path {
         return compactMap {
             switch $0 {
             case .argument(let a): return .named(a)
-            case .index: return .indexed
+            case .index, .range, .closedRange: return .indexed
             }
         }
     }

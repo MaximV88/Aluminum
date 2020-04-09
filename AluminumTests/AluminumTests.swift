@@ -142,7 +142,7 @@ class AluminumTests: XCTestCase {
             }
         }
     }
-
+    
     func testArgumentBufferWithNestedArgumentBuffer() {
         runTestController(for: "test_argument_buffer_with_nested_argument_buffer", expected: 168)
         { controller, computeCommandEncoder in
@@ -368,7 +368,7 @@ class AluminumTests: XCTestCase {
         { controller, computeCommandEncoder in
 
             let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
-            let buffer = makeBuffer(length: encoder.encodedLength, value: UInt32(1))
+            let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
             
             let encodableBuffer = makeBuffer(length: 12)
@@ -385,7 +385,7 @@ class AluminumTests: XCTestCase {
         { controller, computeCommandEncoder in
 
             let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
-            let buffer = makeBuffer(length: encoder.encodedLength, value: UInt32(1))
+            let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
             
             for i: UInt in 0 ..< 10 {
@@ -424,7 +424,7 @@ class AluminumTests: XCTestCase {
         runTestController(for: "test_argument_buffer_struct_array", expected: 680)
         { controller, computeCommandEncoder in
             let encoder = controller.makeEncoder(for: "argument", with: computeCommandEncoder)
-            let buffer = makeBuffer(length: encoder.encodedLength, value: UInt32(1))
+            let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
             
             let intBuffer = makeBuffer(length: MemoryLayout<Int32>.size * 10)
@@ -444,7 +444,7 @@ class AluminumTests: XCTestCase {
         { controller, computeCommandEncoder in
 
             let encoder = controller.makeEncoder(for: "argument", with: computeCommandEncoder)
-            let buffer = makeBuffer(length: encoder.encodedLength, value: UInt32(1))
+            let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
             
             let intBuffer = makeBuffer(length: MemoryLayout<Int32>.size * 10)
@@ -456,6 +456,23 @@ class AluminumTests: XCTestCase {
             }
         }
     }
+    
+//    func testArgumentBufferPointerArrayWithRange() {
+//        runTestController(for: "test_argument_buffer_pointer_array", expected: 450)
+//        { controller, computeCommandEncoder in
+//
+//            let encoder = controller.makeEncoder(for: "argument", with: computeCommandEncoder)
+//            let buffer = makeBuffer(length: encoder.encodedLength)
+//            encoder.setArgumentBuffer(buffer)
+//            
+//            let intBuffer = makeBuffer(length: MemoryLayout<Int32>.size * 10)
+//            let intBufferPtr = intBuffer.contents().assumingMemoryBound(to: Int32.self)
+//            (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
+//
+//            let bufferArray = [MTLBuffer](repeating: intBuffer, count: 10)
+//            encoder.encode(bufferArray, to: [.argument("arr"), .closedRange(0...9)])
+//        }
+//    }
     
     func testTextureArgument() {
         runTestController(for: "test_texture_argument", expected: 5050)
@@ -477,7 +494,18 @@ class AluminumTests: XCTestCase {
             }
         }
     }
-    
+
+    func testTextureArgumentArrayWithRange() {
+        runTestController(for: "test_texture_argument_array", expected: 50500)
+        { controller, computeCommandEncoder in
+
+            let encoder = controller.makeEncoder(for: "argument", with: computeCommandEncoder)
+            
+            let textureArray = [MTLTexture](repeating: texture, count: 10)
+            encoder.encode(textureArray)
+        }
+    }
+
     func testTextureInArgumentBuffer() {
         runTestController(for: "test_texture_in_argument_buffer", expected: 5050)
         { controller, computeCommandEncoder in
@@ -517,7 +545,6 @@ class AluminumTests: XCTestCase {
             }
         }
     }
-
 }
 
 private extension AluminumTests {

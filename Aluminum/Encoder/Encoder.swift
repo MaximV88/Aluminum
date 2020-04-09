@@ -47,10 +47,14 @@ public protocol ArgumentBufferEncoder: ResourceEncoder {
 public protocol RootEncoder: ArgumentBufferEncoder {
     
     func encode(_ buffer: MTLBuffer, offset: Int)
+    
+    func encode(_ buffers: [MTLBuffer], offsets: [Int])
 
     func encode(_ bytes: UnsafeRawPointer, count: Int)
     
     func encode(_ texture: MTLTexture)
+    
+    func encode(_ textures: [MTLTexture])
     
 }
 
@@ -67,6 +71,10 @@ public extension ResourceEncoder {
         encode(buffer, offset: 0, to: path)
     }
     
+    func encode(_ buffers: [MTLBuffer], to path: Path) {
+        encode(buffers, offsets: [Int](repeating: 0, count: buffers.count), to: path)
+    }
+
     func encode<T: MTLBuffer>(_ parameter: T?, to path: Path) {
         switch parameter {
         case .some(let some): encode(some as MTLBuffer, to: path)
@@ -174,8 +182,11 @@ extension TextureRootEncoder: RootEncoder {
         computeCommandEncoder.setTexture(texture, index: argument.index)
     }
     
-    func encode(_ texture: [MTLTexture], to path: Path) {
-        // TODO: reference range path
+    func encode(_ textures: [MTLTexture]) {
+        assert(argument.arrayLength <= textures.count)
+
+        let index = argument.index
+        computeCommandEncoder.setTextures(textures, range: index ..< index + textures.count)
     }
     
     func encode(_ texture: MTLTexture, to path: Path) {
@@ -184,6 +195,15 @@ extension TextureRootEncoder: RootEncoder {
         
         let index = queryIndex(for: path, dataTypePath: dataTypePath)
         computeCommandEncoder.setTextures([texture], range: index ..< index + 1)
+    }
+    
+    func encode(_ texture: [MTLTexture], to path: Path) {
+        let dataTypePath = encoding.localDataTypePath(for: path)
+        assert(dataTypePath.last!.isTextureArgument, .invalidTexturePath(dataTypePath.last!))
+
+        let index = queryIndex(for: path, dataTypePath: dataTypePath)
+        computeCommandEncoder.setTextures(texture, range: index ..< index + 1)
+
     }
 }
 
@@ -465,6 +485,11 @@ extension EncodableBufferEncoder: BytesEncoder {
     }    
 }
 
+enum Index {
+    case single(Int)
+    case range(Int)
+}
+
 private func queryIndex<DataTypeArray: RandomAccessCollection>(
     for path: Path,
     dataTypePath: DataTypeArray
@@ -497,11 +522,13 @@ private func queryIndex<DataTypeArray: RandomAccessCollection>(
             index += s.argumentIndex
             pathIndex += 1
         case .array(let a):
+            // TODO: if range then assert at end - otherwise call makes no sense
             let inputIndex = path[pathIndex].index!
             assert(inputIndex >= 0 && inputIndex < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
             index += a.argumentIndexStride * Int(inputIndex)
             pathIndex += 1
         case .metalArray(let a, let s):
+            // TODO: if range then assert at end - otherwise call makes no sense
             let inputIndex = path[pathIndex].index!
             assert(inputIndex >= 0 && inputIndex < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
             index += a.argumentIndexStride * Int(inputIndex) + s.argumentIndex
@@ -533,6 +560,7 @@ private func queryOffset<DataTypeArray: RandomAccessCollection>(
         case .structMember(let s): offset += s.offset
         case .array(let a): fallthrough
         case .metalArray(let a, _):
+            // TODO: assert not range otherwise call makes no sense
             let index = path[pathIndex].index!
             assert(index >= 0 && index < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
             offset += Int(index) * a.stride

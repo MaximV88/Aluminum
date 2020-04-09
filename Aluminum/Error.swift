@@ -54,6 +54,7 @@ enum AluminumError: Error {
     case noExistingBuffer
     case noArgumentBufferRequired
     case noChildEncoderExists
+    case requiresChildEncoderExistance
 }
 
 // TODO: path description does not provide any useful information
@@ -80,6 +81,7 @@ extension AluminumError: LocalizedError {
         case .noExistingBuffer: return "Encoder does not contain a buffer."
         case .noArgumentBufferRequired: return "Encoder does not require an argument buffer."
         case .noChildEncoderExists: return "Encoder does not contain child encoders."
+        case .requiresChildEncoderExistance: return "Encoder requires existance of child encoder in order to assign argument buffer."
         }
     }
 }

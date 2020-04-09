@@ -12,8 +12,9 @@ public typealias Path = [PathComponent]
 
 public enum PathComponent: Hashable {
     case argument(String)
-    case index(UInt)
-    // TODO: add case range
+    case index(UInt) // TODO: convert to Int
+    case range(Range<Int>)
+    case closedRange(ClosedRange<Int>)
 }
 
 internal extension PathComponent {
