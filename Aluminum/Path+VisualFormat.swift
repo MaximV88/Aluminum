@@ -67,6 +67,19 @@ public extension ResourceEncoder {
     func encode(_ texture: MTLTexture, to path: String) {
         encode(texture, to: Path.path(withVisualFormat: path))
     }
+    
+    func encode(_ textures: [MTLTexture], to path: String) {
+        encode(textures, to: Path.path(withVisualFormat: path))
+    }
+
+    func encode(_ sampler: MTLSamplerState, to path: String) {
+        encode(sampler, to: Path.path(withVisualFormat: path))
+    }
+
+    func encode(_ samplers: [MTLSamplerState], to path: String) {
+        encode(samplers, to: Path.path(withVisualFormat: path))
+    }
+
 }
 
 public extension ArgumentBufferEncoder {

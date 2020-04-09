@@ -466,7 +466,6 @@ uint sum_of_values_in_texture_with_sampler(texture2d<int, access::sample> textur
 
 kernel void test_sampler_argument(texture2d<int, access::sample> texture,
                                   sampler s,
-                                  metal::array<sampler, 10> s_arr,
                                   device uint * result)
 {
     *result = sum_of_values_in_texture_with_sampler(texture, s);
