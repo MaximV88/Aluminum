@@ -39,6 +39,8 @@ public protocol ArgumentBufferEncoder: ResourceEncoder {
 
 public protocol RootEncoder: ArgumentBufferEncoder {
     
+    func encode(_ buffer: MTLBuffer, offset: Int)
+
     func encode(_ bytes: UnsafeRawPointer, count: Int)
     
     func encode(_ texture: MTLTexture)
@@ -84,6 +86,12 @@ public extension ArgumentBufferEncoder {
 }
 
 public extension RootEncoder {
+    func encode(_ buffer: MTLBuffer)  {
+        encode(buffer, offset: 0)
+    }
+}
+
+public extension RootEncoder {
     func encode<T>(_ parameter: T) {
         withUnsafePointer(to: parameter) { ptr in
             encode(ptr, count: MemoryLayout<T>.stride)
@@ -91,7 +99,10 @@ public extension RootEncoder {
     }
     
     func encode<T: MTLBuffer>(_ parameter: T?) {
-        fatalError() // TODO: notify setting a buffer for given encoder should be done via setArgument
+        switch parameter {
+        case .some(let some): encode(some as MTLBuffer)
+        case .none: fatalError()
+        }
     }
 
     func encode<T: MTLTexture>(_ parameter: T?) {
@@ -112,9 +123,11 @@ internal func makeRootEncoder(
     switch encoding.dataType {
     case .argument:
         return ArgumentRootEncoder(encoding: encoding,
-                                   function: function,
                                    computeCommandEncoder: computeCommandEncoder)
-    case .argumentTexture:
+    case .encodableArgument:
+        return EncodableArgumentRootEncoder(encoding: encoding,
+                                            computeCommandEncoder: computeCommandEncoder)
+    case .textureArgument:
         return TextureRootEncoder(encoding: encoding,
                                   computeCommandEncoder: computeCommandEncoder)
     case .argumentContainingArgumentBuffer:
@@ -136,7 +149,7 @@ private class TextureRootEncoder {
     init(encoding: Parser.Encoding,
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
-        guard case let .argumentTexture(argument) = encoding.dataType else {
+        guard case let .textureArgument(argument) = encoding.dataType else {
             fatalError("RootTextureEncoder expects an argument path that starts with an argument texture.")
         }
         
@@ -155,19 +168,23 @@ extension TextureRootEncoder: RootEncoder {
         fatalError(.noArgumentBufferRequired)
     }
     
+    func encode(_ buffer: MTLBuffer, offset: Int) {
+        fatalError(.noExistingBuffer)
+    }
+
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
         fatalError(.noExistingBuffer)
     }
     
     func encode(_ texture: MTLTexture) {
         // texture array cannot be set using a single texture assignment
-        assert(argument.arrayLength == 1, .requiresArrayReference) 
+        assert(argument.arrayLength == 1, .requiresArrayReference)
         computeCommandEncoder.setTexture(texture, index: argument.index)
     }
     
     func encode(_ texture: MTLTexture, to path: Path) {
         let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isArgumentTexture, .invalidTexturePath(dataTypePath.last!))
+        assert(dataTypePath.last!.isTextureArgument, .invalidTexturePath(dataTypePath.last!))
         
         let index = queryIndex(for: path, dataTypePath: dataTypePath)
         computeCommandEncoder.setTextures([texture], range: index ..< index + 1)
@@ -194,7 +211,68 @@ extension TextureRootEncoder: RootEncoder {
 private class ArgumentRootEncoder {
     private let encoding: Parser.Encoding
     private let argument: MTLArgument
-    private let function: MTLFunction
+
+    private weak var computeCommandEncoder: MTLComputeCommandEncoder!
+    private weak var argumentBuffer: MTLBuffer!
+    
+    init(encoding: Parser.Encoding,
+         computeCommandEncoder: MTLComputeCommandEncoder)
+    {
+        guard case let .argument(argument) = encoding.dataType else {
+            fatalError("RootArgumentEncoder expects an argument path that starts with an argument.")
+        }
+
+        self.encoding = encoding
+        self.argument = argument
+        self.computeCommandEncoder = computeCommandEncoder
+    }
+}
+
+extension ArgumentRootEncoder: RootEncoder {
+    var encodedLength: Int {
+        fatalError(.noArgumentBufferRequired)
+    }
+    
+    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
+        fatalError(.noArgumentBufferRequired)
+    }
+    
+    func encode(_ buffer: MTLBuffer, offset: Int) {
+        computeCommandEncoder.setBuffer(buffer, offset: offset, index: argument.index)
+    }
+
+    func encode(_ bytes: UnsafeRawPointer, count: Int) {
+        computeCommandEncoder.setBytes(bytes, length: count, index: argument.index)
+    }
+    
+    func encode(_ texture: MTLTexture) {
+        fatalError(.noExistingTexture)
+    }
+    
+    func encode(_ texture: MTLTexture, to path: Path) {
+        fatalError(.noExistingTexture)
+    }
+    
+    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
+        fatalError(.noExistingBuffer)
+    }
+    
+    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
+        fatalError(.noExistingBuffer)
+    }
+    
+    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder)->()) {
+        fatalError(.noExistingBuffer)
+    }
+    
+    func childEncoder(for path: Path) -> ArgumentBufferEncoder {
+        fatalError(.noChildEncoderExists)
+    }
+}
+
+private class EncodableArgumentRootEncoder {
+    private let encoding: Parser.Encoding
+    private let argument: MTLArgument
 
     private weak var computeCommandEncoder: MTLComputeCommandEncoder!
     private weak var argumentBuffer: MTLBuffer!
@@ -203,21 +281,19 @@ private class ArgumentRootEncoder {
     private var didCopyBytes = false
 
     init(encoding: Parser.Encoding,
-         function: MTLFunction,
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
-        guard case let .argument(argument) = encoding.dataType else {
+        guard case let .encodableArgument(argument) = encoding.dataType else {
             fatalError("RootArgumentEncoder expects an argument path that starts with an argument.")
         }
 
         self.encoding = encoding
-        self.function = function
         self.argument = argument
         self.computeCommandEncoder = computeCommandEncoder
     }
 }
 
-extension ArgumentRootEncoder: RootEncoder {
+extension EncodableArgumentRootEncoder: RootEncoder {
     var encodedLength: Int {
         return argument.bufferDataSize
     }
@@ -229,6 +305,10 @@ extension ArgumentRootEncoder: RootEncoder {
         self.bufferOffset = offset
         
         computeCommandEncoder.setBuffer(argumentBuffer, offset: offset, index: argument.index)
+    }
+    
+    func encode(_ buffer: MTLBuffer, offset: Int) {
+        fatalError(.noExistingBuffer)
     }
 
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
@@ -248,13 +328,10 @@ extension ArgumentRootEncoder: RootEncoder {
     }
     
     func encode(_ texture: MTLTexture) {
-        // another root encoder class is taking care of encoding texture at root level to simplify assertions,
-        // shouldnt reach here unless client made incorrect call
         fatalError(.noExistingTexture)
     }
     
     func encode(_ texture: MTLTexture, to path: Path) {
-         // struct from root that contains a texture must be an argument buffer
         fatalError(.noExistingTexture)
     }
     
@@ -285,6 +362,7 @@ extension ArgumentRootEncoder: RootEncoder {
     func childEncoder(for path: Path) -> ArgumentBufferEncoder {
         fatalError(.noChildEncoderExists)
     }
+
 }
 
 private class ArgumentBufferRootEncoder {
@@ -339,12 +417,16 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         }
     }
     
+    func encode(_ buffer: MTLBuffer, offset: Int) {
+        fatalError(.requiresPathReference)
+    }
+
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
         fatalError(.noArgumentBufferSupportForSingleUseData)
     }
     
     func encode(_ texture: MTLTexture) {
-        fatalError(.noSupportForTextureWithoutPath)
+        fatalError(.requiresPathReference)
     }
     
     func encode(_ texture: MTLTexture, to path: Path) {
@@ -473,7 +555,8 @@ private func queryIndex<DataTypeArray: RandomAccessCollection>(
     for dataType in dataTypePath {
         switch dataType {
         case .argumentContainingArgumentBuffer(let a, _): fallthrough
-        case .argumentTexture(let a): fallthrough
+        case .encodableArgument(let a): fallthrough
+        case .textureArgument(let a): fallthrough
         case .argument(let a):
             index += a.index
             

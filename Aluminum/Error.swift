@@ -10,7 +10,7 @@ import Foundation
 
 
 func fatalError(_ error: AluminumError) -> Never {
-    fatalError(error.localizedDescription)
+    fatalError(error.localizedDescription.padded)
 }
 
 func assert(_ condition: @autoclosure () -> Bool,
@@ -19,7 +19,7 @@ func assert(_ condition: @autoclosure () -> Bool,
             line: UInt = #line)
 {
     assert(condition(),
-           error.localizedDescription,
+           error.localizedDescription.padded,
            file: file,
            line: line)
 }
@@ -28,7 +28,7 @@ func assertionFailure(_ error: AluminumError,
                       file: StaticString = #file,
                       line: UInt = #line)
 {
-    assertionFailure(error.localizedDescription,
+    assertionFailure(error.localizedDescription.padded,
                      file: file,
                      line: line)
 }
@@ -48,7 +48,7 @@ enum AluminumError: Error {
     case invalidChildEncoderPath
     case noArgumentBufferSupportForSingleUseData
     case overridesSingleUseData
-    case noSupportForTextureWithoutPath
+    case requiresPathReference
     case requiresArrayReference
     case noExistingTexture
     case noExistingBuffer
@@ -60,26 +60,26 @@ enum AluminumError: Error {
 extension AluminumError: LocalizedError {
     var localizedDescription: String {
         switch self {
-        case .unknownArgument(let a): return "\(a) does not match any root argument.".padded
-        case .nonExistingPath: return "Given path does not exist.".padded
-        case .invalidEncoderPath: return "Encoder does not support given path (extends outside of it).".padded
-        case .noArgumentBuffer: return "Did not set argument buffer for encoder.".padded
-        case .invalidArgumentBuffer: return "Argument buffer is too short.".padded
-        case .invalidBuffer: return "Buffer is too short.".padded
-        case .pathIndexOutOfBounds(let i): return "index \(i) is not in bounds of related array.".padded
-        case .invalidBufferPath(let d): return "Expected buffer for path. Encountered \(d.named).".padded
-        case .invalidBytesPath(let d): return "Expected assignable value for path. Encountered \(d.named).".padded
-        case .invalidEncodableBufferPath(let d): return "Expected encodable buffer for path. Encountered \(d.named).".padded
-        case .invalidTexturePath(let d): return "Expected texture for path. Encountered \(d.named).".padded
-        case .invalidChildEncoderPath: return "Path used is not compatible for using a child encoder.".padded
-        case .noArgumentBufferSupportForSingleUseData: return "Argument buffer cannot set single use data storage.".padded
-        case .overridesSingleUseData: return "Removes single use data that was already set.".padded
-        case .noSupportForTextureWithoutPath: return "Argument configuration requires a path to set texture.".padded
-        case .requiresArrayReference: return "Argument configuration requires an array path reference.".padded
-        case .noExistingTexture: return "Encoder does not contain a texture.".padded
-        case .noExistingBuffer: return "Encoder does not contain a buffer.".padded
-        case .noArgumentBufferRequired: return "Encoder does not require an argument buffer.".padded
-        case .noChildEncoderExists: return "Encoder does not contain child encoders".padded
+        case .unknownArgument(let a): return "\(a) does not match any root argument."
+        case .nonExistingPath: return "Given path does not exist."
+        case .invalidEncoderPath: return "Encoder does not support given path (extends outside of it)."
+        case .noArgumentBuffer: return "Did not set argument buffer for encoder."
+        case .invalidArgumentBuffer: return "Argument buffer is too short."
+        case .invalidBuffer: return "Buffer is too short."
+        case .pathIndexOutOfBounds(let i): return "index \(i) is not in bounds of related array."
+        case .invalidBufferPath(let d): return "Expected buffer for path. Encountered \(d.named)."
+        case .invalidBytesPath(let d): return "Expected assignable value for path. Encountered \(d.named)."
+        case .invalidEncodableBufferPath(let d): return "Expected encodable buffer for path. Encountered \(d.named)."
+        case .invalidTexturePath(let d): return "Expected texture for path. Encountered \(d.named)."
+        case .invalidChildEncoderPath: return "Path used is not compatible for using a child encoder."
+        case .noArgumentBufferSupportForSingleUseData: return "Argument buffer cannot set single use data storage."
+        case .overridesSingleUseData: return "Removes single use data that was already set."
+        case .requiresPathReference: return "Argument configuration requires a path."
+        case .requiresArrayReference: return "Argument configuration requires an array path reference."
+        case .noExistingTexture: return "Encoder does not contain a texture."
+        case .noExistingBuffer: return "Encoder does not contain a buffer."
+        case .noArgumentBufferRequired: return "Encoder does not require an argument buffer."
+        case .noChildEncoderExists: return "Encoder does not contain child encoders"
         }
     }
 }
@@ -89,7 +89,8 @@ private extension DataType {
         switch self {
         case .argument(let a): fallthrough
         case .argumentContainingArgumentBuffer(let a, _): return "root argument named \(a)"
-        case .argumentTexture(let a): return "root argument of texture named \(a)"
+        case .encodableArgument(let a): return "root encodable argument named \(a)"
+        case .textureArgument(let a): return "root argument of texture named \(a)"
         case .argumentBuffer: return "argument buffer"
         case .array, .metalArray: return "array"
         case .structMember(let s) where s.dataType != .pointer: return "assignable value named \(s.name)"

@@ -12,7 +12,8 @@ import Metal
 internal enum DataType: Equatable {
     case argument(MTLArgument)
     case argumentContainingArgumentBuffer(MTLArgument, MTLPointerType)
-    case argumentTexture(MTLArgument)
+    case textureArgument(MTLArgument)
+    case encodableArgument(MTLArgument)
     case argumentBuffer(MTLPointerType)
     case structMember(MTLStructMember)
     case array(MTLArrayType)
@@ -54,6 +55,23 @@ private struct ArgumentRecognizer: DataTypeRecognizer {
     }
 }
 
+private struct EncodableArgumentRecognizer: DataTypeRecognizer {
+    func recognize(_ context: DataTypeContext) -> DataType? {
+        guard
+            case let .argument(a) = context.currentMetalType,
+            case .buffer = a.type,
+            case let .pointer(p) = context.nextMetalType(),
+            !p.elementIsArgumentBuffer,
+            case .struct = context.pendingMetalType
+            else
+        {
+            return nil
+        }
+        
+        return .encodableArgument(a)
+    }
+}
+
 private struct ArgumentContainingArgumentBufferRecognizer: DataTypeRecognizer {
     func recognize(_ context: DataTypeContext) -> DataType? {
         guard
@@ -70,7 +88,7 @@ private struct ArgumentContainingArgumentBufferRecognizer: DataTypeRecognizer {
     }
 }
 
-private struct ArgumentTextureRecognizer: DataTypeRecognizer {
+private struct TextureArgumentRecognizer: DataTypeRecognizer {
     func recognize(_ context: DataTypeContext) -> DataType? {
         guard
             case let .argument(a) = context.currentMetalType,
@@ -80,7 +98,7 @@ private struct ArgumentTextureRecognizer: DataTypeRecognizer {
             return nil
         }
         
-        return .argumentTexture(a)
+        return .textureArgument(a)
     }
 }
 
@@ -245,8 +263,9 @@ where MetalTypeArray.Element == MetalType, MetalTypeArray.Index == Int {
         MetalArrayRecognizer(),
         AtomicVariableRecognizer(),
         ArgumentContainingArgumentBufferRecognizer(),
+        EncodableArgumentRecognizer(),
         ArgumentRecognizer(),
-        ArgumentTextureRecognizer(),
+        TextureArgumentRecognizer(),
         StructMemberRecognizer(),
         EncodableBufferRecognizer(),
         BufferRecognizer(),
@@ -303,8 +322,8 @@ internal extension DataType {
         return false
     }
     
-    var isArgumentTexture: Bool {
-        if case .argumentTexture = self {
+    var isTextureArgument: Bool {
+        if case .textureArgument = self {
             return true
         }
         return false

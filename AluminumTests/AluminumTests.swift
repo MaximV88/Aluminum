@@ -28,13 +28,23 @@ class AluminumTests: XCTestCase {
         texture = makeTexture(width: 10, height: 10)
     }
         
+    func testArgumentPointerWithBuffer() {
+        runTestController(for: "test_argument_pointer", expected: 1)
+        { controller, computeCommandEncoder in
+            
+            let encoder = controller.makeEncoder(for: "buffer", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: MemoryLayout<UInt32>.stride, value: UInt32(1))
+            encoder.encode(buffer)
+        }
+    }
+    
     func testArgumentPointerWithArgumentBuffer() {
         runTestController(for: "test_argument_pointer", expected: 1)
         { controller, computeCommandEncoder in
             
             let encoder = controller.makeEncoder(for: "buffer", with: computeCommandEncoder)
-            let buffer = makeBuffer(length: encoder.encodedLength, value: UInt32(1))
-            encoder.setArgumentBuffer(buffer)
+            let buffer = makeBuffer(length: MemoryLayout<UInt32>.stride, value: UInt32(1))
+            encoder.encode(buffer)
         }
     }
     
@@ -522,8 +532,8 @@ private extension AluminumTests {
         let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()!
         
         let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
-        let resultBuffer = makeBuffer(length: resultEncoder.encodedLength)
-        resultEncoder.setArgumentBuffer(resultBuffer)
+        let resultBuffer = makeBuffer(length: MemoryLayout<UInt32>.stride)
+        resultEncoder.encode(resultBuffer)
         
         configurationBlock(controller, computeCommandEncoder)
         dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
