@@ -166,7 +166,7 @@ private class TextureRootEncoder {
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
         guard case let .textureArgument(argument) = encoding.dataType else {
-            fatalError("RootTextureEncoder expects an argument path that starts with an argument texture.")
+            fatalError("TextureRootEncoder expects an argument path that starts with an argument texture.")
         }
         
         self.encoding = encoding
@@ -201,9 +201,9 @@ extension TextureRootEncoder: RootEncoder {
         let dataTypePath = encoding.localDataTypePath(for: path)
         assert(dataTypePath.last!.isTextureArgument, .invalidTexturePath(dataTypePath.last!))
 
+        // TODO: assert that this is a range
         let index = queryIndex(for: path, dataTypePath: dataTypePath)
         computeCommandEncoder.setTextures(texture, range: index ..< index + 1)
-
     }
 }
 
@@ -219,7 +219,7 @@ private class ArgumentRootEncoder {
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
         guard case let .argument(argument) = encoding.dataType else {
-            fatalError("RootArgumentEncoder expects an argument path that starts with an argument.")
+            fatalError("ArgumentRootEncoder expects an argument path that starts with an argument.")
         }
 
         self.encoding = encoding
@@ -252,7 +252,7 @@ private class EncodableArgumentRootEncoder {
          computeCommandEncoder: MTLComputeCommandEncoder)
     {
         guard case let .encodableArgument(argument) = encoding.dataType else {
-            fatalError("RootArgumentEncoder expects an argument path that starts with an argument.")
+            fatalError("EncodableArgumentRootEncoder expects an argument path that starts with an argument.")
         }
 
         self.encoding = encoding

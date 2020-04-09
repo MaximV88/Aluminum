@@ -10,11 +10,26 @@ import Foundation
 
 public typealias Path = [PathComponent]
 
-public enum PathComponent: Hashable {
+public enum PathComponent {
     case argument(String)
     case index(UInt) // TODO: convert to Int
-    case range(Range<Int>)
-    case closedRange(ClosedRange<Int>)
+    case range(PathRange)
+}
+
+public protocol PathRange {
+    var inclusiveLowerBound: Int { get }
+    var nonInclusiveUpperBound: Int { get }
+    var isEmpty: Bool { get }
+}
+
+extension Range: PathRange where Bound == Int {
+    public var inclusiveLowerBound: Int { lowerBound }
+    public var nonInclusiveUpperBound: Int { upperBound }
+}
+
+extension ClosedRange: PathRange where Bound == Int {
+    public var inclusiveLowerBound: Int { lowerBound }
+    public var nonInclusiveUpperBound: Int { upperBound + 1 }
 }
 
 internal extension PathComponent {
