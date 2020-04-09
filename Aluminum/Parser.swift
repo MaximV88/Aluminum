@@ -72,7 +72,7 @@ internal class Parser {
         
         func localDataTypePath(to childEncoder: Encoding) -> [DataType] {
             // validate encoders share same path
-            assert(childEncoder.dataTypePath[0...(dataTypePath.count - 1)] == dataTypePath[...])
+            assert(childEncoder.dataTypePath[...(dataTypePath.count - 1)] == dataTypePath[...])
             return Array(childEncoder.dataTypePath[startIndex...childEncoder.startIndex])
         }
     }
@@ -162,7 +162,7 @@ private extension Path {
         return compactMap {
             switch $0 {
             case .argument(let a): return .named(a)
-            case .index, .range: return .indexed
+            case .index: return .indexed
             }
         }
     }

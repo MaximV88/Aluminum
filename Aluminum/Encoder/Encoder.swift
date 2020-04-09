@@ -48,8 +48,6 @@ public protocol RootEncoder: ArgumentBufferEncoder {
     
     func encode(_ buffer: MTLBuffer, offset: Int)
     
-    func encode(_ buffers: [MTLBuffer], offsets: [Int])
-
     func encode(_ bytes: UnsafeRawPointer, count: Int)
     
     func encode(_ texture: MTLTexture)
@@ -78,7 +76,7 @@ public extension ResourceEncoder {
     func encode<T: MTLBuffer>(_ parameter: T?, to path: Path) {
         switch parameter {
         case .some(let some): encode(some as MTLBuffer, to: path)
-        case .none: fatalError() // TODO: allow encoding nil (to remove values from encoded argument buffers)
+        case .none: fatalError()
         }
     }
     
@@ -128,7 +126,6 @@ public extension RootEncoder {
     }
 }
 
-
 internal func makeRootEncoder(
     for encoding: Parser.Encoding,
     rootPath: Path,
@@ -157,340 +154,7 @@ internal func makeRootEncoder(
     }
 }
 
-private class TextureRootEncoder {
-    private let encoding: Parser.Encoding
-    private let argument: MTLArgument
-    private weak var computeCommandEncoder: MTLComputeCommandEncoder!
-    
-    init(encoding: Parser.Encoding,
-         computeCommandEncoder: MTLComputeCommandEncoder)
-    {
-        guard case let .textureArgument(argument) = encoding.dataType else {
-            fatalError("TextureRootEncoder expects an argument path that starts with an argument texture.")
-        }
-        
-        self.encoding = encoding
-        self.argument = argument
-        self.computeCommandEncoder = computeCommandEncoder
-    }
-}
-
-extension TextureRootEncoder: RootEncoder {    
-    func encode(_ texture: MTLTexture) {
-        // texture array cannot be set using a single texture assignment
-        assert(argument.arrayLength == 1, .requiresArrayReference)
-        computeCommandEncoder.setTexture(texture, index: argument.index)
-    }
-    
-    func encode(_ textures: [MTLTexture]) {
-        assert(argument.arrayLength <= textures.count)
-
-        let index = argument.index
-        computeCommandEncoder.setTextures(textures, range: index ..< index + textures.count)
-    }
-    
-    func encode(_ texture: MTLTexture, to path: Path) {
-        let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isTextureArgument, .invalidTexturePath(dataTypePath.last!))
-        
-        let index = queryIndex(for: path, dataTypePath: dataTypePath)
-        computeCommandEncoder.setTextures([texture], range: index ..< index + 1)
-    }
-    
-    func encode(_ texture: [MTLTexture], to path: Path) {
-        let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isTextureArgument, .invalidTexturePath(dataTypePath.last!))
-
-        // TODO: assert that this is a range
-        let index = queryIndex(for: path, dataTypePath: dataTypePath)
-        computeCommandEncoder.setTextures(texture, range: index ..< index + 1)
-    }
-}
-
-
-private class ArgumentRootEncoder {
-    private let encoding: Parser.Encoding
-    private let argument: MTLArgument
-
-    private weak var computeCommandEncoder: MTLComputeCommandEncoder!
-    private weak var argumentBuffer: MTLBuffer!
-    
-    init(encoding: Parser.Encoding,
-         computeCommandEncoder: MTLComputeCommandEncoder)
-    {
-        guard case let .argument(argument) = encoding.dataType else {
-            fatalError("ArgumentRootEncoder expects an argument path that starts with an argument.")
-        }
-
-        self.encoding = encoding
-        self.argument = argument
-        self.computeCommandEncoder = computeCommandEncoder
-    }
-}
-
-extension ArgumentRootEncoder: RootEncoder {    
-    func encode(_ buffer: MTLBuffer, offset: Int) {
-        computeCommandEncoder.setBuffer(buffer, offset: offset, index: argument.index)
-    }
-
-    func encode(_ bytes: UnsafeRawPointer, count: Int) {
-        computeCommandEncoder.setBytes(bytes, length: count, index: argument.index)
-    }
-}
-
-private class EncodableArgumentRootEncoder {
-    private let encoding: Parser.Encoding
-    private let argument: MTLArgument
-
-    private weak var computeCommandEncoder: MTLComputeCommandEncoder!
-    private weak var argumentBuffer: MTLBuffer!
-    
-    private var bufferOffset: Int = 0
-    private var didCopyBytes = false
-
-    init(encoding: Parser.Encoding,
-         computeCommandEncoder: MTLComputeCommandEncoder)
-    {
-        guard case let .encodableArgument(argument) = encoding.dataType else {
-            fatalError("EncodableArgumentRootEncoder expects an argument path that starts with an argument.")
-        }
-
-        self.encoding = encoding
-        self.argument = argument
-        self.computeCommandEncoder = computeCommandEncoder
-    }
-}
-
-extension EncodableArgumentRootEncoder: RootEncoder {
-    var encodedLength: Int {
-        return argument.bufferDataSize
-    }
-    
-    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
-        assert(argumentBuffer.length - offset >= encodedLength, .invalidArgumentBuffer)
-        
-        self.argumentBuffer = argumentBuffer
-        self.bufferOffset = offset
-        
-        computeCommandEncoder.setBuffer(argumentBuffer, offset: offset, index: argument.index)
-    }
-    
-    func encode(_ buffer: MTLBuffer, offset: Int) {
-        fatalError(.noExistingBuffer)
-    }
-
-    func encode(_ bytes: UnsafeRawPointer, count: Int) {
-        if let argumentBuffer = argumentBuffer {
-            let destination = argumentBuffer.contents().assumingMemoryBound(to: UInt8.self)
-            let source = bytes.assumingMemoryBound(to: UInt8.self)
-
-            for i in 0 ..< count {
-                destination[bufferOffset + i] = source[i]
-            }
-        } else {
-            computeCommandEncoder.setBytes(bytes, length: count, index: argument.index)
-            didCopyBytes = true
-        }
-    }
-    
-    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
-        assert(!didCopyBytes, .overridesSingleUseData)
-        assert(argumentBuffer != nil, .noArgumentBuffer)
-        
-        let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
-
-        let pathOffset = queryOffset(for: path, dataTypePath: dataTypePath[1...])
-        let destination = argumentBuffer.contents().assumingMemoryBound(to: UInt8.self)
-        let source = bytes.assumingMemoryBound(to: UInt8.self)
-        
-        for i in 0 ..< count {
-            destination[bufferOffset + pathOffset + i] = source[i]
-        }
-    }
-}
-
-private class ArgumentBufferRootEncoder {
-    private let encoding: Parser.Encoding
-    private let encoderIndex: Int
-    
-    private let pointer: MTLPointerType
-    private let argumentEncoder: MTLArgumentEncoder
-    private let parentArgumentEncoder: MTLArgumentEncoder?
-    private weak var computeCommandEncoder: MTLComputeCommandEncoder!
-
-    private var hasArgumentBuffer: Bool = false
-
-    init(encoding: Parser.Encoding,
-         encoderIndex: Int,
-         argumentEncoder: MTLArgumentEncoder,
-         parentArgumentEncoder: MTLArgumentEncoder?,
-         computeCommandEncoder: MTLComputeCommandEncoder)
-    {
-        let pointer: MTLPointerType
-        switch encoding.dataType {
-        case let .argumentBuffer(p): pointer = p
-        case let .argumentContainingArgumentBuffer(_, p): pointer = p
-        default: fatalError("Invalid instantiation of encoder per encoding path type.")
-        }
-        
-        self.encoding = encoding
-        self.encoderIndex = encoderIndex
-        self.pointer = pointer
-        self.argumentEncoder = argumentEncoder
-        self.parentArgumentEncoder = parentArgumentEncoder
-        self.computeCommandEncoder = computeCommandEncoder
-    }
-}
-
-extension ArgumentBufferRootEncoder: RootEncoder {
-    var encodedLength: Int {
-        return argumentEncoder.encodedLength
-    }
-    
-    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
-        assert(argumentBuffer.length - offset >= encodedLength, .invalidArgumentBuffer)
-
-        hasArgumentBuffer = true
-        argumentEncoder.setArgumentBuffer(argumentBuffer, offset: offset)
-        
-        if let parentArgumentEncoder = parentArgumentEncoder {
-            parentArgumentEncoder.setBuffer(argumentBuffer, offset: offset, index: encoderIndex)
-            computeCommandEncoder.useResource(argumentBuffer, usage: pointer.access.usage)
-        } else {
-            computeCommandEncoder.setBuffer(argumentBuffer, offset: offset, index: encoderIndex)
-        }
-    }
-    
-    func encode(_ buffer: MTLBuffer, offset: Int) {
-        fatalError(.requiresPathReference)
-    }
-
-    func encode(_ bytes: UnsafeRawPointer, count: Int) {
-        fatalError(.noArgumentBufferSupportForSingleUseData)
-    }
-    
-    func encode(_ texture: MTLTexture) {
-        fatalError(.requiresPathReference)
-    }
-    
-    func encode(_ texture: MTLTexture, to path: Path) {
-        validateArgumentBuffer()
-        
-        let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isTexture, .invalidTexturePath(dataTypePath.last!))
-
-        let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
-        argumentEncoder.setTexture(texture, index: index)
-    }
-    
-    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
-        validateArgumentBuffer()
-        
-        let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
-        
-        let bytesIndex = queryIndex(for: path, dataTypePath: dataTypePath[1...])
-        let destination = argumentEncoder.constantData(at: bytesIndex).assumingMemoryBound(to: UInt8.self)
-        let source = bytes.assumingMemoryBound(to: UInt8.self)
-        
-        for i in 0 ..< count {
-            destination[i] = source[i]
-        }
-    }
-    
-    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
-        validateArgumentBuffer()
-
-        let dataTypePath = encoding.localDataTypePath(for: path)
-        
-        switch dataTypePath.last! {
-        case let .buffer(p): fallthrough
-        case let .encodableBuffer(p):
-
-            let pointerIndex = queryIndex(for: path, dataTypePath: dataTypePath[1...])
-            argumentEncoder.setBuffer(buffer, offset: offset, index: pointerIndex)
-            computeCommandEncoder.useResource(buffer, usage: p.access.usage)
-
-        default: fatalError(.invalidBufferPath(dataTypePath.last!))
-        }
-    }
-    
-    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder)->()) {
-        validateArgumentBuffer()
-
-        let childEncoding = encoding.childEncoding(for: path)
-        
-        guard case let .encodableBuffer(p) = childEncoding.dataType else {
-            fatalError(.invalidEncodableBufferPath(childEncoding.dataType))
-        }
-        
-        assert(buffer.length - offset >= p.dataSize, .invalidBuffer)
-
-        let pointerIndex = queryIndex(for: path, dataTypePath: encoding.localDataTypePath(to: childEncoding)[1...])
-        argumentEncoder.setBuffer(buffer, offset: offset, index: pointerIndex)
-        computeCommandEncoder.useResource(buffer, usage: p.access.usage)
-        
-        encoderClosure(EncodableBufferEncoder(encoding: childEncoding,
-                                              encodableBuffer: buffer,
-                                              offset: offset))
-    }
-
-    func childEncoder(for path: Path) -> ArgumentBufferEncoder {
-        validateArgumentBuffer()
-
-        let childEncoding = encoding.childEncoding(for: path)
-        let index = queryIndex(for: path, dataTypePath: encoding.localDataTypePath(to: childEncoding)[1...])
-        
-        return ArgumentBufferRootEncoder(encoding: childEncoding,
-                                         encoderIndex: index,
-                                         argumentEncoder: argumentEncoder.makeArgumentEncoderForBuffer(atIndex: index)!,
-                                         parentArgumentEncoder: argumentEncoder,
-                                         computeCommandEncoder: computeCommandEncoder)
-    }
-}
-
-private extension ArgumentBufferRootEncoder {
-    func validateArgumentBuffer() {
-        assert(hasArgumentBuffer, .noArgumentBuffer)
-    }
-}
-
-private class EncodableBufferEncoder {
-    private let encoding: Parser.Encoding
-    private let encodableBuffer: MTLBuffer
-    private let offset: Int
-
-    init(encoding: Parser.Encoding, encodableBuffer: MTLBuffer, offset: Int) {
-        assert(encoding.dataType.isEncodableBuffer)
-        
-        self.encoding = encoding
-        self.encodableBuffer = encodableBuffer
-        self.offset = offset
-    }
-}
-
-extension EncodableBufferEncoder: BytesEncoder {
-    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
-        let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
-
-        let pathOffset = queryOffset(for: path, dataTypePath: dataTypePath[1...])
-        let destination = encodableBuffer.contents().assumingMemoryBound(to: UInt8.self)
-        let source = bytes.assumingMemoryBound(to: UInt8.self)
-        
-        for i in 0 ..< count {
-            destination[offset + pathOffset + i] = source[i]
-        }
-    }    
-}
-
-enum Index {
-    case single(Int)
-    case range(Int)
-}
-
-private func queryIndex<DataTypeArray: RandomAccessCollection>(
+internal func queryIndex<DataTypeArray: RandomAccessCollection>(
     for path: Path,
     dataTypePath: DataTypeArray
 ) -> Int
@@ -522,13 +186,11 @@ private func queryIndex<DataTypeArray: RandomAccessCollection>(
             index += s.argumentIndex
             pathIndex += 1
         case .array(let a):
-            // TODO: if range then assert at end - otherwise call makes no sense
             let inputIndex = path[pathIndex].index!
             assert(inputIndex >= 0 && inputIndex < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
             index += a.argumentIndexStride * Int(inputIndex)
             pathIndex += 1
         case .metalArray(let a, let s):
-            // TODO: if range then assert at end - otherwise call makes no sense
             let inputIndex = path[pathIndex].index!
             assert(inputIndex >= 0 && inputIndex < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
             index += a.argumentIndexStride * Int(inputIndex) + s.argumentIndex
@@ -543,7 +205,7 @@ private func queryIndex<DataTypeArray: RandomAccessCollection>(
     return index
 }
 
-private func queryOffset<DataTypeArray: RandomAccessCollection>(
+internal func queryOffset<DataTypeArray: RandomAccessCollection>(
     for path: Path,
     dataTypePath: DataTypeArray
 ) -> Int
@@ -560,7 +222,6 @@ private func queryOffset<DataTypeArray: RandomAccessCollection>(
         case .structMember(let s): offset += s.offset
         case .array(let a): fallthrough
         case .metalArray(let a, _):
-            // TODO: assert not range otherwise call makes no sense
             let index = path[pathIndex].index!
             assert(index >= 0 && index < a.arrayLength, .pathIndexOutOfBounds(pathIndex))
             offset += Int(index) * a.stride
@@ -574,15 +235,4 @@ private func queryOffset<DataTypeArray: RandomAccessCollection>(
     assert(pathIndex == path.count)
     
     return offset
-}
-
-private extension MTLArgumentAccess {
-    var usage: MTLResourceUsage {
-        switch self {
-        case .readOnly: return .read
-        case .writeOnly: return .write
-        case .readWrite: return [.read, .write]
-        default: fatalError("Unknown usage.")
-        }
-    }
 }

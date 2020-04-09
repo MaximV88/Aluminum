@@ -22,6 +22,11 @@
 		9453C92E23D613EA00E7FCFE /* Encoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9453C92D23D613EA00E7FCFE /* Encoder.swift */; };
 		9497B83223FB1006000C8085 /* MetalType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9497B83123FB1006000C8085 /* MetalType.swift */; };
 		94A52E5D243F1348006806D3 /* Encoder+Default.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E5C243F1348006806D3 /* Encoder+Default.swift */; };
+		94A52E60243F99E9006806D3 /* TextureRootEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E5F243F99E9006806D3 /* TextureRootEncoder.swift */; };
+		94A52E62243F9A04006806D3 /* ArgumentRootEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E61243F9A04006806D3 /* ArgumentRootEncoder.swift */; };
+		94A52E64243F9A21006806D3 /* EncodableArgumentRootEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E63243F9A21006806D3 /* EncodableArgumentRootEncoder.swift */; };
+		94A52E66243F9A36006806D3 /* ArgumentBufferRootEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E65243F9A36006806D3 /* ArgumentBufferRootEncoder.swift */; };
+		94A52E68243F9A5C006806D3 /* EncodableBufferEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E67243F9A5C006806D3 /* EncodableBufferEncoder.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +59,11 @@
 		9453C92D23D613EA00E7FCFE /* Encoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Encoder.swift; sourceTree = "<group>"; };
 		9497B83123FB1006000C8085 /* MetalType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalType.swift; sourceTree = "<group>"; };
 		94A52E5C243F1348006806D3 /* Encoder+Default.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Encoder+Default.swift"; sourceTree = "<group>"; };
+		94A52E5F243F99E9006806D3 /* TextureRootEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextureRootEncoder.swift; sourceTree = "<group>"; };
+		94A52E61243F9A04006806D3 /* ArgumentRootEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArgumentRootEncoder.swift; sourceTree = "<group>"; };
+		94A52E63243F9A21006806D3 /* EncodableArgumentRootEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncodableArgumentRootEncoder.swift; sourceTree = "<group>"; };
+		94A52E65243F9A36006806D3 /* ArgumentBufferRootEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArgumentBufferRootEncoder.swift; sourceTree = "<group>"; };
+		94A52E67243F9A5C006806D3 /* EncodableBufferEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncodableBufferEncoder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -137,6 +147,11 @@
 			children = (
 				9453C92D23D613EA00E7FCFE /* Encoder.swift */,
 				94A52E5C243F1348006806D3 /* Encoder+Default.swift */,
+				94A52E5F243F99E9006806D3 /* TextureRootEncoder.swift */,
+				94A52E61243F9A04006806D3 /* ArgumentRootEncoder.swift */,
+				94A52E63243F9A21006806D3 /* EncodableArgumentRootEncoder.swift */,
+				94A52E65243F9A36006806D3 /* ArgumentBufferRootEncoder.swift */,
+				94A52E67243F9A5C006806D3 /* EncodableBufferEncoder.swift */,
 			);
 			path = Encoder;
 			sourceTree = "<group>";
@@ -252,15 +267,20 @@
 			buildActionMask = 2147483647;
 			files = (
 				9497B83223FB1006000C8085 /* MetalType.swift in Sources */,
+				94A52E68243F9A5C006806D3 /* EncodableBufferEncoder.swift in Sources */,
 				9453C92E23D613EA00E7FCFE /* Encoder.swift in Sources */,
 				94A52E5D243F1348006806D3 /* Encoder+Default.swift in Sources */,
+				94A52E62243F9A04006806D3 /* ArgumentRootEncoder.swift in Sources */,
 				9402317124250C6A002242B3 /* DataType.swift in Sources */,
 				9453C92A23D60C9800E7FCFE /* Parser.swift in Sources */,
 				9402316924165FB8002242B3 /* Path.swift in Sources */,
 				9402316F2424BC77002242B3 /* Error.swift in Sources */,
 				9402316B24182A2A002242B3 /* String+NSRange.swift in Sources */,
+				94A52E60243F99E9006806D3 /* TextureRootEncoder.swift in Sources */,
 				9453C91223D32AA600E7FCFE /* ComputePipelineStateController.swift in Sources */,
+				94A52E66243F9A36006806D3 /* ArgumentBufferRootEncoder.swift in Sources */,
 				9402316D24182A6A002242B3 /* Path+VisualFormat.swift in Sources */,
+				94A52E64243F9A21006806D3 /* EncodableArgumentRootEncoder.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

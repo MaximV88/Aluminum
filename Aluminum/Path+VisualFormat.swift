@@ -10,7 +10,7 @@ import Metal
 
 
 private extension Path {
-    // TODO: add range parsing: x...y, x..<y
+
     private static let argumentPattern = "[a-zA-Z0-9_]+"
     private static let indexPattern = "\\[[\\d]+\\]"
     private static let regex = try! NSRegularExpression(pattern: "(?<argument>\(argumentPattern))|(?<index>\(indexPattern))")

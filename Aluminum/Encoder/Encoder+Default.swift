@@ -55,10 +55,6 @@ extension RootEncoder {
     func encode(_ buffer: MTLBuffer, offset: Int) {
         fatalError(.noExistingBuffer)
     }
-
-    func encode(_ buffers: [MTLBuffer], offsets: [Int]) {
-        fatalError(.requiresChildEncoderExistance)
-    }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
         fatalError(.noExistingBuffer)
