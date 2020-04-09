@@ -19,11 +19,14 @@ public protocol ResourceEncoder: BytesEncoder {
         
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path)
     
+    func encode(_ buffers: [MTLBuffer], offsets: [Int], to path: Path)
+    
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder)->())
 
     func encode(_ texture: MTLTexture, to path: Path)
-    
-    // TODO: add stubs for buffer/texture arrays
+        
+    func encode(_ textures: [MTLTexture], to path: Path)
+
     
 //    func encode(_ sampler: MTLSamplerState, to path: Path)
 
@@ -117,6 +120,7 @@ public extension RootEncoder {
     }
 }
 
+
 internal func makeRootEncoder(
     for encoding: Parser.Encoding,
     rootPath: Path,
@@ -163,27 +167,15 @@ private class TextureRootEncoder {
     }
 }
 
-extension TextureRootEncoder: RootEncoder {
-    var encodedLength: Int {
-        fatalError(.noArgumentBufferRequired)
-    }
-    
-    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
-        fatalError(.noArgumentBufferRequired)
-    }
-    
-    func encode(_ buffer: MTLBuffer, offset: Int) {
-        fatalError(.noExistingBuffer)
-    }
-
-    func encode(_ bytes: UnsafeRawPointer, count: Int) {
-        fatalError(.noExistingBuffer)
-    }
-    
+extension TextureRootEncoder: RootEncoder {    
     func encode(_ texture: MTLTexture) {
         // texture array cannot be set using a single texture assignment
         assert(argument.arrayLength == 1, .requiresArrayReference)
         computeCommandEncoder.setTexture(texture, index: argument.index)
+    }
+    
+    func encode(_ texture: [MTLTexture], to path: Path) {
+        // TODO: reference range path
     }
     
     func encode(_ texture: MTLTexture, to path: Path) {
@@ -192,22 +184,6 @@ extension TextureRootEncoder: RootEncoder {
         
         let index = queryIndex(for: path, dataTypePath: dataTypePath)
         computeCommandEncoder.setTextures([texture], range: index ..< index + 1)
-    }
-
-    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder) -> ()) {
-        fatalError(.noExistingBuffer)
-    }
-    
-    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
-        fatalError(.noExistingBuffer)
-    }
-    
-    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
-        fatalError(.noExistingBuffer)
-    }
-    
-    func childEncoder(for path: Path) -> ArgumentBufferEncoder {
-        fatalError(.noChildEncoderExists)
     }
 }
 
@@ -232,45 +208,13 @@ private class ArgumentRootEncoder {
     }
 }
 
-extension ArgumentRootEncoder: RootEncoder {
-    var encodedLength: Int {
-        fatalError(.noArgumentBufferRequired)
-    }
-    
-    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
-        fatalError(.noArgumentBufferRequired)
-    }
-    
+extension ArgumentRootEncoder: RootEncoder {    
     func encode(_ buffer: MTLBuffer, offset: Int) {
         computeCommandEncoder.setBuffer(buffer, offset: offset, index: argument.index)
     }
 
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
         computeCommandEncoder.setBytes(bytes, length: count, index: argument.index)
-    }
-    
-    func encode(_ texture: MTLTexture) {
-        fatalError(.noExistingTexture)
-    }
-    
-    func encode(_ texture: MTLTexture, to path: Path) {
-        fatalError(.noExistingTexture)
-    }
-    
-    func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
-        fatalError(.noExistingBuffer)
-    }
-    
-    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
-        fatalError(.noExistingBuffer)
-    }
-    
-    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder)->()) {
-        fatalError(.noExistingBuffer)
-    }
-    
-    func childEncoder(for path: Path) -> ArgumentBufferEncoder {
-        fatalError(.noChildEncoderExists)
     }
 }
 
@@ -329,14 +273,6 @@ extension EncodableArgumentRootEncoder: RootEncoder {
         }
     }
     
-    func encode(_ texture: MTLTexture) {
-        fatalError(.noExistingTexture)
-    }
-    
-    func encode(_ texture: MTLTexture, to path: Path) {
-        fatalError(.noExistingTexture)
-    }
-    
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
         assert(!didCopyBytes, .overridesSingleUseData)
         assert(argumentBuffer != nil, .noArgumentBuffer)
@@ -352,19 +288,6 @@ extension EncodableArgumentRootEncoder: RootEncoder {
             destination[bufferOffset + pathOffset + i] = source[i]
         }
     }
-    
-    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
-        fatalError(.noExistingBuffer)
-    }
-    
-    func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder)->()) {
-        fatalError(.noExistingBuffer)
-    }
-    
-    func childEncoder(for path: Path) -> ArgumentBufferEncoder {
-        fatalError(.noChildEncoderExists)
-    }
-
 }
 
 private class ArgumentBufferRootEncoder {
