@@ -16,7 +16,7 @@ public protocol BytesEncoder {
 }
 
 public protocol ResourceEncoder: BytesEncoder {
-    
+        
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path)
     
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path, _ encoderClosure: (BytesEncoder)->())
@@ -24,6 +24,10 @@ public protocol ResourceEncoder: BytesEncoder {
     func encode(_ texture: MTLTexture, to path: Path)
     
     // TODO: add stubs for buffer/texture arrays
+    
+//    func encode(_ sampler: MTLSamplerState, to path: Path)
+
+    
     
 }
 
@@ -63,7 +67,7 @@ public extension ResourceEncoder {
     func encode<T: MTLBuffer>(_ parameter: T?, to path: Path) {
         switch parameter {
         case .some(let some): encode(some as MTLBuffer, to: path)
-        case .none: fatalError()
+        case .none: fatalError() // TODO: allow encoding nil (to remove values from encoded argument buffers)
         }
     }
     
@@ -312,8 +316,6 @@ extension EncodableArgumentRootEncoder: RootEncoder {
     }
 
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
-        // TODO: issue warning if bytes is above 4k (i.e. count or enoder call)
-
         if let argumentBuffer = argumentBuffer {
             let destination = argumentBuffer.contents().assumingMemoryBound(to: UInt8.self)
             let source = bytes.assumingMemoryBound(to: UInt8.self)

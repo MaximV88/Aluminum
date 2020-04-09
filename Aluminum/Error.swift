@@ -79,7 +79,7 @@ extension AluminumError: LocalizedError {
         case .noExistingTexture: return "Encoder does not contain a texture."
         case .noExistingBuffer: return "Encoder does not contain a buffer."
         case .noArgumentBufferRequired: return "Encoder does not require an argument buffer."
-        case .noChildEncoderExists: return "Encoder does not contain child encoders"
+        case .noChildEncoderExists: return "Encoder does not contain child encoders."
         }
     }
 }
