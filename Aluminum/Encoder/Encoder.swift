@@ -30,8 +30,7 @@ public protocol ResourceEncoder: BytesEncoder {
     func encode(_ sampler: MTLSamplerState, to path: Path)
 
     func encode(_ samplers: [MTLSamplerState], to path: Path)
-
-    
+  
 }
 
 public protocol ArgumentBufferEncoder: ResourceEncoder {
@@ -56,7 +55,11 @@ public protocol RootEncoder: ArgumentBufferEncoder {
     
     func encode(_ sampler: MTLSamplerState)
 
+    func encode(_ sampler: MTLSamplerState, lodMinClamp: Float, lodMaxClamp: Float)
+
     func encode(_ samplers: [MTLSamplerState])
+
+    func encode(_ samplers: [MTLSamplerState], lodMinClamps: [Float], lodMaxClamps: [Float])
 
 }
 
@@ -90,7 +93,14 @@ public extension ResourceEncoder {
         case .none: fatalError(.nilValuesAreInvalid)
         }
     }
-    
+
+    func encode<T: MTLSamplerState>(_ parameter: T?, to path: Path) {
+        switch parameter {
+        case .some(let some): encode(some as MTLSamplerState, to: path)
+        case .none: fatalError(.nilValuesAreInvalid)
+        }
+    }
+
     func encode(_ buffer: MTLBuffer, to path: Path, _ encoderClosure: (BytesEncoder)->()) {
         encode(buffer, offset: 0, to: path, encoderClosure)
     }
@@ -125,6 +135,13 @@ public extension RootEncoder {
     func encode<T: MTLTexture>(_ parameter: T?) {
         switch parameter {
         case .some(let some): encode(some as MTLTexture)
+        case .none: fatalError(.nilValuesAreInvalid)
+        }
+    }
+    
+    func encode<T: MTLSamplerState>(_ parameter: T?) {
+        switch parameter {
+        case .some(let some): encode(some as MTLSamplerState)
         case .none: fatalError(.nilValuesAreInvalid)
         }
     }

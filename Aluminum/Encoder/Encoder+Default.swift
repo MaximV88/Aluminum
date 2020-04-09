@@ -79,8 +79,16 @@ extension RootEncoder {
     func encode(_ sampler: MTLSamplerState) {
         fatalError(.noExistingSampler)
     }
+    
+    func encode(_ sampler: MTLSamplerState, lodMinClamp: Float, lodMaxClamp: Float) {
+        fatalError(.noExistingSampler)
+    }
 
     func encode(_ sampler: [MTLSamplerState]) {
+        fatalError(.noExistingSampler)
+    }
+    
+    func encode(_ samplers: [MTLSamplerState], lodMinClamps: [Float], lodMaxClamps: [Float]) {
         fatalError(.noExistingSampler)
     }
 }

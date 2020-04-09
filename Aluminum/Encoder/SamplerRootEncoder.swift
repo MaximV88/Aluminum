@@ -32,12 +32,30 @@ extension SamplerRootEncoder: RootEncoder {
         assert(argument.arrayLength == 1, .requiresArrayReference)
         computeCommandEncoder.setSamplerState(sampler, index: argument.index)
     }
+    
+    func encode(_ sampler: MTLSamplerState, lodMinClamp: Float, lodMaxClamp: Float) {
+        assert(argument.arrayLength == 1, .requiresArrayReference)
+        computeCommandEncoder.setSamplerState(sampler,
+                                              lodMinClamp: lodMinClamp,
+                                              lodMaxClamp: lodMaxClamp,
+                                              index: argument.index)
+    }
 
     func encode(_ samplers: [MTLSamplerState]) {
         assert(argument.arrayLength >= samplers.count, .arrayOutOfBounds(argument.arrayLength))
         
         let index = argument.index
         computeCommandEncoder.setSamplerStates(samplers, range: index ..< index + samplers.count)
+    }
+    
+    func encode(_ samplers: [MTLSamplerState], lodMinClamps: [Float], lodMaxClamps: [Float]) {
+        assert(argument.arrayLength >= samplers.count, .arrayOutOfBounds(argument.arrayLength))
+        
+        let index = argument.index
+        computeCommandEncoder.setSamplerStates(samplers,
+                                               lodMinClamps: lodMinClamps,
+                                               lodMaxClamps: lodMaxClamps,
+                                               range: index ..< index + samplers.count)
     }
     
     func encode(_ sampler: MTLSamplerState, to path: Path) {
