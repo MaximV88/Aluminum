@@ -57,6 +57,7 @@ enum AluminumError: Error {
     case noArgumentBufferRequired
     case noChildEncoderExists
     case nilValuesAreInvalid
+    case arrayOutOfBounds(Int)
 }
 
 // TODO: path description does not provide any useful information
@@ -86,6 +87,7 @@ extension AluminumError: LocalizedError {
         case .noArgumentBufferRequired: return "Encoder does not require an argument buffer."
         case .noChildEncoderExists: return "Encoder does not contain child encoders."
         case .nilValuesAreInvalid: return "Encoder does not support encoding nil values."
+        case .arrayOutOfBounds(let i): return "Array size can have maximum count of \(i)."
         }
     }
 }
@@ -97,6 +99,7 @@ private extension DataType {
         case .argumentContainingArgumentBuffer(let a, _): return "root argument named \(a)"
         case .encodableArgument(let a): return "root encodable argument named \(a)"
         case .textureArgument(let a): return "root argument of texture named \(a)"
+        case .samplerArgument(let a): return "root argument of sampler named \(a)"
         case .argumentBuffer: return "argument buffer"
         case .array, .metalArray: return "array"
         case .structMember(let s) where s.dataType != .pointer: return "assignable value named \(s.name)"

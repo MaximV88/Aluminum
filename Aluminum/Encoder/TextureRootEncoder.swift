@@ -29,14 +29,13 @@ internal class TextureRootEncoder {
 
 extension TextureRootEncoder: RootEncoder {
     func encode(_ texture: MTLTexture) {
-        // texture array cannot be set using a single texture assignment
         assert(argument.arrayLength == 1, .requiresArrayReference)
         computeCommandEncoder.setTexture(texture, index: argument.index)
     }
     
     func encode(_ textures: [MTLTexture]) {
-        assert(argument.arrayLength >= textures.count) // TODO: add error
-
+        assert(argument.arrayLength >= textures.count, .arrayOutOfBounds(argument.arrayLength))
+        
         let index = argument.index
         computeCommandEncoder.setTextures(textures, range: index ..< index + textures.count)
     }

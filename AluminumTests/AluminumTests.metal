@@ -443,7 +443,7 @@ kernel void test_texture_array_in_argument_buffer(device ArgumentBufferWithTextu
     }
 }
 
-#pragma mark - Test Sampler In Argument Buffer
+#pragma mark - Test Sampler Argument
 
 uint sum_of_values_in_texture_with_sampler(texture2d<int, access::sample> texture, sampler s)
 {
@@ -463,6 +463,28 @@ uint sum_of_values_in_texture_with_sampler(texture2d<int, access::sample> textur
     
     return result;
 }
+
+kernel void test_sampler_argument(texture2d<int, access::sample> texture,
+                                  sampler s,
+                                  metal::array<sampler, 10> s_arr,
+                                  device uint * result)
+{
+    *result = sum_of_values_in_texture_with_sampler(texture, s);
+}
+
+#pragma mark - Test Sampler Array Argument
+
+kernel void test_sampler_array_argument(texture2d<int, access::sample> texture,
+                                        metal::array<sampler, 10> arr,
+                                        device uint * result)
+{
+    for (ushort i = 0 ; i < 10 ; i++)
+    {
+        *result += sum_of_values_in_texture_with_sampler(texture, arr[i]);
+    }
+}
+
+#pragma mark - Test Sampler In Argument Buffer
 
 struct ArgumentBufferWithSampler {
     sampler s;

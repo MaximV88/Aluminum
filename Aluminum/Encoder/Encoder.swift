@@ -54,6 +54,10 @@ public protocol RootEncoder: ArgumentBufferEncoder {
     
     func encode(_ textures: [MTLTexture])
     
+    func encode(_ sampler: MTLSamplerState)
+
+    func encode(_ samplers: [MTLSamplerState])
+
 }
 
 public extension BytesEncoder {
@@ -142,6 +146,9 @@ internal func makeRootEncoder(
                                             computeCommandEncoder: computeCommandEncoder)
     case .textureArgument:
         return TextureRootEncoder(encoding: encoding,
+                                  computeCommandEncoder: computeCommandEncoder)
+    case .samplerArgument:
+        return SamplerRootEncoder(encoding: encoding,
                                   computeCommandEncoder: computeCommandEncoder)
     case .argumentContainingArgumentBuffer:
         let index = queryIndex(for: rootPath, dataTypePath: encoding.dataTypePath)

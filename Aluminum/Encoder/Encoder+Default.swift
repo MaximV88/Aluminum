@@ -75,4 +75,12 @@ extension RootEncoder {
     func encode(_ textures: [MTLTexture]) {
         fatalError(.noExistingTexture)
     }
+    
+    func encode(_ sampler: MTLSamplerState) {
+        fatalError(.noExistingSampler)
+    }
+
+    func encode(_ sampler: [MTLSamplerState]) {
+        fatalError(.noExistingSampler)
+    }
 }

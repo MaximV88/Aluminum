@@ -558,6 +558,35 @@ class AluminumTests: XCTestCase {
         }
     }
     
+    func testSamplerInArgument() {
+        runTestController(for: "test_sampler_argument", expected: 9010)
+        { controller, computeCommandEncoder in
+            
+            let textureEncoder = controller.makeEncoder(for: "texture", with: computeCommandEncoder)
+            let samplerEncoder = controller.makeEncoder(for: "s", with: computeCommandEncoder)
+            let sampler = makeSampler()
+            
+            textureEncoder.encode(texture)
+            samplerEncoder.encode(sampler)
+        }
+    }
+
+    func testSamplerArrayInArgument() {
+        runTestController(for: "test_sampler_array_argument", expected: 90100)
+        { controller, computeCommandEncoder in
+            
+            let textureEncoder = controller.makeEncoder(for: "texture", with: computeCommandEncoder)
+            let samplerEncoder = controller.makeEncoder(for: "arr", with: computeCommandEncoder)
+            let sampler = makeSampler()
+            
+            textureEncoder.encode(texture)
+            
+            let samplerArray = [MTLSamplerState](repeating: sampler, count: 10)
+            samplerEncoder.encode(samplerArray)
+        }
+    }
+
+    
     func testSamplerInArgumentBuffer() {
         runTestController(for: "test_sampler_in_argument_buffer", expected: 9010)
         { controller, computeCommandEncoder in

@@ -13,6 +13,7 @@ internal enum DataType: Equatable {
     case argument(MTLArgument)
     case argumentContainingArgumentBuffer(MTLArgument, MTLPointerType)
     case textureArgument(MTLArgument)
+    case samplerArgument(MTLArgument)
     case encodableArgument(MTLArgument)
     case argumentBuffer(MTLPointerType)
     case structMember(MTLStructMember)
@@ -99,6 +100,20 @@ private struct TextureArgumentRecognizer: DataTypeRecognizer {
         }
         
         return .textureArgument(a)
+    }
+}
+
+private struct SamplerArgumentRecognizer: DataTypeRecognizer {
+    func recognize(_ context: DataTypeContext) -> DataType? {
+        guard
+            case let .argument(a) = context.currentMetalType,
+            case .sampler = a.type
+            else
+        {
+            return nil
+        }
+        
+        return .samplerArgument(a)
     }
 }
 
@@ -266,6 +281,7 @@ where MetalTypeArray.Element == MetalType, MetalTypeArray.Index == Int {
         EncodableArgumentRecognizer(),
         ArgumentRecognizer(),
         TextureArgumentRecognizer(),
+        SamplerArgumentRecognizer(),
         StructMemberRecognizer(),
         EncodableBufferRecognizer(),
         BufferRecognizer(),
@@ -324,6 +340,13 @@ internal extension DataType {
     
     var isTextureArgument: Bool {
         if case .textureArgument = self {
+            return true
+        }
+        return false
+    }
+    
+    var isSamplerArgument: Bool {
+        if case .samplerArgument = self {
             return true
         }
         return false

@@ -144,6 +144,7 @@ private extension Parser {
     static func parseTypes(from pathType: DataType) -> [ParseType] {
         switch pathType {
         case .argument(let a): fallthrough
+        case .samplerArgument(let a): fallthrough
         case .textureArgument(let a): fallthrough
         case .encodableArgument(let a): fallthrough
         case .argumentContainingArgumentBuffer(let a, _):
