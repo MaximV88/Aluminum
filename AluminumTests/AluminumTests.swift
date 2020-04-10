@@ -474,6 +474,24 @@ class AluminumTests: XCTestCase {
         }
     }
     
+    func testArgumentBufferPointerArrayWithArrayWithoutIndex() {
+        runTestController(for: "test_argument_buffer_pointer_array", expected: 450)
+        { controller, computeCommandEncoder in
+
+            let encoder = controller.makeEncoder(for: "argument", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            encoder.setArgumentBuffer(buffer)
+            
+            let intBuffer = makeBuffer(length: MemoryLayout<Int32>.size * 10)
+            let intBufferPtr = intBuffer.contents().assumingMemoryBound(to: Int32.self)
+            (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
+
+            let bufferArray = [MTLBuffer](repeating: intBuffer, count: 10)
+            encoder.encode(bufferArray, to: [.argument("arr")])
+        }
+    }
+
+    
     func testTextureArgument() {
         runTestController(for: "test_texture_argument", expected: 5050)
         { controller, computeCommandEncoder in
@@ -602,7 +620,7 @@ class AluminumTests: XCTestCase {
         }
     }
     
-    func testSamplerArrayInArgumentBuffer() {
+    func testSamplerArrayInArgumentBufferFromIndex() {
         runTestController(for: "test_sampler_array_in_argument_buffer", expected: 90100)
         { controller, computeCommandEncoder in
             

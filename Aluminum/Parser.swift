@@ -75,6 +75,15 @@ internal class Parser {
             assert(childEncoder.dataTypePath[...(dataTypePath.count - 1)] == dataTypePath[...])
             return Array(childEncoder.dataTypePath[startIndex...childEncoder.startIndex])
         }
+        
+        /// Non fatal query since query is intended for candidate paths
+        func candidateLocalDataTypePath(for candidatePath: Path) -> [DataType] {
+            guard let dataTypePath = parser.mapping[parsePath + candidatePath.parsePath] else {
+                return []
+            }
+            
+            return Array(dataTypePath[startIndex...])
+        }
     }
     
 
