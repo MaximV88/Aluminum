@@ -46,6 +46,7 @@ enum AluminumError: Error {
     case invalidEncodableBufferPath(DataType)
     case invalidTexturePath(DataType)
     case invalidSamplerPath(DataType)
+    case invalidRenderPipelineStatePath(DataType)
     case invalidIndirectCommandBufferPath(DataType)
     case invalidChildEncoderPath
     case noArgumentBufferSupportForSingleUseData
@@ -55,6 +56,7 @@ enum AluminumError: Error {
     case noExistingTexture
     case noExistingBuffer
     case noExistingSampler
+    case noExistingRenderPipelineState
     case noExistingIndirectBuffer
     case noArgumentBufferRequired
     case noChildEncoderExists
@@ -78,6 +80,7 @@ extension AluminumError: LocalizedError {
         case .invalidEncodableBufferPath(let d): return "Expected encodable buffer for path. Encountered \(d.named)."
         case .invalidTexturePath(let d): return "Expected texture for path. Encountered \(d.named)."
         case .invalidSamplerPath(let d): return "Expected sampler for path. Encountered \(d.named)."
+        case .invalidRenderPipelineStatePath(let d): return "Expected render pipeline state for path. Encountered \(d.named)."
         case .invalidIndirectCommandBufferPath(let d): return "Expected indirect command buffer for path. Encountered \(d.named)."
         case .invalidChildEncoderPath: return "Path used is not compatible for using a child encoder."
         case .noArgumentBufferSupportForSingleUseData: return "Argument buffer cannot set single use data storage."
@@ -87,6 +90,7 @@ extension AluminumError: LocalizedError {
         case .noExistingTexture: return "Encoder does not contain a texture."
         case .noExistingBuffer: return "Encoder does not contain a buffer."
         case .noExistingSampler: return "Encoder does not contain a sampler."
+        case .noExistingRenderPipelineState: return "Encoder does not contain a render pipeline state."
         case .noExistingIndirectBuffer: return "Encoder does not contain an indirect buffer."
         case .noArgumentBufferRequired: return "Encoder does not require an argument buffer."
         case .noChildEncoderExists: return "Encoder does not contain child encoders."

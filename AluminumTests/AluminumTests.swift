@@ -652,18 +652,8 @@ class AluminumTests: XCTestCase {
         }
     }
 
-    func testIndirectCommandBuffer() {
-        runTestController(for: "test_indirect_command_buffer", expected: 90100)
-        { controller, computeCommandEncoder in
-            
-            let encoder = controller.makeEncoder(for: "command_buffer", with: computeCommandEncoder)
-            let buffer = makeBuffer(length: encoder.encodedLength)
-            encoder.setArgumentBuffer(buffer)
-            
-            let indirectCommandBuffer = makeIndirectCommandBuffer()
-            encoder.encode(indirectCommandBuffer, to: [.argument("buffer")])
-        }
-    }
+    // TODO: add render pipeline state tests
+    // TODO: add indirect command buffer tests
     
     // RENDER
     

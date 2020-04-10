@@ -44,6 +44,14 @@ extension ResourceEncoder {
         fatalError(.noExistingSampler)
     }
     
+    func encode(_ pipeline: MTLRenderPipelineState, to path: Path) {
+        fatalError(.noExistingRenderPipelineState)
+    }
+    
+    func encode(_ pipelines: [MTLRenderPipelineState], to path: Path) {
+        fatalError(.noExistingRenderPipelineState)
+    }
+    
     func encode(_ buffer: MTLIndirectCommandBuffer, to path: Path) {
         fatalError(.noExistingIndirectBuffer)
     }

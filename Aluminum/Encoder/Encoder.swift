@@ -31,12 +31,14 @@ public protocol ResourceEncoder: BytesEncoder {
 
     func encode(_ samplers: [MTLSamplerState], to path: Path)
     
+    func encode(_ pipeline: MTLRenderPipelineState, to path: Path)
+    
+    func encode(_ pipelines: [MTLRenderPipelineState], to path: Path)
+    
     func encode(_ buffer: MTLIndirectCommandBuffer, to path: Path)
 
     func encode(_ buffers: [MTLIndirectCommandBuffer], to path: Path)
 
-    // TODO: missing functionality
-//    func setRenderPipelineState(_ pipeline: MTLRenderPipelineState?, index: Int)
 }
 
 public protocol ArgumentBufferEncoder: ResourceEncoder {
@@ -110,6 +112,13 @@ public extension ResourceEncoder {
         }
     }
     
+    func encode<T: MTLRenderPipelineState>(_ parameter: T?, to path: Path) {
+        switch parameter {
+        case .some(let some): encode(some as MTLRenderPipelineState, to: path)
+        case .none: fatalError(.nilValuesAreInvalid)
+        }
+    }
+
     func encode<T: MTLIndirectCommandBuffer>(_ parameter: T?, to path: Path) {
         switch parameter {
         case .some(let some): encode(some as MTLIndirectCommandBuffer, to: path)

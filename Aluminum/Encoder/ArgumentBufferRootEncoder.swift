@@ -184,6 +184,27 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         }
     }
     
+    func encode(_ pipeline: MTLRenderPipelineState, to path: Path) {
+        validateArgumentBuffer()
+
+        let dataTypePath = encoding.localDataTypePath(for: path)
+        assert(dataTypePath.last!.isRenderPipelineState, .invalidRenderPipelineStatePath(dataTypePath.last!))
+
+        let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
+        argumentEncoder.setRenderPipelineState(pipeline, index: index)
+    }
+    
+    func encode(_ pipelines: [MTLRenderPipelineState], to path: Path) {
+        validateArgumentBuffer()
+
+        applyArray(path: path) { (applicablePath, dataTypePath) in
+            assert(dataTypePath.last!.isRenderPipelineState, .invalidRenderPipelineStatePath(dataTypePath.last!))
+
+            let index = queryIndex(for: applicablePath, dataTypePath: dataTypePath[1...])
+            argumentEncoder.setRenderPipelineStates(pipelines, range: index ..< index + pipelines.count)
+        }
+    }
+    
     func encode(_ buffer: MTLIndirectCommandBuffer, to path: Path) {
         validateArgumentBuffer()
 

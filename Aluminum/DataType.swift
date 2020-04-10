@@ -436,7 +436,16 @@ extension DataType {
         default: return false
         }
     }
-    
+
+    var isRenderPipelineState: Bool {
+        switch self {
+        case .array(let a), .metalArray(let a, _): return a.elementType == .renderPipeline
+        case .atomicVariable(let s): return s.dataType == .renderPipeline
+        case .structMember(let s): return s.dataType == .renderPipeline
+        default: return false
+        }
+    }
+
     var isIndirectCommandBuffer: Bool {
         switch self {
         case .array(let a), .metalArray(let a, _): return a.elementType == .indirectCommandBuffer

@@ -512,18 +512,6 @@ kernel void test_sampler_array_in_argument_buffer(device ArgumentBufferWithSampl
     }
 }
 
-#pragma mark - Test Indirect Command Buffer
-
-struct ICBContainer {
-    command_buffer buffer;
-};
-
-kernel void test_indirect_command_buffer(device ICBContainer * command_buffer,
-                                         device uint * result)
-{
-    
-}
-
 #pragma mark - Render
 
 struct VertexOut {
