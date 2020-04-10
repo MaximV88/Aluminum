@@ -28,6 +28,7 @@
 		94A52E66243F9A36006806D3 /* ArgumentBufferRootEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E65243F9A36006806D3 /* ArgumentBufferRootEncoder.swift */; };
 		94A52E68243F9A5C006806D3 /* EncodableBufferEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E67243F9A5C006806D3 /* EncodableBufferEncoder.swift */; };
 		94A52E6A243FAA29006806D3 /* SamplerRootEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E69243FAA29006806D3 /* SamplerRootEncoder.swift */; };
+		94A52E7B24410135006806D3 /* MTLBuffer+Value.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E7A24410135006806D3 /* MTLBuffer+Value.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -66,6 +67,7 @@
 		94A52E65243F9A36006806D3 /* ArgumentBufferRootEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArgumentBufferRootEncoder.swift; sourceTree = "<group>"; };
 		94A52E67243F9A5C006806D3 /* EncodableBufferEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncodableBufferEncoder.swift; sourceTree = "<group>"; };
 		94A52E69243FAA29006806D3 /* SamplerRootEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamplerRootEncoder.swift; sourceTree = "<group>"; };
+		94A52E7A24410135006806D3 /* MTLBuffer+Value.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MTLBuffer+Value.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -138,6 +140,7 @@
 			children = (
 				9453C91C23D32ADF00E7FCFE /* AluminumTests.swift */,
 				9453C92523D32B7100E7FCFE /* AluminumTests.metal */,
+				94A52E7A24410135006806D3 /* MTLBuffer+Value.swift */,
 				9453C91E23D32ADF00E7FCFE /* Info.plist */,
 				9453C92823D32E0B00E7FCFE /* AluminumTests-Bridging-Header.h */,
 			);
@@ -294,6 +297,7 @@
 			files = (
 				9453C91D23D32ADF00E7FCFE /* AluminumTests.swift in Sources */,
 				9453C92623D32B7100E7FCFE /* AluminumTests.metal in Sources */,
+				94A52E7B24410135006806D3 /* MTLBuffer+Value.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -654,15 +654,7 @@ class AluminumTests: XCTestCase {
 
     // TODO: add render pipeline state tests
     // TODO: add indirect command buffer tests
-    
-    // RENDER
-    
-//    func testRender() {
-//        runTestController(for: "test_render", expected: 0)
-//        { controller, computeCommandEncoder in
-//
-//        }
-//    }
+
 }
 
 private extension AluminumTests {
@@ -751,11 +743,5 @@ private extension AluminumTests {
     func makeIndirectCommandBuffer() -> MTLIndirectCommandBuffer {
         let descriptor = MTLIndirectCommandBufferDescriptor()
         return device.makeIndirectCommandBuffer(descriptor: descriptor, maxCommandCount: 1, options: .storageModeShared)!
-    }
-}
-
-private extension MTLBuffer {
-    func value<T>() -> T {
-        return contents().assumingMemoryBound(to: T.self).pointee
     }
 }
