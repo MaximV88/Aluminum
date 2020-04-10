@@ -213,6 +213,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
 
         let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
         argumentEncoder.setIndirectCommandBuffer(buffer, index: index)
+        computeCommandEncoder.useResource(buffer, usage: .write)
     }
     
     func encode(_ buffers: [MTLIndirectCommandBuffer], to path: Path) {
@@ -223,6 +224,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
 
             let index = queryIndex(for: applicablePath, dataTypePath: dataTypePath[1...])
             argumentEncoder.setIndirectCommandBuffers(buffers, range: index ..< index + buffers.count)
+            computeCommandEncoder.useResources(buffers, usage: .write)
         }
     }
     
