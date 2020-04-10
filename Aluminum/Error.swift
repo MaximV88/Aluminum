@@ -62,8 +62,10 @@ enum AluminumError: Error {
     case noChildEncoderExists
     case nilValuesAreInvalid
     case arrayOutOfBounds(Int)
+    case noClampOverrideSupportInArgumentBuffer
 }
 
+// TODO: remove duplicate errors by using type parameter
 // TODO: path description does not provide any useful information
 extension AluminumError: LocalizedError {
     var localizedDescription: String {
@@ -96,6 +98,7 @@ extension AluminumError: LocalizedError {
         case .noChildEncoderExists: return "Encoder does not contain child encoders."
         case .nilValuesAreInvalid: return "Encoder does not support encoding nil values."
         case .arrayOutOfBounds(let i): return "Array size can have maximum count of \(i)."
+        case .noClampOverrideSupportInArgumentBuffer: return "Argument encoder does not support clamp override."
         }
     }
 }

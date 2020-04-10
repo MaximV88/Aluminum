@@ -172,6 +172,10 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
         argumentEncoder.setSamplerState(sampler, index: index)
     }
+    
+    func encode(_ sampler: MTLSamplerState, lodMinClamp: Float, lodMaxClamp: Float) {
+        fatalError(.noClampOverrideSupportInArgumentBuffer)
+    }
 
     func encode(_ samplers: [MTLSamplerState], to path: Path) {
         validateArgumentBuffer()
@@ -182,6 +186,10 @@ extension ArgumentBufferRootEncoder: RootEncoder {
             let index = queryIndex(for: applicablePath, dataTypePath: dataTypePath[1...])
             argumentEncoder.setSamplerStates(samplers, range: index ..< index + samplers.count)
         }
+    }
+    
+    func encode(_ samplers: [MTLSamplerState], lodMinClamps: [Float], lodMaxClamps: [Float]) {
+        fatalError(.noClampOverrideSupportInArgumentBuffer)
     }
     
     func encode(_ pipeline: MTLRenderPipelineState, to path: Path) {

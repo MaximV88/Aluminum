@@ -63,7 +63,6 @@ public protocol RootEncoder: ArgumentBufferEncoder {
     
     func encode(_ sampler: MTLSamplerState)
 
-    // TODO: check if sampler with clamps are functional on argumentWithArgumentBuffer
     func encode(_ sampler: MTLSamplerState, lodMinClamp: Float, lodMaxClamp: Float)
 
     func encode(_ samplers: [MTLSamplerState])
@@ -91,36 +90,36 @@ public extension ResourceEncoder {
         encode(buffers, offsets: [Int](repeating: 0, count: buffers.count), to: path)
     }
 
-    func encode<T: MTLBuffer>(_ parameter: T?, to path: Path) {
-        switch parameter {
+    func encode<T: MTLBuffer>(_ buffer: T?, to path: Path) {
+        switch buffer {
         case .some(let some): encode(some as MTLBuffer, to: path)
         case .none: fatalError(.nilValuesAreInvalid)
         }
     }
     
-    func encode<T: MTLTexture>(_ parameter: T?, to path: Path) {
-        switch parameter {
+    func encode<T: MTLTexture>(_ texture: T?, to path: Path) {
+        switch texture {
         case .some(let some): encode(some as MTLTexture, to: path)
         case .none: fatalError(.nilValuesAreInvalid)
         }
     }
 
-    func encode<T: MTLSamplerState>(_ parameter: T?, to path: Path) {
-        switch parameter {
+    func encode<T: MTLSamplerState>(_ sampler: T?, to path: Path) {
+        switch sampler {
         case .some(let some): encode(some as MTLSamplerState, to: path)
         case .none: fatalError(.nilValuesAreInvalid)
         }
     }
     
-    func encode<T: MTLRenderPipelineState>(_ parameter: T?, to path: Path) {
-        switch parameter {
+    func encode<T: MTLRenderPipelineState>(_ pipeline: T?, to path: Path) {
+        switch pipeline {
         case .some(let some): encode(some as MTLRenderPipelineState, to: path)
         case .none: fatalError(.nilValuesAreInvalid)
         }
     }
 
-    func encode<T: MTLIndirectCommandBuffer>(_ parameter: T?, to path: Path) {
-        switch parameter {
+    func encode<T: MTLIndirectCommandBuffer>(_ buffer: T?, to path: Path) {
+        switch buffer {
         case .some(let some): encode(some as MTLIndirectCommandBuffer, to: path)
         case .none: fatalError(.nilValuesAreInvalid)
         }
