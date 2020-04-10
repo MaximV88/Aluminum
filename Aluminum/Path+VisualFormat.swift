@@ -80,6 +80,14 @@ public extension ResourceEncoder {
         encode(samplers, to: Path.path(withVisualFormat: path))
     }
     
+    func encode(_ pipeline: MTLRenderPipelineState, to path: String) {
+        encode(pipeline, to: Path.path(withVisualFormat: path))
+    }
+    
+    func encode(_ pipelines: [MTLRenderPipelineState], to path: String) {
+        encode(pipelines, to: Path.path(withVisualFormat: path))
+    }
+
     func encode(_ buffer: MTLIndirectCommandBuffer, to path: String) {
         encode(buffer, to: Path.path(withVisualFormat: path))
     }

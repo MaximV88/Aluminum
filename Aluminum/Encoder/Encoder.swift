@@ -52,7 +52,9 @@ public protocol ArgumentBufferEncoder: ResourceEncoder {
 }
 
 public protocol RootEncoder: ArgumentBufferEncoder {
-    
+    // TODO: implement buffer offset
+//    func setBufferOffset(_ offset: Int)
+
     func encode(_ buffer: MTLBuffer, offset: Int)
     
     func encode(_ bytes: UnsafeRawPointer, count: Int)
@@ -69,8 +71,6 @@ public protocol RootEncoder: ArgumentBufferEncoder {
 
     func encode(_ samplers: [MTLSamplerState], lodMinClamps: [Float], lodMaxClamps: [Float])
     
-    // TODO: check index association
-//    func setRenderPipelineState(_ pipeline: MTLRenderPipelineState?, index: Int)
 }
 
 public extension BytesEncoder {
