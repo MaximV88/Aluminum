@@ -46,6 +46,7 @@ enum AluminumError: Error {
     case invalidEncodableBufferPath(DataType)
     case invalidTexturePath(DataType)
     case invalidSamplerPath(DataType)
+    case invalidIndirectCommandBufferPath(DataType)
     case invalidChildEncoderPath
     case noArgumentBufferSupportForSingleUseData
     case overridesSingleUseData
@@ -54,6 +55,7 @@ enum AluminumError: Error {
     case noExistingTexture
     case noExistingBuffer
     case noExistingSampler
+    case noExistingIndirectBuffer
     case noArgumentBufferRequired
     case noChildEncoderExists
     case nilValuesAreInvalid
@@ -76,6 +78,7 @@ extension AluminumError: LocalizedError {
         case .invalidEncodableBufferPath(let d): return "Expected encodable buffer for path. Encountered \(d.named)."
         case .invalidTexturePath(let d): return "Expected texture for path. Encountered \(d.named)."
         case .invalidSamplerPath(let d): return "Expected sampler for path. Encountered \(d.named)."
+        case .invalidIndirectCommandBufferPath(let d): return "Expected indirect command buffer for path. Encountered \(d.named)."
         case .invalidChildEncoderPath: return "Path used is not compatible for using a child encoder."
         case .noArgumentBufferSupportForSingleUseData: return "Argument buffer cannot set single use data storage."
         case .overridesSingleUseData: return "Removes single use data that was already set."
@@ -84,6 +87,7 @@ extension AluminumError: LocalizedError {
         case .noExistingTexture: return "Encoder does not contain a texture."
         case .noExistingBuffer: return "Encoder does not contain a buffer."
         case .noExistingSampler: return "Encoder does not contain a sampler."
+        case .noExistingIndirectBuffer: return "Encoder does not contain an indirect buffer."
         case .noArgumentBufferRequired: return "Encoder does not require an argument buffer."
         case .noChildEncoderExists: return "Encoder does not contain child encoders."
         case .nilValuesAreInvalid: return "Encoder does not support encoding nil values."

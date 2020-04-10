@@ -414,7 +414,7 @@ extension DataType {
         }
         
         switch dataType {
-        case .pointer, .texture, .sampler: return false
+        case .pointer, .texture, .sampler, .indirectCommandBuffer: return false
         default: return true
         }
     }
@@ -433,6 +433,15 @@ extension DataType {
         case .array(let a), .metalArray(let a, _): return a.elementType == .sampler
         case .atomicVariable(let s): return s.dataType == .sampler
         case .structMember(let s): return s.dataType == .sampler
+        default: return false
+        }
+    }
+    
+    var isIndirectCommandBuffer: Bool {
+        switch self {
+        case .array(let a), .metalArray(let a, _): return a.elementType == .indirectCommandBuffer
+        case .atomicVariable(let s): return s.dataType == .indirectCommandBuffer
+        case .structMember(let s): return s.dataType == .indirectCommandBuffer
         default: return false
         }
     }

@@ -43,6 +43,14 @@ extension ResourceEncoder {
     func encode(_ samplers: [MTLSamplerState], to path: Path) {
         fatalError(.noExistingSampler)
     }
+    
+    func encode(_ buffer: MTLIndirectCommandBuffer, to path: Path) {
+        fatalError(.noExistingIndirectBuffer)
+    }
+    
+    func encode(_ buffers: [MTLIndirectCommandBuffer], to path: Path) {
+        fatalError(.noExistingIndirectBuffer)
+    }
 }
 
 extension ArgumentBufferEncoder {

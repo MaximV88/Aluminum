@@ -135,7 +135,7 @@ private extension Parser {
         while !iterator.isFinished {
             let result = iterator.next()!
              aggragateDataTypePath.append(result)
-                        
+               
             let types = Parser.parseTypes(from: result)
             
             // parse path should be mapped for every item in path to it's path

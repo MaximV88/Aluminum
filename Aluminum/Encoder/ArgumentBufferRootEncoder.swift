@@ -184,6 +184,27 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         }
     }
     
+    func encode(_ buffer: MTLIndirectCommandBuffer, to path: Path) {
+        validateArgumentBuffer()
+
+        let dataTypePath = encoding.localDataTypePath(for: path)
+        assert(dataTypePath.last!.isIndirectCommandBuffer, .invalidIndirectCommandBufferPath(dataTypePath.last!))
+
+        let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
+        argumentEncoder.setIndirectCommandBuffer(buffer, index: index)
+    }
+    
+    func encode(_ buffers: [MTLIndirectCommandBuffer], to path: Path) {
+        validateArgumentBuffer()
+
+        applyArray(path: path) { (applicablePath, dataTypePath) in
+            assert(dataTypePath.last!.isSampler, .invalidSamplerPath(dataTypePath.last!))
+
+            let index = queryIndex(for: applicablePath, dataTypePath: dataTypePath[1...])
+            argumentEncoder.setIndirectCommandBuffers(buffers, range: index ..< index + buffers.count)
+        }
+    }
+    
     func childEncoder(for path: Path) -> ArgumentBufferEncoder {
         validateArgumentBuffer()
 

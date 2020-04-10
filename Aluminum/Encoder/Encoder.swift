@@ -30,12 +30,13 @@ public protocol ResourceEncoder: BytesEncoder {
     func encode(_ sampler: MTLSamplerState, to path: Path)
 
     func encode(_ samplers: [MTLSamplerState], to path: Path)
-  
-    // TODO: in case destination is array, make index optional
     
+    func encode(_ buffer: MTLIndirectCommandBuffer, to path: Path)
+
+    func encode(_ buffers: [MTLIndirectCommandBuffer], to path: Path)
+
     // TODO: missing functionality
 //    func setRenderPipelineState(_ pipeline: MTLRenderPipelineState?, index: Int)
-//    func setIndirectCommandBuffer(_ indirectCommandBuffer: MTLIndirectCommandBuffer?, index: Int)
 }
 
 public protocol ArgumentBufferEncoder: ResourceEncoder {
@@ -60,15 +61,15 @@ public protocol RootEncoder: ArgumentBufferEncoder {
     
     func encode(_ sampler: MTLSamplerState)
 
+    // TODO: check if sampler with clamps are functional on argumentWithArgumentBuffer
     func encode(_ sampler: MTLSamplerState, lodMinClamp: Float, lodMaxClamp: Float)
 
     func encode(_ samplers: [MTLSamplerState])
 
     func encode(_ samplers: [MTLSamplerState], lodMinClamps: [Float], lodMaxClamps: [Float])
-
+    
     // TODO: check index association
 //    func setRenderPipelineState(_ pipeline: MTLRenderPipelineState?, index: Int)
-//    func setIndirectCommandBuffer(_ indirectCommandBuffer: MTLIndirectCommandBuffer?, index: Int)
 }
 
 public extension BytesEncoder {
@@ -105,6 +106,13 @@ public extension ResourceEncoder {
     func encode<T: MTLSamplerState>(_ parameter: T?, to path: Path) {
         switch parameter {
         case .some(let some): encode(some as MTLSamplerState, to: path)
+        case .none: fatalError(.nilValuesAreInvalid)
+        }
+    }
+    
+    func encode<T: MTLIndirectCommandBuffer>(_ parameter: T?, to path: Path) {
+        switch parameter {
+        case .some(let some): encode(some as MTLIndirectCommandBuffer, to: path)
         case .none: fatalError(.nilValuesAreInvalid)
         }
     }

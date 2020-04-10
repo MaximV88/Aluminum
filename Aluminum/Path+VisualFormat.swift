@@ -79,6 +79,14 @@ public extension ResourceEncoder {
     func encode(_ samplers: [MTLSamplerState], to path: String) {
         encode(samplers, to: Path.path(withVisualFormat: path))
     }
+    
+    func encode(_ buffer: MTLIndirectCommandBuffer, to path: String) {
+        encode(buffer, to: Path.path(withVisualFormat: path))
+    }
+    
+    func encode(_ buffers: [MTLIndirectCommandBuffer], to path: String) {
+        encode(buffers, to: Path.path(withVisualFormat: path))
+    }
 
 }
 

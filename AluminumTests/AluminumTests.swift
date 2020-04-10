@@ -652,6 +652,18 @@ class AluminumTests: XCTestCase {
         }
     }
 
+    func testIndirectCommandBuffer() {
+        runTestController(for: "test_indirect_command_buffer", expected: 90100)
+        { controller, computeCommandEncoder in
+            
+            let encoder = controller.makeEncoder(for: "command_buffer", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            encoder.setArgumentBuffer(buffer)
+            
+            let indirectCommandBuffer = makeIndirectCommandBuffer()
+            encoder.encode(indirectCommandBuffer, to: [.argument("buffer")])
+        }
+    }
     
     // RENDER
     
@@ -744,6 +756,11 @@ private extension AluminumTests {
     func makeSampler() -> MTLSamplerState {
         let descriptor = MTLSamplerDescriptor()
         return device.makeSamplerState(descriptor: descriptor)!
+    }
+    
+    func makeIndirectCommandBuffer() -> MTLIndirectCommandBuffer {
+        let descriptor = MTLIndirectCommandBufferDescriptor()
+        return device.makeIndirectCommandBuffer(descriptor: descriptor, maxCommandCount: 1, options: .storageModeShared)!
     }
 }
 
