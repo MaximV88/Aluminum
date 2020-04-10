@@ -436,4 +436,12 @@ extension DataType {
         default: return false
         }
     }
+    
+    var isPendingArray: Bool {
+        guard case let .structMember(s) = self else {
+            return false
+        }
+        
+        return s.dataType == .array
+    }
 }

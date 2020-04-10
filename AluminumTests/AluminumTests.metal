@@ -512,6 +512,17 @@ kernel void test_sampler_array_in_argument_buffer(device ArgumentBufferWithSampl
     }
 }
 
+#pragma mark - Render
+
+struct VertexOut {
+    float4 position [[ position ]];
+    float2 coordinate_position;
+};
+
+vertex VertexOut test_render(device uint * result)
+{
+    return VertexOut();
+}
 
 #pragma mark - Utility
 

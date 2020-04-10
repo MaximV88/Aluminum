@@ -617,6 +617,32 @@ class AluminumTests: XCTestCase {
             encoder.encode(texture, to: [.argument("tex")])
         }
     }
+
+    func testSamplerArrayInArgumentBufferWithoutIndex() {
+        runTestController(for: "test_sampler_array_in_argument_buffer", expected: 90100)
+        { controller, computeCommandEncoder in
+            
+            let encoder = controller.makeEncoder(for: "argument_buffer", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            let sampler = makeSampler()
+            
+            encoder.setArgumentBuffer(buffer)
+            
+            let samplerArray = [MTLSamplerState](repeating: sampler, count: 10)
+            encoder.encode(samplerArray, to: [.argument("s")])
+            encoder.encode(texture, to: [.argument("tex")])
+        }
+    }
+
+    
+    // RENDER
+    
+//    func testRender() {
+//        runTestController(for: "test_render", expected: 0)
+//        { controller, computeCommandEncoder in
+//
+//        }
+//    }
 }
 
 private extension AluminumTests {
@@ -643,6 +669,11 @@ private extension AluminumTests {
     func makeComputePipelineState(functionName: String) throws -> ComputePipelineStateController {
         guard let function = library.makeFunction(name: functionName) else {
             throw TestError.noFunctionForName
+        }
+        
+        // TODO: render - MTLFunction.functionType
+        guard case .kernel = function.functionType else {
+            fatalError()
         }
         
         return try ComputePipelineStateController(function: function)

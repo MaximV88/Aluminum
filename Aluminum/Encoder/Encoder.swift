@@ -31,6 +31,9 @@ public protocol ResourceEncoder: BytesEncoder {
 
     func encode(_ samplers: [MTLSamplerState], to path: Path)
   
+    // TODO: in case destination is array, make index optional
+    
+    // TODO: missing functionality
 //    func setRenderPipelineState(_ pipeline: MTLRenderPipelineState?, index: Int)
 //    func setIndirectCommandBuffer(_ indirectCommandBuffer: MTLIndirectCommandBuffer?, index: Int)
 }
@@ -64,7 +67,8 @@ public protocol RootEncoder: ArgumentBufferEncoder {
     func encode(_ samplers: [MTLSamplerState], lodMinClamps: [Float], lodMaxClamps: [Float])
 
     // TODO: check index association
-//    func setThreadgroupMemoryLength(_ length: Int, index: Int)
+//    func setRenderPipelineState(_ pipeline: MTLRenderPipelineState?, index: Int)
+//    func setIndirectCommandBuffer(_ indirectCommandBuffer: MTLIndirectCommandBuffer?, index: Int)
 }
 
 public extension BytesEncoder {

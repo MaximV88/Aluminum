@@ -86,12 +86,12 @@ extension ArgumentBufferRootEncoder: RootEncoder {
     func encode(_ textures: [MTLTexture], to path: Path) {
         validateArgumentBuffer()
         
-        let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isTexture, .invalidTexturePath(dataTypePath.last!))
+        applyArray(path: path) { (applicablePath, dataTypePath) in
+            assert(dataTypePath.last!.isTexture, .invalidTexturePath(dataTypePath.last!))
 
-        let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
-        argumentEncoder.setTextures(textures, range: index ..< index + textures.count)
-
+            let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
+            argumentEncoder.setTextures(textures, range: index ..< index + textures.count)
+        }
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
@@ -130,7 +130,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         validateArgumentBuffer()
 
         let dataTypePath = encoding.localDataTypePath(for: path)
-        
+        // TODO: TEST!!!!! an array in argument buffer doesnt look like it should end with encodable buffer
         switch dataTypePath.last! {
         case let .buffer(p): fallthrough
         case let .encodableBuffer(p):
@@ -176,11 +176,12 @@ extension ArgumentBufferRootEncoder: RootEncoder {
     func encode(_ samplers: [MTLSamplerState], to path: Path) {
         validateArgumentBuffer()
 
-        let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isSampler, .invalidSamplerPath(dataTypePath.last!))
+        applyArray(path: path) { (applicablePath, dataTypePath) in
+            assert(dataTypePath.last!.isSampler, .invalidSamplerPath(dataTypePath.last!))
 
-        let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
-        argumentEncoder.setSamplerStates(samplers, range: index ..< index + samplers.count)
+            let index = queryIndex(for: applicablePath, dataTypePath: dataTypePath[1...])
+            argumentEncoder.setSamplerStates(samplers, range: index ..< index + samplers.count)
+        }
     }
     
     func childEncoder(for path: Path) -> ArgumentBufferEncoder {
@@ -201,6 +202,20 @@ private extension ArgumentBufferRootEncoder {
     func validateArgumentBuffer() {
         assert(hasArgumentBuffer, .noArgumentBuffer)
     }
+    
+    /// Detects incomplete array path and proceeds application of array by completing missing path component
+    func applyArray(path: Path, closure: (_ path: Path, _ dataTypePath: [DataType])->())
+    {
+        var queryPath = path
+        var dataTypePath = encoding.localDataTypePath(for: queryPath)
+        if dataTypePath.last!.isPendingArray {
+            queryPath = path + [.index(0)]
+            dataTypePath = encoding.localDataTypePath(for: queryPath)
+        }
+        
+        closure(queryPath, dataTypePath)
+    }
+
 }
 
 private extension MTLArgumentAccess {
