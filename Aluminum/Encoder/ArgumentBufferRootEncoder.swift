@@ -198,7 +198,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         validateArgumentBuffer()
 
         applyArray(path: path) { (applicablePath, dataTypePath) in
-            assert(dataTypePath.last!.isSampler, .invalidSamplerPath(dataTypePath.last!))
+            assert(dataTypePath.last!.isIndirectCommandBuffer, .invalidIndirectCommandBufferPath(dataTypePath.last!))
 
             let index = queryIndex(for: applicablePath, dataTypePath: dataTypePath[1...])
             argumentEncoder.setIndirectCommandBuffers(buffers, range: index ..< index + buffers.count)
