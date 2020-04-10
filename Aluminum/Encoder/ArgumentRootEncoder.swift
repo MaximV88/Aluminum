@@ -37,21 +37,4 @@ extension ArgumentRootEncoder: RootEncoder {
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
         computeCommandEncoder.setBytes(bytes, length: count, index: argument.index)
     }
-    
-    func encode(_ sampler: MTLSamplerState, to path: Path) {
-        let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isSamplerArgument, .invalidSamplerPath(dataTypePath.last!))
-        
-        let index = queryIndex(for: path, dataTypePath: dataTypePath)
-        computeCommandEncoder.setSamplerStates([sampler], range: index ..< index + 1)
-    }
-
-    func encode(_ samplers: [MTLSamplerState], to path: Path) {
-        let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isSamplerArgument, .invalidSamplerPath(dataTypePath.last!))
-        
-        let index = queryIndex(for: path, dataTypePath: dataTypePath)
-        computeCommandEncoder.setSamplerStates(samplers, range: index ..< index + samplers.count)
-    }
-
 }

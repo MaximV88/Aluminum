@@ -46,7 +46,8 @@ private struct ArgumentRecognizer: DataTypeRecognizer {
             case let .argument(a) = context.currentMetalType,
             case .buffer = a.type,
             case let .pointer(p) = context.nextMetalType(),
-            !p.elementIsArgumentBuffer
+            !p.elementIsArgumentBuffer,
+            p.elementType != .struct
             else
         {
             return nil

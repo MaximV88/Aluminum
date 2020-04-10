@@ -31,6 +31,8 @@ public protocol ResourceEncoder: BytesEncoder {
 
     func encode(_ samplers: [MTLSamplerState], to path: Path)
   
+//    func setRenderPipelineState(_ pipeline: MTLRenderPipelineState?, index: Int)
+//    func setIndirectCommandBuffer(_ indirectCommandBuffer: MTLIndirectCommandBuffer?, index: Int)
 }
 
 public protocol ArgumentBufferEncoder: ResourceEncoder {
