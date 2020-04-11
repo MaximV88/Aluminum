@@ -677,18 +677,15 @@ private extension AluminumTests {
 
         XCTAssertEqual(resultBuffer.value(), expected)
     }
-    
+}
+
+private extension AluminumTests {
     func makeComputePipelineState(functionName: String) throws -> ComputePipelineStateController {
         guard let function = library.makeFunction(name: functionName) else {
             throw TestError.noFunctionForName
         }
-        
-        // TODO: render - MTLFunction.functionType
-        guard case .kernel = function.functionType else {
-            fatalError()
-        }
-        
-        return try ComputePipelineStateController(function: function)
+                
+        return try ComputePipelineStateController(function)
     }
     
     func dispatchAndCommit(_ computeCommandEncoder: MTLComputeCommandEncoder, commandBuffer: MTLCommandBuffer, threadCount: Int) {

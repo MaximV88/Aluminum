@@ -11,17 +11,28 @@ import Metal
 
 public class ComputePipelineStateController {
     
-    public let function: MTLFunction
     
     public let computePipelineState: MTLComputePipelineState
         
+    private let function: MTLFunction
     private let parser: Parser
     
-    public init(function: MTLFunction) throws {
+    public init(_ function: MTLFunction) throws {
         self.function = function
         
         var reflection: MTLComputePipelineReflection?
         self.computePipelineState = try function.device.makeComputePipelineState(function: function,
+                                                                                 options: [.argumentInfo, .bufferTypeInfo],
+                                                                                 reflection: &reflection)
+        
+        self.parser = Parser(arguments: reflection!.arguments)
+    }
+    
+    public init(_ descriptor: MTLComputePipelineDescriptor) throws {
+        self.function = descriptor.computeFunction!
+        
+        var reflection: MTLComputePipelineReflection?
+        self.computePipelineState = try function.device.makeComputePipelineState(descriptor: descriptor,
                                                                                  options: [.argumentInfo, .bufferTypeInfo],
                                                                                  reflection: &reflection)
         

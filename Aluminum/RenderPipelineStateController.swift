@@ -10,10 +10,9 @@ import Metal
 
 
 public class RenderPipelineStateController {
-    public let descriptor: MTLRenderPipelineDescriptor
     public let renderPipelineState: MTLRenderPipelineState
     
-    struct Data {
+    private struct Data {
         let parser: Parser
         let function: MTLFunction
     }
@@ -21,11 +20,7 @@ public class RenderPipelineStateController {
     private let vertexData: Data?
     private let fragmentData: Data?
     
-    public init(descriptor: MTLRenderPipelineDescriptor) throws {
-        // TODO: assert functions to have same device?
-        
-        self.descriptor = descriptor
-        
+    public init(_ descriptor: MTLRenderPipelineDescriptor) throws {
         guard let function = descriptor.vertexFunction ?? descriptor.fragmentFunction else {
             fatalError("MTLRenderPipelineDescriptor does not contain any functions.".padded)
         }
