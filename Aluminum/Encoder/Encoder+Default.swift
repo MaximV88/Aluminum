@@ -15,7 +15,19 @@ extension BytesEncoder {
     }
 }
 
-extension ResourceEncoder {
+extension ArgumentBufferEncoder {
+    var encodedLength: Int {
+        fatalError(.noArgumentBufferRequired)
+    }
+
+    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
+        fatalError(.noArgumentBufferRequired)
+    }
+
+    func childEncoder(for path: Path) -> ArgumentBufferEncoder {
+        fatalError(.noChildEncoderExists)
+    }
+
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path) {
         fatalError(.noExistingBuffer)
     }
@@ -58,20 +70,6 @@ extension ResourceEncoder {
     
     func encode(_ buffers: [MTLIndirectCommandBuffer], to path: Path) {
         fatalError(.noExistingIndirectBuffer)
-    }
-}
-
-extension ArgumentBufferEncoder {
-    var encodedLength: Int {
-        fatalError(.noArgumentBufferRequired)
-    }
-
-    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
-        fatalError(.noArgumentBufferRequired)
-    }
-
-    func childEncoder(for path: Path) -> ArgumentBufferEncoder {
-        fatalError(.noChildEncoderExists)
     }
 }
 

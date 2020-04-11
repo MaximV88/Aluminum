@@ -47,7 +47,11 @@ public extension BytesEncoder {
     }
 }
 
-public extension ResourceEncoder {
+public extension ArgumentBufferEncoder {
+    func childEncoder(for path: String) -> ArgumentBufferEncoder {
+        childEncoder(for: Path.path(withVisualFormat: path))
+    }
+
     func encode(_ buffer: MTLBuffer, to path: String) {
         encode(buffer, to: Path.path(withVisualFormat: path))
     }
@@ -94,12 +98,5 @@ public extension ResourceEncoder {
     
     func encode(_ buffers: [MTLIndirectCommandBuffer], to path: String) {
         encode(buffers, to: Path.path(withVisualFormat: path))
-    }
-
-}
-
-public extension ArgumentBufferEncoder {
-    func childEncoder(for path: String) -> ArgumentBufferEncoder {
-        childEncoder(for: Path.path(withVisualFormat: path))
     }
 }

@@ -15,9 +15,14 @@ public protocol BytesEncoder {
 
 }
 
-// TODO: merge with argument buffer encoder
-public protocol ResourceEncoder: BytesEncoder {
+public protocol ArgumentBufferEncoder: BytesEncoder {
         
+    var encodedLength: Int { get }
+
+    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int)
+
+    func childEncoder(for path: Path) -> ArgumentBufferEncoder
+
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path)
     
     func encode(_ buffers: [MTLBuffer], offsets: [Int], to path: Path)
@@ -39,17 +44,7 @@ public protocol ResourceEncoder: BytesEncoder {
     func encode(_ buffer: MTLIndirectCommandBuffer, to path: Path)
 
     func encode(_ buffers: [MTLIndirectCommandBuffer], to path: Path)
-
-}
-
-public protocol ArgumentBufferEncoder: ResourceEncoder {
     
-    var encodedLength: Int { get }
-
-    func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int)
-
-    func childEncoder(for path: Path) -> ArgumentBufferEncoder
-
 }
 
 public protocol RootEncoder: ArgumentBufferEncoder {
@@ -82,13 +77,21 @@ public extension BytesEncoder {
     }
 }
 
-public extension ResourceEncoder {
+public extension ArgumentBufferEncoder {
+    func setArgumentBuffer(_ argumentBuffer: MTLBuffer) {
+        setArgumentBuffer(argumentBuffer, offset: 0)
+    }
+
     func encode(_ buffer: MTLBuffer, to path: Path)  {
         encode(buffer, offset: 0, to: path)
     }
     
     func encode(_ buffers: [MTLBuffer], to path: Path) {
         encode(buffers, offsets: [Int](repeating: 0, count: buffers.count), to: path)
+    }
+    
+    func encode(_ buffer: MTLBuffer, to path: Path, _ encoderClosure: (BytesEncoder)->()) {
+        encode(buffer, offset: 0, to: path, encoderClosure)
     }
 
     func encode<T: MTLBuffer>(_ buffer: T?, to path: Path) {
@@ -124,16 +127,6 @@ public extension ResourceEncoder {
         case .some(let some): encode(some as MTLIndirectCommandBuffer, to: path)
         case .none: fatalError(.nilValuesAreInvalid)
         }
-    }
-
-    func encode(_ buffer: MTLBuffer, to path: Path, _ encoderClosure: (BytesEncoder)->()) {
-        encode(buffer, offset: 0, to: path, encoderClosure)
-    }
-}
-
-public extension ArgumentBufferEncoder {
-    func setArgumentBuffer(_ argumentBuffer: MTLBuffer) {
-        setArgumentBuffer(argumentBuffer, offset: 0)
     }
 }
 

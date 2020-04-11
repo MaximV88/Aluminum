@@ -10,8 +10,6 @@ import Metal
 
 
 public class ComputePipelineStateController {
-    
-    
     public let computePipelineState: MTLComputePipelineState
         
     private let function: MTLFunction
