@@ -65,7 +65,7 @@ class AluminumTests: XCTestCase {
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
 
-            for i: UInt in 0 ..< 10 {
+            for i in 0 ..< 10 {
                 encoder.encode(UInt32(i), to: [.index(i)])
             }
         }
@@ -96,7 +96,7 @@ class AluminumTests: XCTestCase {
             
             (0 ..< 10).forEach {
                 encoder.encode(Int32($0), to: "i_arr[\($0)]")
-                encoder.encode(UInt32($0), to: [.argument("ui_arr"), .index(UInt($0))])
+                encoder.encode(UInt32($0), to: [.argument("ui_arr"), .index($0)])
             }
             
             encoder.encode(UInt(10), to: [.argument("j")])
@@ -137,8 +137,8 @@ class AluminumTests: XCTestCase {
             
             for i in 0 ..< 10 {
                 encoder.encode(intBuffers[i], to: "[\(i)].buff")
-                encoder.encode(11, to: [.index(UInt(i)), .argument("i")])
-                encoder.encode(12, to: [.index(UInt(i)), .argument("j")])
+                encoder.encode(11, to: [.index(i), .argument("i")])
+                encoder.encode(12, to: [.index(i), .argument("j")])
             }
         }
     }
@@ -226,7 +226,7 @@ class AluminumTests: XCTestCase {
             let intBufferPtr = intBuffer.contents().assumingMemoryBound(to: Int32.self)
             (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
 
-            for i: UInt in 0 ..< 10 {
+            for i in 0 ..< 10 {
                 encoder.encode(UInt32(i), to: [.index(i), .argument("i")])
                 
                 encoder.encode(intBuffer, to: "[\(i)].j[0].buff")
@@ -388,7 +388,7 @@ class AluminumTests: XCTestCase {
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
             
-            for i: UInt in 0 ..< 10 {
+            for i in 0 ..< 10 {
                 let encodableBuffer = makeBuffer(length: 12)
                 encoder.encode(encodableBuffer, to: [.argument("arr"), .index(i)]) { encoder in
                     encoder.encode(true, to: "k")
@@ -407,8 +407,8 @@ class AluminumTests: XCTestCase {
             let buffer = makeBuffer(length: encoder.encodedLength, value: UInt32(1))
             encoder.setArgumentBuffer(buffer)
             
-            for i: UInt in 0 ..< 10 {
-                for j: UInt in 0 ..< 10 {
+            for i in 0 ..< 10 {
+                for j in 0 ..< 10 {
                     let encodableBuffer = makeBuffer(length: 12)
                     encoder.encode(encodableBuffer, to: [.index(i), .argument("arr"), .index(j)]) { encoder in
                         encoder.encode(true, to: "k")
@@ -451,7 +451,7 @@ class AluminumTests: XCTestCase {
             let intBufferPtr = intBuffer.contents().assumingMemoryBound(to: Int32.self)
             (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
 
-            for i: UInt in 0 ..< 10 {
+            for i in 0 ..< 10 {
                 encoder.encode(intBuffer, to: [.argument("arr"), .index(i)])
             }
         }
@@ -507,7 +507,7 @@ class AluminumTests: XCTestCase {
 
             let encoder = controller.makeEncoder(for: "argument", with: computeCommandEncoder)
             
-            for i: UInt in 0 ..< 10 {
+            for i in 0 ..< 10 {
                 encoder.encode(texture, to: [.index(i)])
             }
         }
@@ -556,7 +556,7 @@ class AluminumTests: XCTestCase {
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
 
-            for i: UInt in 0 ..< 10 {
+            for i in 0 ..< 10 {
                 encoder.encode(texture, to: [.index(i), .argument("tex")])
             }
         }
@@ -570,7 +570,7 @@ class AluminumTests: XCTestCase {
             let buffer = makeBuffer(length: encoder.encodedLength)
             encoder.setArgumentBuffer(buffer)
 
-            for i: UInt in 0 ..< 10 {
+            for i in 0 ..< 10 {
                 encoder.encode(texture, to: [.argument("arr"), .index(i)])
             }
         }

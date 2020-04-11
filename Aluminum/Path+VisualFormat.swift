@@ -27,7 +27,7 @@ private extension Path {
             if let argument = format.substring(with: argumentRange) {
                 return .argument(argument)
             } else if let rawIndex = format.substring(with: indexRange) {
-                return .index(UInt(rawIndex.substring(with: NSMakeRange(1, rawIndex.count - 2))!)!) // ignore '[', ']'
+                return .index(Int(rawIndex.substring(with: NSMakeRange(1, rawIndex.count - 2))!)!) // ignore '[', ']'
             } else {
                 return nil
             }

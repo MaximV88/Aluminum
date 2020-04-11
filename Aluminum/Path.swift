@@ -12,13 +12,15 @@ public typealias Path = [PathComponent]
 
 public enum PathComponent {
     case argument(String)
-    case index(UInt) // TODO: convert to Int
+    case index(Int)
 }
 
 internal extension PathComponent {
     var index: UInt? {
         switch self {
-        case .index(let i): return i
+        case .index(let i):
+            assert(i >= 0)
+            return UInt(i)
         default: return nil
         }
     }
