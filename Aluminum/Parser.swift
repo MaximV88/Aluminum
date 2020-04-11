@@ -82,6 +82,10 @@ internal class Parser {
                 return []
             }
             
+            guard validateEncodablePath(from: dataTypePath[(startIndex + 1)...]) else {
+                return []
+            }
+            
             return Array(dataTypePath[startIndex...])
         }
     }

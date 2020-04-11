@@ -14,9 +14,7 @@ public class ComputePipelineStateController {
     public let function: MTLFunction
     
     public let computePipelineState: MTLComputePipelineState
-    
-    
-    private let reflection: MTLComputePipelineReflection
+        
     private let parser: Parser
     
     public init(function: MTLFunction) throws {
@@ -27,7 +25,6 @@ public class ComputePipelineStateController {
                                                                                  options: [.argumentInfo, .bufferTypeInfo],
                                                                                  reflection: &reflection)
         
-        self.reflection = reflection!
         self.parser = Parser(arguments: reflection!.arguments)
     }
     
@@ -39,6 +36,6 @@ public class ComputePipelineStateController {
         return makeRootEncoder(for: encoding,
                                rootPath: [.argument(argument)],
                                function: function,
-                               computeCommandEncoder: computeCommandEncoder)
+                               metalEncoder: ComputeMetalEncoder(computeCommandEncoder))
     }
 }

@@ -12,10 +12,10 @@ import Metal
 internal class SamplerRootEncoder {
     private let encoding: Parser.Encoding
     private let argument: MTLArgument
-    private weak var computeCommandEncoder: MTLComputeCommandEncoder!
+    private let metalEncoder: MetalEncoder
     
     init(encoding: Parser.Encoding,
-         computeCommandEncoder: MTLComputeCommandEncoder)
+         metalEncoder: MetalEncoder)
     {
         guard case let .samplerArgument(argument) = encoding.dataType else {
             fatalError("SamplerRootEncoder expects an argument path that starts with an argument texture.")
@@ -23,39 +23,39 @@ internal class SamplerRootEncoder {
         
         self.encoding = encoding
         self.argument = argument
-        self.computeCommandEncoder = computeCommandEncoder
+        self.metalEncoder = metalEncoder
     }
 }
 
 extension SamplerRootEncoder: RootEncoder {
     func encode(_ sampler: MTLSamplerState) {
         assert(argument.arrayLength == 1, .requiresArrayReference)
-        computeCommandEncoder.setSamplerState(sampler, index: argument.index)
+        metalEncoder.encode(sampler, to: argument.index)
     }
     
     func encode(_ sampler: MTLSamplerState, lodMinClamp: Float, lodMaxClamp: Float) {
         assert(argument.arrayLength == 1, .requiresArrayReference)
-        computeCommandEncoder.setSamplerState(sampler,
-                                              lodMinClamp: lodMinClamp,
-                                              lodMaxClamp: lodMaxClamp,
-                                              index: argument.index)
+        metalEncoder.encode(sampler,
+                            lodMinClamp: lodMinClamp,
+                            lodMaxClamp: lodMaxClamp,
+                            to: argument.index)
     }
 
     func encode(_ samplers: [MTLSamplerState]) {
         assert(argument.arrayLength >= samplers.count, .arrayOutOfBounds(argument.arrayLength))
         
         let index = argument.index
-        computeCommandEncoder.setSamplerStates(samplers, range: index ..< index + samplers.count)
+        metalEncoder.encode(samplers, to: index ..< index + samplers.count)
     }
     
     func encode(_ samplers: [MTLSamplerState], lodMinClamps: [Float], lodMaxClamps: [Float]) {
         assert(argument.arrayLength >= samplers.count, .arrayOutOfBounds(argument.arrayLength))
         
         let index = argument.index
-        computeCommandEncoder.setSamplerStates(samplers,
-                                               lodMinClamps: lodMinClamps,
-                                               lodMaxClamps: lodMaxClamps,
-                                               range: index ..< index + samplers.count)
+        metalEncoder.encode(samplers,
+                            lodMinClamps: lodMinClamps,
+                            lodMaxClamps: lodMaxClamps,
+                            to: index ..< index + samplers.count)
     }
     
     func encode(_ sampler: MTLSamplerState, to path: Path) {
@@ -63,7 +63,7 @@ extension SamplerRootEncoder: RootEncoder {
         assert(dataTypePath.last!.isSamplerArgument, .invalidSamplerPath(dataTypePath.last!))
         
         let index = queryIndex(for: path, dataTypePath: dataTypePath)
-        computeCommandEncoder.setSamplerStates([sampler], range: index ..< index + 1)
+        metalEncoder.encode([sampler], to: index ..< index + 1)
     }
 
     func encode(_ samplers: [MTLSamplerState], to path: Path) {
@@ -71,7 +71,7 @@ extension SamplerRootEncoder: RootEncoder {
         assert(dataTypePath.last!.isSamplerArgument, .invalidSamplerPath(dataTypePath.last!))
         
         let index = queryIndex(for: path, dataTypePath: dataTypePath)
-        computeCommandEncoder.setSamplerStates(samplers, range: index ..< index + samplers.count)
+        metalEncoder.encode(samplers, to: index ..< index + samplers.count)
     }
 }
 

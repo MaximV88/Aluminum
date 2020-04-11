@@ -16,7 +16,7 @@ internal class ArgumentBufferRootEncoder {
     private let pointer: MTLPointerType
     private let argumentEncoder: MTLArgumentEncoder
     private let parentArgumentEncoder: MTLArgumentEncoder?
-    private weak var computeCommandEncoder: MTLComputeCommandEncoder!
+    private let metalEncoder: MetalEncoder
 
     private var hasArgumentBuffer: Bool = false
 
@@ -24,7 +24,7 @@ internal class ArgumentBufferRootEncoder {
          encoderIndex: Int,
          argumentEncoder: MTLArgumentEncoder,
          parentArgumentEncoder: MTLArgumentEncoder?,
-         computeCommandEncoder: MTLComputeCommandEncoder)
+         metalEncoder: MetalEncoder)
     {
         let pointer: MTLPointerType
         switch encoding.dataType {
@@ -38,7 +38,7 @@ internal class ArgumentBufferRootEncoder {
         self.pointer = pointer
         self.argumentEncoder = argumentEncoder
         self.parentArgumentEncoder = parentArgumentEncoder
-        self.computeCommandEncoder = computeCommandEncoder
+        self.metalEncoder = metalEncoder
     }
 }
 
@@ -55,9 +55,9 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         
         if let parentArgumentEncoder = parentArgumentEncoder {
             parentArgumentEncoder.setBuffer(argumentBuffer, offset: offset, index: encoderIndex)
-            computeCommandEncoder.useResource(argumentBuffer, usage: pointer.access.usage)
+            metalEncoder.useResource(argumentBuffer, usage: pointer.access.usage)
         } else {
-            computeCommandEncoder.setBuffer(argumentBuffer, offset: offset, index: encoderIndex)
+            metalEncoder.encode(argumentBuffer, offset: offset, to: encoderIndex)
         }
     }
     
@@ -120,7 +120,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
 
             let pointerIndex = queryIndex(for: path, dataTypePath: dataTypePath[1...])
             argumentEncoder.setBuffer(buffer, offset: offset, index: pointerIndex)
-            computeCommandEncoder.useResource(buffer, usage: p.access.usage)
+            metalEncoder.useResource(buffer, usage: p.access.usage)
 
         default: fatalError(.invalidBufferPath(dataTypePath.last!))
         }
@@ -136,7 +136,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
 
                 let pointerIndex = queryIndex(for: applicablePath, dataTypePath: dataTypePath[1...])
                 argumentEncoder.setBuffers(buffers, offsets: offsets, range: pointerIndex ..< pointerIndex + buffers.count)
-                computeCommandEncoder.useResources(buffers, usage: p.access.usage)
+                metalEncoder.useResources(buffers, usage: p.access.usage)
 
             default: fatalError(.invalidBufferPath(dataTypePath.last!))
             }
@@ -156,7 +156,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
 
         let pointerIndex = queryIndex(for: path, dataTypePath: encoding.localDataTypePath(to: childEncoding)[1...])
         argumentEncoder.setBuffer(buffer, offset: offset, index: pointerIndex)
-        computeCommandEncoder.useResource(buffer, usage: p.access.usage)
+        metalEncoder.useResource(buffer, usage: p.access.usage)
         
         encoderClosure(EncodableBufferEncoder(encoding: childEncoding,
                                               encodableBuffer: buffer,
@@ -221,7 +221,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
 
         let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
         argumentEncoder.setIndirectCommandBuffer(buffer, index: index)
-        computeCommandEncoder.useResource(buffer, usage: .write)
+        metalEncoder.useResource(buffer, usage: .write)
     }
     
     func encode(_ buffers: [MTLIndirectCommandBuffer], to path: Path) {
@@ -232,7 +232,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
 
             let index = queryIndex(for: applicablePath, dataTypePath: dataTypePath[1...])
             argumentEncoder.setIndirectCommandBuffers(buffers, range: index ..< index + buffers.count)
-            computeCommandEncoder.useResources(buffers, usage: .write)
+            metalEncoder.useResources(buffers, usage: .write)
         }
     }
     
@@ -246,7 +246,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
                                          encoderIndex: index,
                                          argumentEncoder: argumentEncoder.makeArgumentEncoderForBuffer(atIndex: index)!,
                                          parentArgumentEncoder: argumentEncoder,
-                                         computeCommandEncoder: computeCommandEncoder)
+                                         metalEncoder: metalEncoder)
     }
 }
 
@@ -266,12 +266,12 @@ private extension ArgumentBufferRootEncoder {
             let candidatePath = path + [.index(0)]
             let candidateDataTypePath = encoding.candidateLocalDataTypePath(for: candidatePath)
             
-            // paths original from same position, find next by index
+            // paths originate from same position, find next by index
             if dataTypePath.count < candidateDataTypePath.count,
                 candidateDataTypePath[dataTypePath.count].isGenericArray
             {
                 queryPath = candidatePath
-                dataTypePath = encoding.localDataTypePath(for: candidatePath)
+                dataTypePath = candidateDataTypePath
             }
         }
         

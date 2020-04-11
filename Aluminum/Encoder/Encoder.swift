@@ -15,6 +15,7 @@ public protocol BytesEncoder {
 
 }
 
+// TODO: merge with argument buffer encoder
 public protocol ResourceEncoder: BytesEncoder {
         
     func encode(_ buffer: MTLBuffer, offset: Int, to path: Path)
@@ -182,29 +183,29 @@ internal func makeRootEncoder(
     for encoding: Parser.Encoding,
     rootPath: Path,
     function: MTLFunction,
-    computeCommandEncoder: MTLComputeCommandEncoder
+    metalEncoder: MetalEncoder
 ) -> RootEncoder
 {
     switch encoding.dataType {
     case .argument:
         return ArgumentRootEncoder(encoding: encoding,
-                                   computeCommandEncoder: computeCommandEncoder)
+                                   metalEncoder: metalEncoder)
     case .encodableArgument:
         return EncodableArgumentRootEncoder(encoding: encoding,
-                                            computeCommandEncoder: computeCommandEncoder)
+                                            metalEncoder: metalEncoder)
     case .textureArgument:
         return TextureRootEncoder(encoding: encoding,
-                                  computeCommandEncoder: computeCommandEncoder)
+                                  metalEncoder: metalEncoder)
     case .samplerArgument:
         return SamplerRootEncoder(encoding: encoding,
-                                  computeCommandEncoder: computeCommandEncoder)
+                                  metalEncoder: metalEncoder)
     case .argumentContainingArgumentBuffer:
         let index = queryIndex(for: rootPath, dataTypePath: encoding.dataTypePath)
         return ArgumentBufferRootEncoder(encoding: encoding,
                                          encoderIndex: index,
                                          argumentEncoder: function.makeArgumentEncoder(bufferIndex: index),
                                          parentArgumentEncoder: nil,
-                                         computeCommandEncoder: computeCommandEncoder)
+                                         metalEncoder: metalEncoder)
     default: fatalError("RootEncoder must start with an argument.")
     }
 }

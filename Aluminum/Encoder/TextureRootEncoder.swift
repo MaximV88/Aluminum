@@ -12,10 +12,10 @@ import Metal
 internal class TextureRootEncoder {
     private let encoding: Parser.Encoding
     private let argument: MTLArgument
-    private weak var computeCommandEncoder: MTLComputeCommandEncoder!
+    private let metalEncoder: MetalEncoder
     
     init(encoding: Parser.Encoding,
-         computeCommandEncoder: MTLComputeCommandEncoder)
+         metalEncoder: MetalEncoder)
     {
         guard case let .textureArgument(argument) = encoding.dataType else {
             fatalError("TextureRootEncoder expects an argument path that starts with an argument texture.")
@@ -23,21 +23,21 @@ internal class TextureRootEncoder {
         
         self.encoding = encoding
         self.argument = argument
-        self.computeCommandEncoder = computeCommandEncoder
+        self.metalEncoder = metalEncoder
     }
 }
 
 extension TextureRootEncoder: RootEncoder {
     func encode(_ texture: MTLTexture) {
         assert(argument.arrayLength == 1, .requiresArrayReference)
-        computeCommandEncoder.setTexture(texture, index: argument.index)
+        metalEncoder.encode(texture, to: argument.index)
     }
     
     func encode(_ textures: [MTLTexture]) {
         assert(argument.arrayLength >= textures.count, .arrayOutOfBounds(argument.arrayLength))
         
         let index = argument.index
-        computeCommandEncoder.setTextures(textures, range: index ..< index + textures.count)
+        metalEncoder.encode(textures, to: index ..< index + textures.count)
     }
     
     func encode(_ texture: MTLTexture, to path: Path) {
@@ -45,7 +45,7 @@ extension TextureRootEncoder: RootEncoder {
         assert(dataTypePath.last!.isTextureArgument, .invalidTexturePath(dataTypePath.last!))
         
         let index = queryIndex(for: path, dataTypePath: dataTypePath)
-        computeCommandEncoder.setTextures([texture], range: index ..< index + 1)
+        metalEncoder.encode([texture], to: index ..< index + 1)
     }
     
     func encode(_ textures: [MTLTexture], to path: Path) {
@@ -53,6 +53,6 @@ extension TextureRootEncoder: RootEncoder {
         assert(dataTypePath.last!.isTextureArgument, .invalidTexturePath(dataTypePath.last!))
 
         let index = queryIndex(for: path, dataTypePath: dataTypePath)
-        computeCommandEncoder.setTextures(textures, range: index ..< index + textures.count)
+        metalEncoder.encode(textures, to: index ..< index + textures.count)
     }
 }

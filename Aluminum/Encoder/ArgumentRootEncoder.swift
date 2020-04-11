@@ -13,11 +13,11 @@ internal class ArgumentRootEncoder {
     private let encoding: Parser.Encoding
     private let argument: MTLArgument
 
-    private weak var computeCommandEncoder: MTLComputeCommandEncoder!
+    private let metalEncoder: MetalEncoder
     private weak var argumentBuffer: MTLBuffer!
     
     init(encoding: Parser.Encoding,
-         computeCommandEncoder: MTLComputeCommandEncoder)
+         metalEncoder: MetalEncoder)
     {
         guard case let .argument(argument) = encoding.dataType else {
             fatalError("ArgumentRootEncoder expects an argument path that starts with an argument.")
@@ -25,16 +25,16 @@ internal class ArgumentRootEncoder {
 
         self.encoding = encoding
         self.argument = argument
-        self.computeCommandEncoder = computeCommandEncoder
+        self.metalEncoder = metalEncoder
     }
 }
 
 extension ArgumentRootEncoder: RootEncoder {
     func encode(_ buffer: MTLBuffer, offset: Int) {
-        computeCommandEncoder.setBuffer(buffer, offset: offset, index: argument.index)
+        metalEncoder.encode(buffer, offset: offset, to: argument.index)
     }
 
     func encode(_ bytes: UnsafeRawPointer, count: Int) {
-        computeCommandEncoder.setBytes(bytes, length: count, index: argument.index)
+        metalEncoder.encode(bytes, count: count, to: argument.index)
     }
 }
