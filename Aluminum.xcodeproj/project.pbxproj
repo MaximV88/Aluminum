@@ -31,6 +31,7 @@
 		94A52E7B24410135006806D3 /* MTLBuffer+Value.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E7A24410135006806D3 /* MTLBuffer+Value.swift */; };
 		94A52E7D24410444006806D3 /* RenderPipelineStateController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E7C24410444006806D3 /* RenderPipelineStateController.swift */; };
 		94A52E7F2441993E006806D3 /* MetalEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E7E2441993E006806D3 /* MetalEncoder.swift */; };
+		94A52E812441AF3D006806D3 /* String+Padding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E802441AF3D006806D3 /* String+Padding.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +73,7 @@
 		94A52E7A24410135006806D3 /* MTLBuffer+Value.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MTLBuffer+Value.swift"; sourceTree = "<group>"; };
 		94A52E7C24410444006806D3 /* RenderPipelineStateController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderPipelineStateController.swift; sourceTree = "<group>"; };
 		94A52E7E2441993E006806D3 /* MetalEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalEncoder.swift; sourceTree = "<group>"; };
+		94A52E802441AF3D006806D3 /* String+Padding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Padding.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -128,6 +130,7 @@
 				9402316824165FB8002242B3 /* Path.swift */,
 				9402316C24182A6A002242B3 /* Path+VisualFormat.swift */,
 				9402316A24182A2A002242B3 /* String+NSRange.swift */,
+				94A52E802441AF3D006806D3 /* String+Padding.swift */,
 			);
 			path = Aluminum;
 			sourceTree = "<group>";
@@ -278,6 +281,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				94A52E812441AF3D006806D3 /* String+Padding.swift in Sources */,
 				9497B83223FB1006000C8085 /* MetalType.swift in Sources */,
 				94A52E68243F9A5C006806D3 /* EncodableBufferEncoder.swift in Sources */,
 				9453C92E23D613EA00E7FCFE /* Encoder.swift in Sources */,

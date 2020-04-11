@@ -27,7 +27,7 @@ public class RenderPipelineStateController {
         self.descriptor = descriptor
         
         guard let function = descriptor.vertexFunction ?? descriptor.fragmentFunction else {
-            fatalError() // ???: change to throw
+            fatalError("MTLRenderPipelineDescriptor does not contain any functions.".padded)
         }
         
         
@@ -51,7 +51,7 @@ public class RenderPipelineStateController {
     
     public func makeVertexEncoder(for argument: String, with renderCommandEncoder: MTLRenderCommandEncoder) -> RootEncoder {
         guard let data = vertexData else {
-            fatalError()
+            fatalError("No vertex function found.".padded)
         }
         
         let encoding = data.parser.encoding(for: argument)
@@ -66,7 +66,7 @@ public class RenderPipelineStateController {
 
     public func makeFragmentEncoder(for argument: String, with renderCommandEncoder: MTLRenderCommandEncoder) -> RootEncoder {
         guard let data = fragmentData else {
-            fatalError()
+            fatalError("No fragment function found.".padded)
         }
 
         let encoding = data.parser.encoding(for: argument)

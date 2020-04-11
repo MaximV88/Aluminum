@@ -121,9 +121,3 @@ private extension DataType {
         }
     }
 }
-
-private extension String {
-    var padded: String {
-        return "\n\n\(self)\n\n"
-    }
-}
