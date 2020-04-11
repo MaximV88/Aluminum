@@ -32,6 +32,10 @@
 		94A52E7D24410444006806D3 /* RenderPipelineStateController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E7C24410444006806D3 /* RenderPipelineStateController.swift */; };
 		94A52E7F2441993E006806D3 /* MetalEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E7E2441993E006806D3 /* MetalEncoder.swift */; };
 		94A52E812441AF3D006806D3 /* String+Padding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E802441AF3D006806D3 /* String+Padding.swift */; };
+		94A52E852441AFCE006806D3 /* Utilities.metal in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E842441AFCE006806D3 /* Utilities.metal */; };
+		94A52E882441B0A2006806D3 /* ComputeMetalEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E872441B0A2006806D3 /* ComputeMetalEncoder.swift */; };
+		94A52E8A2441B0B9006806D3 /* RenderVertexMetalEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E892441B0B9006806D3 /* RenderVertexMetalEncoder.swift */; };
+		94A52E8C2441B0D1006806D3 /* RenderFragmentMetalEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E8B2441B0D1006806D3 /* RenderFragmentMetalEncoder.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,6 +78,10 @@
 		94A52E7C24410444006806D3 /* RenderPipelineStateController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderPipelineStateController.swift; sourceTree = "<group>"; };
 		94A52E7E2441993E006806D3 /* MetalEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalEncoder.swift; sourceTree = "<group>"; };
 		94A52E802441AF3D006806D3 /* String+Padding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Padding.swift"; sourceTree = "<group>"; };
+		94A52E842441AFCE006806D3 /* Utilities.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Utilities.metal; sourceTree = "<group>"; };
+		94A52E872441B0A2006806D3 /* ComputeMetalEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComputeMetalEncoder.swift; sourceTree = "<group>"; };
+		94A52E892441B0B9006806D3 /* RenderVertexMetalEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderVertexMetalEncoder.swift; sourceTree = "<group>"; };
+		94A52E8B2441B0D1006806D3 /* RenderFragmentMetalEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderFragmentMetalEncoder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -123,6 +131,7 @@
 				9453C91123D32AA600E7FCFE /* ComputePipelineStateController.swift */,
 				94A52E7C24410444006806D3 /* RenderPipelineStateController.swift */,
 				94A52E5E243F1659006806D3 /* Encoder */,
+				94A52E862441B093006806D3 /* MetalEncoder */,
 				9453C92923D60C9800E7FCFE /* Parser.swift */,
 				9402317024250C6A002242B3 /* DataType.swift */,
 				9402316E2424BC77002242B3 /* Error.swift */,
@@ -148,6 +157,7 @@
 			children = (
 				9453C91C23D32ADF00E7FCFE /* AluminumTests.swift */,
 				9453C92523D32B7100E7FCFE /* AluminumTests.metal */,
+				94A52E842441AFCE006806D3 /* Utilities.metal */,
 				94A52E7A24410135006806D3 /* MTLBuffer+Value.swift */,
 				9453C91E23D32ADF00E7FCFE /* Info.plist */,
 				9453C92823D32E0B00E7FCFE /* AluminumTests-Bridging-Header.h */,
@@ -160,7 +170,6 @@
 			children = (
 				9453C92D23D613EA00E7FCFE /* Encoder.swift */,
 				94A52E5C243F1348006806D3 /* Encoder+Default.swift */,
-				94A52E7E2441993E006806D3 /* MetalEncoder.swift */,
 				94A52E5F243F99E9006806D3 /* TextureRootEncoder.swift */,
 				94A52E69243FAA29006806D3 /* SamplerRootEncoder.swift */,
 				94A52E61243F9A04006806D3 /* ArgumentRootEncoder.swift */,
@@ -169,6 +178,17 @@
 				94A52E67243F9A5C006806D3 /* EncodableBufferEncoder.swift */,
 			);
 			path = Encoder;
+			sourceTree = "<group>";
+		};
+		94A52E862441B093006806D3 /* MetalEncoder */ = {
+			isa = PBXGroup;
+			children = (
+				94A52E7E2441993E006806D3 /* MetalEncoder.swift */,
+				94A52E872441B0A2006806D3 /* ComputeMetalEncoder.swift */,
+				94A52E892441B0B9006806D3 /* RenderVertexMetalEncoder.swift */,
+				94A52E8B2441B0D1006806D3 /* RenderFragmentMetalEncoder.swift */,
+			);
+			path = MetalEncoder;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -289,14 +309,17 @@
 				94A52E62243F9A04006806D3 /* ArgumentRootEncoder.swift in Sources */,
 				9402317124250C6A002242B3 /* DataType.swift in Sources */,
 				9453C92A23D60C9800E7FCFE /* Parser.swift in Sources */,
+				94A52E8C2441B0D1006806D3 /* RenderFragmentMetalEncoder.swift in Sources */,
 				9402316924165FB8002242B3 /* Path.swift in Sources */,
 				94A52E7F2441993E006806D3 /* MetalEncoder.swift in Sources */,
 				9402316F2424BC77002242B3 /* Error.swift in Sources */,
 				9402316B24182A2A002242B3 /* String+NSRange.swift in Sources */,
 				94A52E60243F99E9006806D3 /* TextureRootEncoder.swift in Sources */,
+				94A52E8A2441B0B9006806D3 /* RenderVertexMetalEncoder.swift in Sources */,
 				94A52E7D24410444006806D3 /* RenderPipelineStateController.swift in Sources */,
 				94A52E6A243FAA29006806D3 /* SamplerRootEncoder.swift in Sources */,
 				9453C91223D32AA600E7FCFE /* ComputePipelineStateController.swift in Sources */,
+				94A52E882441B0A2006806D3 /* ComputeMetalEncoder.swift in Sources */,
 				94A52E66243F9A36006806D3 /* ArgumentBufferRootEncoder.swift in Sources */,
 				9402316D24182A6A002242B3 /* Path+VisualFormat.swift in Sources */,
 				94A52E64243F9A21006806D3 /* EncodableArgumentRootEncoder.swift in Sources */,
@@ -307,6 +330,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				94A52E852441AFCE006806D3 /* Utilities.metal in Sources */,
 				9453C91D23D32ADF00E7FCFE /* AluminumTests.swift in Sources */,
 				9453C92623D32B7100E7FCFE /* AluminumTests.metal in Sources */,
 				94A52E7B24410135006806D3 /* MTLBuffer+Value.swift in Sources */,

@@ -511,20 +511,3 @@ kernel void test_sampler_array_in_argument_buffer(device ArgumentBufferWithSampl
         *result += sum_of_values_in_texture_with_sampler(argument_buffer->tex, argument_buffer->s[i]);
     }
 }
-
-#pragma mark - Utility
-
-kernel void fill_test_texture(texture2d<uint, access::write> texture)
-{
-    uint value = 1;
-    
-    for (ushort i = 0 ; i < 10 ; i++)
-    {
-        for (ushort j = 0 ; j < 10 ; j++)
-        {
-            texture.write(uint4(value, 0, 0, 0), ushort2(i, j));
-            value += 1;
-        }
-    }
-
-}
