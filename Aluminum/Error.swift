@@ -63,6 +63,12 @@ enum AluminumError: Error {
     case nilValuesAreInvalid
     case arrayOutOfBounds(Int)
     case noClampOverrideSupportInArgumentBuffer
+    case missingTextureEncodings(Int, Int)
+    case missingSamplerStateEncodings(Int, Int)
+    case noDirectSetBytesSupportInGroupEncoder
+    case descriptorConstructorRequiresFunction
+    case noVertexFunctionFound
+    case noFragmentFunctionFound
 }
 
 // TODO: remove duplicate errors by using type parameter
@@ -99,6 +105,12 @@ extension AluminumError: LocalizedError {
         case .nilValuesAreInvalid: return "Encoder does not support encoding nil values."
         case .arrayOutOfBounds(let i): return "Array has maximum count of \(i)."
         case .noClampOverrideSupportInArgumentBuffer: return "Argument encoder does not support clamp override."
+        case .missingTextureEncodings(let s, let d): return "Missing texture encoding (\(s) out of \(d) encoded)"
+        case .missingSamplerStateEncodings(let s, let d): return "Missing texture encoding (\(s) out of \(d) encoded)"
+        case .noDirectSetBytesSupportInGroupEncoder: return "setBytes can only be used in setBytes closure when group is applied on a command encoder."
+        case .descriptorConstructorRequiresFunction: return "Descriptor constructor requires a function."
+        case .noVertexFunctionFound: return "No vertex function found"
+        case .noFragmentFunctionFound: return "No fragment function found"
         }
     }
 }

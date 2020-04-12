@@ -36,6 +36,9 @@
 		94A52E882441B0A2006806D3 /* ComputeMetalEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E872441B0A2006806D3 /* ComputeMetalEncoder.swift */; };
 		94A52E8A2441B0B9006806D3 /* RenderVertexMetalEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E892441B0B9006806D3 /* RenderVertexMetalEncoder.swift */; };
 		94A52E8C2441B0D1006806D3 /* RenderFragmentMetalEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E8B2441B0D1006806D3 /* RenderFragmentMetalEncoder.swift */; };
+		94A52E90244380DE006806D3 /* EncoderGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E8F244380DE006806D3 /* EncoderGroup.swift */; };
+		94A52E9324438118006806D3 /* EncoderGroupFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E9224438118006806D3 /* EncoderGroupFactory.swift */; };
+		94A52E9524438152006806D3 /* Metal+EncoderGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E9424438152006806D3 /* Metal+EncoderGroup.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -82,6 +85,9 @@
 		94A52E872441B0A2006806D3 /* ComputeMetalEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComputeMetalEncoder.swift; sourceTree = "<group>"; };
 		94A52E892441B0B9006806D3 /* RenderVertexMetalEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderVertexMetalEncoder.swift; sourceTree = "<group>"; };
 		94A52E8B2441B0D1006806D3 /* RenderFragmentMetalEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderFragmentMetalEncoder.swift; sourceTree = "<group>"; };
+		94A52E8F244380DE006806D3 /* EncoderGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncoderGroup.swift; sourceTree = "<group>"; };
+		94A52E9224438118006806D3 /* EncoderGroupFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncoderGroupFactory.swift; sourceTree = "<group>"; };
+		94A52E9424438152006806D3 /* Metal+EncoderGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Metal+EncoderGroup.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -130,6 +136,7 @@
 				9453C90A23D32A3B00E7FCFE /* Info.plist */,
 				9453C91123D32AA600E7FCFE /* ComputePipelineStateController.swift */,
 				94A52E7C24410444006806D3 /* RenderPipelineStateController.swift */,
+				94A52E9124438109006806D3 /* EncoderGroup */,
 				94A52E5E243F1659006806D3 /* Encoder */,
 				94A52E862441B093006806D3 /* MetalEncoder */,
 				9453C92923D60C9800E7FCFE /* Parser.swift */,
@@ -189,6 +196,16 @@
 				94A52E8B2441B0D1006806D3 /* RenderFragmentMetalEncoder.swift */,
 			);
 			path = MetalEncoder;
+			sourceTree = "<group>";
+		};
+		94A52E9124438109006806D3 /* EncoderGroup */ = {
+			isa = PBXGroup;
+			children = (
+				94A52E8F244380DE006806D3 /* EncoderGroup.swift */,
+				94A52E9224438118006806D3 /* EncoderGroupFactory.swift */,
+				94A52E9424438152006806D3 /* Metal+EncoderGroup.swift */,
+			);
+			path = EncoderGroup;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -314,9 +331,12 @@
 				94A52E7F2441993E006806D3 /* MetalEncoder.swift in Sources */,
 				9402316F2424BC77002242B3 /* Error.swift in Sources */,
 				9402316B24182A2A002242B3 /* String+NSRange.swift in Sources */,
+				94A52E90244380DE006806D3 /* EncoderGroup.swift in Sources */,
 				94A52E60243F99E9006806D3 /* TextureRootEncoder.swift in Sources */,
 				94A52E8A2441B0B9006806D3 /* RenderVertexMetalEncoder.swift in Sources */,
+				94A52E9524438152006806D3 /* Metal+EncoderGroup.swift in Sources */,
 				94A52E7D24410444006806D3 /* RenderPipelineStateController.swift in Sources */,
+				94A52E9324438118006806D3 /* EncoderGroupFactory.swift in Sources */,
 				94A52E6A243FAA29006806D3 /* SamplerRootEncoder.swift in Sources */,
 				9453C91223D32AA600E7FCFE /* ComputePipelineStateController.swift in Sources */,
 				94A52E882441B0A2006806D3 /* ComputeMetalEncoder.swift in Sources */,

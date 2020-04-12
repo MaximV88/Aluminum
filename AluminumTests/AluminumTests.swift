@@ -652,6 +652,52 @@ class AluminumTests: XCTestCase {
         }
     }
 
+    func testEncoderGroup() {
+        let controller = try! makeComputePipelineState(functionName: "test_argument_pointer")
+        let commandBuffer = commandQueue.makeCommandBuffer()!
+        let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()!
+        computeCommandEncoder.setComputePipelineState(controller.computePipelineState)
+        
+        let group = controller.makeEncoderGroup()
+        
+        let encoder = group.makeEncoder(for: "buffer")
+        let buffer = makeBuffer(length: MemoryLayout<UInt32>.stride, value: UInt32(1))
+        encoder.encode(buffer)
+        
+        let resultEncoder = group.makeEncoder(for: "result")
+        let resultBuffer = makeBuffer(length: MemoryLayout<UInt32>.stride)
+        resultEncoder.encode(resultBuffer)
+                
+        computeCommandEncoder.apply(group)
+        
+        dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
+
+        XCTAssertEqual(resultBuffer.value(), 1)
+    }
+    
+    func testEncoderGroupWithSetBytes() {
+        let controller = try! makeComputePipelineState(functionName: "test_argument_pointer")
+        let commandBuffer = commandQueue.makeCommandBuffer()!
+        let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()!
+        computeCommandEncoder.setComputePipelineState(controller.computePipelineState)
+        
+        let group = controller.makeEncoderGroup()
+                
+        let resultEncoder = group.makeEncoder(for: "result")
+        let resultBuffer = makeBuffer(length: MemoryLayout<UInt32>.stride)
+        resultEncoder.encode(resultBuffer)
+        resultEncoder.encode(1)
+                
+        computeCommandEncoder.apply(group) { encoder in
+            encoder.setBytes(1, to: "buffer")
+        }
+        
+        dispatchAndCommit(computeCommandEncoder, commandBuffer: commandBuffer, threadCount: 1)
+
+        XCTAssertEqual(resultBuffer.value(), 1)
+    }
+
+    
     // TODO: add render pipeline state tests
     // TODO: add indirect command buffer tests
 
@@ -667,6 +713,7 @@ private extension AluminumTests {
         let controller = try! makeComputePipelineState(functionName: functionName)
         let commandBuffer = commandQueue.makeCommandBuffer()!
         let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()!
+        computeCommandEncoder.setComputePipelineState(controller.computePipelineState)
         
         let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
         let resultBuffer = makeBuffer(length: MemoryLayout<UInt32>.stride)

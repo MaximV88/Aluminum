@@ -12,13 +12,31 @@ import Metal
 public class RenderPipelineStateController {
     public let renderPipelineState: MTLRenderPipelineState
     
+    
     private struct Data {
         let parser: Parser
         let function: MTLFunction
+        let factory: EncoderGroupFactory
     }
     
     private let vertexData: Data?
     private let fragmentData: Data?
+    
+    private var safeVertexData: Data {
+        guard let data = vertexData else {
+            fatalError(.noVertexFunctionFound)
+        }
+        
+        return data
+    }
+
+    private var safeFragmentData: Data {
+        guard let data = fragmentData else {
+            fatalError(.noFragmentFunctionFound)
+        }
+        
+        return data
+    }
     
     public init(_ descriptor: MTLRenderPipelineDescriptor) throws {
         guard let function = descriptor.vertexFunction ?? descriptor.fragmentFunction else {
@@ -32,25 +50,28 @@ public class RenderPipelineStateController {
                                                                           reflection: &reflection)
         
         if let vertexArguments = reflection?.vertexArguments {
-            vertexData = Data(parser: Parser(arguments: vertexArguments), function: descriptor.vertexFunction!)
+            vertexData = Data(parser: Parser(arguments: vertexArguments),
+                              function: descriptor.vertexFunction!,
+                              factory: EncoderGroupFactory(arguments: vertexArguments))
         } else {
             vertexData = nil
         }
         
         if let fragmentArguments = reflection?.fragmentArguments {
-            fragmentData = Data(parser: Parser(arguments: fragmentArguments), function: descriptor.fragmentFunction!)
+            fragmentData = Data(parser: Parser(arguments: fragmentArguments),
+                                function: descriptor.fragmentFunction!,
+                                factory: EncoderGroupFactory(arguments: fragmentArguments))
         } else {
             fragmentData = nil
         }
     }
-    
-    public func makeVertexEncoder(for argument: String, with renderCommandEncoder: MTLRenderCommandEncoder) -> RootEncoder {
-        guard let data = vertexData else {
-            fatalError("No vertex function found.".padded)
-        }
-        
+}
+
+public extension RenderPipelineStateController {
+    func makeVertexEncoder(for argument: String, with renderCommandEncoder: MTLRenderCommandEncoder) -> RootEncoder {
+        let data = safeVertexData
         let encoding = data.parser.encoding(for: argument)
-                
+        
         renderCommandEncoder.setRenderPipelineState(renderPipelineState)
         
         return makeRootEncoder(for: encoding,
@@ -58,20 +79,27 @@ public class RenderPipelineStateController {
                                function: data.function,
                                metalEncoder: RenderVertexMetalEncoder(renderCommandEncoder))
     }
-
-    public func makeFragmentEncoder(for argument: String, with renderCommandEncoder: MTLRenderCommandEncoder) -> RootEncoder {
-        guard let data = fragmentData else {
-            fatalError("No fragment function found.".padded)
-        }
-
+    
+    func makeFragmentEncoder(for argument: String, with renderCommandEncoder: MTLRenderCommandEncoder) -> RootEncoder {
+        let data = safeFragmentData
         let encoding = data.parser.encoding(for: argument)
-                
+        
         renderCommandEncoder.setRenderPipelineState(renderPipelineState)
-
+        
         return makeRootEncoder(for: encoding,
                                rootPath: [.argument(argument)],
                                function: data.function,
                                metalEncoder: RenderVertexMetalEncoder(renderCommandEncoder))
-
+        
+    }
+    
+    func makeVertexEncoderGroup() -> EncoderGroup {
+        let data = safeVertexData
+        return data.factory.makeEncoderGroup(function: data.function, parser: data.parser)
+    }
+    
+    func makeFragmentEncoderGroup() -> EncoderGroup {
+        let data = safeFragmentData
+        return data.factory.makeEncoderGroup(function: data.function, parser: data.parser)
     }
 }
