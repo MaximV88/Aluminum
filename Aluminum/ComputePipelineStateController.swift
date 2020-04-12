@@ -15,6 +15,14 @@ public class ComputePipelineStateController {
     private let function: MTLFunction
     private let parser: Parser
     
+    fileprivate struct TypeCount {
+        let bufferCount: Int
+        let samplerCount: Int
+        let textureCount: Int
+    }
+    
+    private let typeCount: TypeCount
+    
     public init(_ function: MTLFunction) throws {
         self.function = function
         
@@ -24,6 +32,23 @@ public class ComputePipelineStateController {
                                                                                  reflection: &reflection)
         
         self.parser = Parser(arguments: reflection!.arguments)
+        
+        var bufferCount = 0
+        var samplerCount = 0
+        var textureCount = 0
+
+        reflection!.arguments.forEach {
+            switch $0.type {
+            case .buffer: bufferCount += $0.arrayLength // always 1
+            case .sampler: samplerCount += $0.arrayLength
+            case .texture: textureCount += $0.arrayLength
+            default: break
+            }
+        }
+        
+        self.typeCount = TypeCount(bufferCount: bufferCount,
+                                   samplerCount: samplerCount,
+                                   textureCount: textureCount)
     }
     
     public init(_ descriptor: MTLComputePipelineDescriptor) throws {
@@ -35,17 +60,28 @@ public class ComputePipelineStateController {
                                                                                  reflection: &reflection)
         
         self.parser = Parser(arguments: reflection!.arguments)
+        
+        var bufferCount = 0
+        var samplerCount = 0
+        var textureCount = 0
+
+        reflection!.arguments.forEach {
+            switch $0.type {
+            case .buffer: bufferCount += $0.arrayLength // always 1
+            case .sampler: samplerCount += $0.arrayLength
+            case .texture: textureCount += $0.arrayLength
+            default: break
+            }
+        }
+        
+        self.typeCount = TypeCount(bufferCount: bufferCount,
+                                   samplerCount: samplerCount,
+                                   textureCount: textureCount)
     }
-    
-    // remove compute command encoder
+
     public func makeEncoder(for argument: String, with computeCommandEncoder: MTLComputeCommandEncoder) -> RootEncoder
     {
-        let encoding = parser.encoding(for: argument)
-
-        // need to be set once
-        computeCommandEncoder.setComputePipelineState(computePipelineState)
-
-        return makeRootEncoder(for: encoding,
+        return makeRootEncoder(for: parser.encoding(for: argument),
                                rootPath: [.argument(argument)],
                                function: function,
                                metalEncoder: ComputeMetalEncoder(computeCommandEncoder))
@@ -54,44 +90,67 @@ public class ComputePipelineStateController {
     public func makeEncoderGroup() -> ComputeEncoderGroup {
         return ComputeEncoderGroup(computePipelineState: computePipelineState,
                                    function: function,
-                                   parser: parser)
+                                   parser: parser,
+                                   typeCount: typeCount)
     }
 }
 
 
 // MARK: - Caching
 
-public protocol Interactor {
-    func setBytes<T>(_ parameter: T)
-    func setBytes(_ bytes: UnsafeRawPointer, count: Int)
+public protocol SetBytesEncoder {
+    func setBytes<T>(_ parameter: T?, to: String)
+    func setBytes(_ bytes: UnsafeRawPointer, count: Int, to: String)
 }
 
-public protocol ComputeEncoderGroupDataSourceDelegate: AnyObject {
-    func didRequestSetBytes(for argumentName: String, with interactor: Interactor)
-}
-
-// use cache (Data) - or avoid cache if delegate is provided
 // remeber setBuffers actually sets multiple arguments since an argument cant have a buffer array (illigal)
 
 // make generic via typedef?
 public class ComputeEncoderGroup {
+    private struct Buffer {
+        let buffer: MTLBuffer
+        let offset: Int
+    }
+    
+    private struct Sampler {
+        let sampler: MTLSamplerState
+        let lodClamps: (min: Float, max: Float)?
+    }
+    
+    private struct Resource {
+        let resource: MTLResource
+        let usage: MTLResourceUsage
+    }
+    
+    private var buffers = [Buffer]()
+    private var textures = [MTLTexture]()
+    private var samplerStates = [Sampler]()
+
     private let computePipelineState: MTLComputePipelineState
     private let function: MTLFunction
     private let parser: Parser
 
-    public weak var dataSourceDelegate: ComputeEncoderGroupDataSourceDelegate?
-    
-    public var computeCommandEncoder: MTLComputeCommandEncoder?
-    
+    private var lastBufferIndex: Int? // used for useResources assignment
+    private var resourcesList = [Int: [Resource]]()
+
     // storage ---
-    // check maximum range value from arguments?
     // need to track resources that are removed in override
-    
-    
-    fileprivate init(computePipelineState: MTLComputePipelineState, function: MTLFunction, parser: Parser) {
+
+
+    fileprivate init(computePipelineState: MTLComputePipelineState,
+                     function: MTLFunction,
+                     parser: Parser,
+                     typeCount: ComputePipelineStateController.TypeCount)
+    {
         self.computePipelineState = computePipelineState
+        self.function = function
+        self.parser = parser
+        
+        buffers.reserveCapacity(typeCount.bufferCount)
+        textures.reserveCapacity(typeCount.textureCount)
+        samplerStates.reserveCapacity(typeCount.samplerCount)
     }
-    
+
     public func makeEncoder(for argument: String) -> RootEncoder {
         let encoding = parser.encoding(for: argument)
         return makeRootEncoder(for: encoding,
@@ -99,57 +158,75 @@ public class ComputeEncoderGroup {
                                function: function,
                                metalEncoder: self)
     }
-    
-    // apply on current command encoder, throw if there is no command encoder
-    func apply() {
+}
+
+public extension MTLComputeCommandEncoder {
+    func apply(_ encoderGroup: ComputeEncoderGroup, _ interactorClosure: (SetBytesEncoder)->()) { //
+        // TODO: optimize to use continous
         
     }
 }
 
-
-
 extension ComputeEncoderGroup: MetalEncoder {
     func encode(_ bytes: UnsafeRawPointer, count: Int, to index: Int) {
-        // throw if command encoder is not set, specify that if setBytes is used there has to be a command encoder
+        // TODO: error that says setBytes can only be used in application on metal encoder via closure
+        fatalError()
     }
-    
+
     func encode(_ buffer: MTLBuffer, offset: Int, to index: Int) {
-        <#code#>
+        lastBufferIndex = index
+        
+        // reset existing resources at index, buffer encoding refers to different encodings
+        resourcesList[index] = []
+        
+        buffers[index] = Buffer(buffer: buffer, offset: offset)
     }
-    
+
     func encode(_ buffers: [MTLBuffer], offsets: [Int], to range: Range<Int>) {
-        <#code#>
+        fatalError("Not callable from encoding, used only by EncoderGroup.")
     }
-    
+
     func encode(_ texture: MTLTexture, to index: Int) {
-        <#code#>
+        textures[index] = texture
     }
-    
+
     func encode(_ textures: [MTLTexture], to range: Range<Int>) {
-        <#code#>
+        range.forEach {
+            self.textures[$0] = textures[$0]
+        }
     }
-    
+
     func encode(_ sampler: MTLSamplerState, to index: Int) {
-        <#code#>
+        samplerStates[index] = Sampler(sampler: sampler, lodClamps: nil)
     }
-    
+
     func encode(_ sampler: MTLSamplerState, lodMinClamp: Float, lodMaxClamp: Float, to index: Int) {
-        <#code#>
+        samplerStates[index] = Sampler(sampler: sampler,
+                                       lodClamps: (min: lodMinClamp,
+                                                   max: lodMaxClamp))
     }
-    
+
     func encode(_ samplers: [MTLSamplerState], to range: Range<Int>) {
-        <#code#>
+        range.forEach {
+            samplerStates[$0] = Sampler(sampler: samplers[$0], lodClamps: nil)
+        }
     }
-    
+
     func encode(_ samplers: [MTLSamplerState], lodMinClamps: [Float], lodMaxClamps: [Float], to range: Range<Int>) {
-        <#code#>
+        range.forEach {
+            samplerStates[$0] = Sampler(sampler: samplers[$0],
+                                        lodClamps: (min: lodMinClamps[$0],
+                                                    max: lodMaxClamps[$0]))
+        }
     }
-    
+
     func useResource(_ resource: MTLResource, usage: MTLResourceUsage) {
-        <#code#>
+        resourcesList[lastBufferIndex!]!.append(Resource(resource: resource, usage: usage))
     }
-    
+
     func useResources(_ resources: [MTLResource], usage: MTLResourceUsage) {
-        <#code#>
+        resources.forEach {
+            resourcesList[lastBufferIndex!]!.append(Resource(resource: $0, usage: usage))
+        }
     }
 }

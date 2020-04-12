@@ -97,7 +97,7 @@ extension AluminumError: LocalizedError {
         case .noArgumentBufferRequired: return "Encoder does not require an argument buffer."
         case .noChildEncoderExists: return "Encoder does not contain child encoders."
         case .nilValuesAreInvalid: return "Encoder does not support encoding nil values."
-        case .arrayOutOfBounds(let i): return "Array size can have maximum count of \(i)."
+        case .arrayOutOfBounds(let i): return "Array has maximum count of \(i)."
         case .noClampOverrideSupportInArgumentBuffer: return "Argument encoder does not support clamp override."
         }
     }
