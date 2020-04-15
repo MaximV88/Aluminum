@@ -66,6 +66,10 @@
 		94A52ED12446F5AE006806D3 /* Path+VisualFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9402316C24182A6A002242B3 /* Path+VisualFormat.swift */; };
 		94A52ED22446F5AE006806D3 /* EncodableArgumentRootEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A52E63243F9A21006806D3 /* EncodableArgumentRootEncoder.swift */; };
 		94A52ED42446F5AE006806D3 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9453C91423D32AB300E7FCFE /* Metal.framework */; };
+		94E867C824479BD100B9DD58 /* Parser+Encoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94E867C724479BD100B9DD58 /* Parser+Encoding.swift */; };
+		94E867C924479BD100B9DD58 /* Parser+Encoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94E867C724479BD100B9DD58 /* Parser+Encoding.swift */; };
+		94E867CB24479E1700B9DD58 /* DataTypeIterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94E867CA24479E1700B9DD58 /* DataTypeIterator.swift */; };
+		94E867CC24479E1700B9DD58 /* DataTypeIterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94E867CA24479E1700B9DD58 /* DataTypeIterator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -117,6 +121,8 @@
 		94A52ED92446F5AE006806D3 /* Aluminum.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Aluminum.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		94E8679D24476ED700B9DD58 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		94E8679E24476ED700B9DD58 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		94E867C724479BD100B9DD58 /* Parser+Encoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Parser+Encoding.swift"; sourceTree = "<group>"; };
+		94E867CA24479E1700B9DD58 /* DataTypeIterator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataTypeIterator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -240,7 +246,9 @@
 				94A52E5E243F1659006806D3 /* Encoder */,
 				94A52E862441B093006806D3 /* MetalEncoder */,
 				9453C92923D60C9800E7FCFE /* Parser.swift */,
+				94E867C724479BD100B9DD58 /* Parser+Encoding.swift */,
 				9402317024250C6A002242B3 /* DataType.swift */,
+				94E867CA24479E1700B9DD58 /* DataTypeIterator.swift */,
 				9402316E2424BC77002242B3 /* Error.swift */,
 				9497B83123FB1006000C8085 /* MetalType.swift */,
 				9402316824165FB8002242B3 /* Path.swift */,
@@ -420,6 +428,7 @@
 				94A52E7F2441993E006806D3 /* MetalEncoder.swift in Sources */,
 				9402316F2424BC77002242B3 /* Error.swift in Sources */,
 				9402316B24182A2A002242B3 /* String+NSRange.swift in Sources */,
+				94E867C924479BD100B9DD58 /* Parser+Encoding.swift in Sources */,
 				94A52E90244380DE006806D3 /* EncoderGroup.swift in Sources */,
 				94A52E60243F99E9006806D3 /* TextureRootEncoder.swift in Sources */,
 				94A52E8A2441B0B9006806D3 /* RenderVertexMetalEncoder.swift in Sources */,
@@ -430,6 +439,7 @@
 				9453C91223D32AA600E7FCFE /* ComputePipelineStateController.swift in Sources */,
 				94A52E882441B0A2006806D3 /* ComputeMetalEncoder.swift in Sources */,
 				94A52E66243F9A36006806D3 /* ArgumentBufferRootEncoder.swift in Sources */,
+				94E867CC24479E1700B9DD58 /* DataTypeIterator.swift in Sources */,
 				9402316D24182A6A002242B3 /* Path+VisualFormat.swift in Sources */,
 				94A52E64243F9A21006806D3 /* EncodableArgumentRootEncoder.swift in Sources */,
 			);
@@ -463,6 +473,7 @@
 				94A52EC42446F5AE006806D3 /* MetalEncoder.swift in Sources */,
 				94A52EC52446F5AE006806D3 /* Error.swift in Sources */,
 				94A52EC62446F5AE006806D3 /* String+NSRange.swift in Sources */,
+				94E867C824479BD100B9DD58 /* Parser+Encoding.swift in Sources */,
 				94A52EC72446F5AE006806D3 /* EncoderGroup.swift in Sources */,
 				94A52EC82446F5AE006806D3 /* TextureRootEncoder.swift in Sources */,
 				94A52EC92446F5AE006806D3 /* RenderVertexMetalEncoder.swift in Sources */,
@@ -473,6 +484,7 @@
 				94A52ECE2446F5AE006806D3 /* ComputePipelineStateController.swift in Sources */,
 				94A52ECF2446F5AE006806D3 /* ComputeMetalEncoder.swift in Sources */,
 				94A52ED02446F5AE006806D3 /* ArgumentBufferRootEncoder.swift in Sources */,
+				94E867CB24479E1700B9DD58 /* DataTypeIterator.swift in Sources */,
 				94A52ED12446F5AE006806D3 /* Path+VisualFormat.swift in Sources */,
 				94A52ED22446F5AE006806D3 /* EncodableArgumentRootEncoder.swift in Sources */,
 			);
