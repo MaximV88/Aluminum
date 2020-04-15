@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "9453C90523D32A3B00E7FCFE"
+               BlueprintIdentifier = "94A52EB62446F5AE006806D3"
                BuildableName = "Aluminum.framework"
-               BlueprintName = "Aluminum"
+               BlueprintName = "Aluminum (iOS)"
                ReferencedContainer = "container:Aluminum.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -28,16 +28,6 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "9453C91923D32ADF00E7FCFE"
-               BuildableName = "AluminumTests.xctest"
-               BlueprintName = "AluminumTests"
-               ReferencedContainer = "container:Aluminum.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
@@ -60,9 +50,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "9453C90523D32A3B00E7FCFE"
+            BlueprintIdentifier = "94A52EB62446F5AE006806D3"
             BuildableName = "Aluminum.framework"
-            BlueprintName = "Aluminum"
+            BlueprintName = "Aluminum (iOS)"
             ReferencedContainer = "container:Aluminum.xcodeproj">
          </BuildableReference>
       </MacroExpansion>

@@ -29,12 +29,12 @@ internal class SamplerRootEncoder {
 
 extension SamplerRootEncoder: RootEncoder {
     func encode(_ sampler: MTLSamplerState) {
-        assert(argument.arrayLength == 1, .requiresArrayReference)
+        precondition(argument.arrayLength == 1, .requiresArrayReference)
         metalEncoder.encode(sampler, to: argument.index)
     }
     
     func encode(_ sampler: MTLSamplerState, lodMinClamp: Float, lodMaxClamp: Float) {
-        assert(argument.arrayLength == 1, .requiresArrayReference)
+        precondition(argument.arrayLength == 1, .requiresArrayReference)
         metalEncoder.encode(sampler,
                             lodMinClamp: lodMinClamp,
                             lodMaxClamp: lodMaxClamp,
@@ -42,14 +42,14 @@ extension SamplerRootEncoder: RootEncoder {
     }
 
     func encode(_ samplers: [MTLSamplerState]) {
-        assert(argument.arrayLength >= samplers.count, .arrayOutOfBounds(argument.arrayLength))
+        precondition(argument.arrayLength >= samplers.count, .arrayOutOfBounds(argument.arrayLength))
         
         let index = argument.index
         metalEncoder.encode(samplers, to: index ..< index + samplers.count)
     }
     
     func encode(_ samplers: [MTLSamplerState], lodMinClamps: [Float], lodMaxClamps: [Float]) {
-        assert(argument.arrayLength >= samplers.count, .arrayOutOfBounds(argument.arrayLength))
+        precondition(argument.arrayLength >= samplers.count, .arrayOutOfBounds(argument.arrayLength))
         
         let index = argument.index
         metalEncoder.encode(samplers,
@@ -60,7 +60,7 @@ extension SamplerRootEncoder: RootEncoder {
     
     func encode(_ sampler: MTLSamplerState, to path: Path) {
         let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isSamplerArgument, .invalidSamplerPath(dataTypePath.last!))
+        precondition(dataTypePath.last!.isSamplerArgument, .invalidSamplerPath(dataTypePath.last!))
         
         let index = queryIndex(for: path, dataTypePath: dataTypePath)
         metalEncoder.encode([sampler], to: index ..< index + 1)
@@ -68,7 +68,7 @@ extension SamplerRootEncoder: RootEncoder {
 
     func encode(_ samplers: [MTLSamplerState], to path: Path) {
         let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isSamplerArgument, .invalidSamplerPath(dataTypePath.last!))
+        precondition(dataTypePath.last!.isSamplerArgument, .invalidSamplerPath(dataTypePath.last!))
         
         let index = queryIndex(for: path, dataTypePath: dataTypePath)
         metalEncoder.encode(samplers, to: index ..< index + samplers.count)

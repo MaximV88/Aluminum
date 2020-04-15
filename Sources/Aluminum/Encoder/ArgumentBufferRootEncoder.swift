@@ -48,7 +48,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
     }
     
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
-        assert(argumentBuffer.length - offset >= encodedLength, .invalidArgumentBuffer)
+        precondition(argumentBuffer.length - offset >= encodedLength, .invalidArgumentBuffer)
 
         hasArgumentBuffer = true
         argumentEncoder.setArgumentBuffer(argumentBuffer, offset: offset)
@@ -77,7 +77,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         validateArgumentBuffer()
         
         let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isTexture, .invalidTexturePath(dataTypePath.last!))
+        precondition(dataTypePath.last!.isTexture, .invalidTexturePath(dataTypePath.last!))
 
         let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
         argumentEncoder.setTexture(texture, index: index)
@@ -87,7 +87,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         validateArgumentBuffer()
         
         applyArray(path: path) { (applicablePath, dataTypePath) in
-            assert(dataTypePath.last!.isTexture, .invalidTexturePath(dataTypePath.last!))
+            precondition(dataTypePath.last!.isTexture, .invalidTexturePath(dataTypePath.last!))
 
             let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
             argumentEncoder.setTextures(textures, range: index ..< index + textures.count)
@@ -98,7 +98,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         validateArgumentBuffer()
         
         let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
+        precondition(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
         
         let bytesIndex = queryIndex(for: path, dataTypePath: dataTypePath[1...])
         let destination = argumentEncoder.constantData(at: bytesIndex).assumingMemoryBound(to: UInt8.self)
@@ -152,7 +152,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
             fatalError(.invalidEncodableBufferPath(childEncoding.dataType))
         }
         
-        assert(buffer.length - offset >= p.dataSize, .invalidBuffer)
+        precondition(buffer.length - offset >= p.dataSize, .invalidBuffer)
 
         let pointerIndex = queryIndex(for: path, dataTypePath: encoding.localDataTypePath(to: childEncoding)[1...])
         argumentEncoder.setBuffer(buffer, offset: offset, index: pointerIndex)
@@ -167,7 +167,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         validateArgumentBuffer()
 
         let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isSampler, .invalidSamplerPath(dataTypePath.last!))
+        precondition(dataTypePath.last!.isSampler, .invalidSamplerPath(dataTypePath.last!))
 
         let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
         argumentEncoder.setSamplerState(sampler, index: index)
@@ -181,7 +181,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         validateArgumentBuffer()
 
         applyArray(path: path) { (applicablePath, dataTypePath) in
-            assert(dataTypePath.last!.isSampler, .invalidSamplerPath(dataTypePath.last!))
+            precondition(dataTypePath.last!.isSampler, .invalidSamplerPath(dataTypePath.last!))
 
             let index = queryIndex(for: applicablePath, dataTypePath: dataTypePath[1...])
             argumentEncoder.setSamplerStates(samplers, range: index ..< index + samplers.count)
@@ -192,32 +192,35 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         fatalError(.noClampOverrideSupportInArgumentBuffer)
     }
     
+    @available(iOS 13, *)
     func encode(_ pipeline: MTLRenderPipelineState, to path: Path) {
         validateArgumentBuffer()
 
         let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isRenderPipelineState, .invalidRenderPipelineStatePath(dataTypePath.last!))
+        precondition(dataTypePath.last!.isRenderPipelineState, .invalidRenderPipelineStatePath(dataTypePath.last!))
 
         let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
         argumentEncoder.setRenderPipelineState(pipeline, index: index)
     }
-    
+
+#if os(macOS)
     func encode(_ pipelines: [MTLRenderPipelineState], to path: Path) {
         validateArgumentBuffer()
 
         applyArray(path: path) { (applicablePath, dataTypePath) in
-            assert(dataTypePath.last!.isRenderPipelineState, .invalidRenderPipelineStatePath(dataTypePath.last!))
+            precondition(dataTypePath.last!.isRenderPipelineState, .invalidRenderPipelineStatePath(dataTypePath.last!))
 
             let index = queryIndex(for: applicablePath, dataTypePath: dataTypePath[1...])
             argumentEncoder.setRenderPipelineStates(pipelines, range: index ..< index + pipelines.count)
         }
     }
+#endif
     
     func encode(_ buffer: MTLIndirectCommandBuffer, to path: Path) {
         validateArgumentBuffer()
 
         let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isIndirectCommandBuffer, .invalidIndirectCommandBufferPath(dataTypePath.last!))
+        precondition(dataTypePath.last!.isIndirectCommandBuffer, .invalidIndirectCommandBufferPath(dataTypePath.last!))
 
         let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
         argumentEncoder.setIndirectCommandBuffer(buffer, index: index)
@@ -228,7 +231,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         validateArgumentBuffer()
 
         applyArray(path: path) { (applicablePath, dataTypePath) in
-            assert(dataTypePath.last!.isIndirectCommandBuffer, .invalidIndirectCommandBufferPath(dataTypePath.last!))
+            precondition(dataTypePath.last!.isIndirectCommandBuffer, .invalidIndirectCommandBufferPath(dataTypePath.last!))
 
             let index = queryIndex(for: applicablePath, dataTypePath: dataTypePath[1...])
             argumentEncoder.setIndirectCommandBuffers(buffers, range: index ..< index + buffers.count)
@@ -252,7 +255,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
 
 private extension ArgumentBufferRootEncoder {
     func validateArgumentBuffer() {
-        assert(hasArgumentBuffer, .noArgumentBuffer)
+        precondition(hasArgumentBuffer, .noArgumentBuffer)
     }
     
     /// Detects incomplete array path and proceeds application of array by completing missing path component

@@ -437,6 +437,7 @@ extension DataType {
         }
     }
 
+    @available(OSX 10.14, iOS 13, *)
     var isRenderPipelineState: Bool {
         switch self {
         case .array(let a), .metalArray(let a, _): return a.elementType == .renderPipeline

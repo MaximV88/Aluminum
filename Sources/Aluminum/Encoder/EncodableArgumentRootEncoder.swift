@@ -38,7 +38,7 @@ extension EncodableArgumentRootEncoder: RootEncoder {
     }
     
     func setArgumentBuffer(_ argumentBuffer: MTLBuffer, offset: Int) {
-        assert(argumentBuffer.length - offset >= encodedLength, .invalidArgumentBuffer)
+        precondition(argumentBuffer.length - offset >= encodedLength, .invalidArgumentBuffer)
         
         self.argumentBuffer = argumentBuffer
         self.bufferOffset = offset
@@ -61,11 +61,11 @@ extension EncodableArgumentRootEncoder: RootEncoder {
     }
     
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
-        assert(!didCopyBytes, .overridesSingleUseData)
-        assert(argumentBuffer != nil, .noArgumentBuffer)
+        precondition(!didCopyBytes, .overridesSingleUseData)
+        precondition(argumentBuffer != nil, .noArgumentBuffer)
         
         let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
+        precondition(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
 
         let pathOffset = queryOffset(for: path, dataTypePath: dataTypePath[1...])
         let destination = argumentBuffer.contents().assumingMemoryBound(to: UInt8.self)

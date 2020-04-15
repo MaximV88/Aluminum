@@ -4,12 +4,12 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
-		<key>Aluminum.xcscheme_^#shared#^_</key>
+		<key>Aluminum (iOS).xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
-		<key>AluminumTests.xcscheme_^#shared#^_</key>
+		<key>Aluminum (macOS).xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>1</integer>
@@ -23,6 +23,21 @@
 			<true/>
 		</dict>
 		<key>9453C91923D32ADF00E7FCFE</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>94A52EA02446F2B4006806D3</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>94A52EB62446F5AE006806D3</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>94A52F0924470C3C006806D3</key>
 		<dict>
 			<key>primary</key>
 			<true/>

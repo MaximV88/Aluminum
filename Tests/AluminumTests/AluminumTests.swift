@@ -656,7 +656,7 @@ class AluminumTests: XCTestCase {
         let controller = try! makeComputePipelineState(functionName: "test_argument_pointer")
         let commandBuffer = commandQueue.makeCommandBuffer()!
         let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()!
-        computeCommandEncoder.setComputePipelineState(controller.computePipelineState)
+        computeCommandEncoder.setComputePipelineState(controller.pipelineState)
         
         let group = controller.makeEncoderGroup()
         
@@ -679,14 +679,13 @@ class AluminumTests: XCTestCase {
         let controller = try! makeComputePipelineState(functionName: "test_argument_pointer")
         let commandBuffer = commandQueue.makeCommandBuffer()!
         let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()!
-        computeCommandEncoder.setComputePipelineState(controller.computePipelineState)
+        computeCommandEncoder.setComputePipelineState(controller.pipelineState)
         
         let group = controller.makeEncoderGroup()
                 
         let resultEncoder = group.makeEncoder(for: "result")
         let resultBuffer = makeBuffer(length: MemoryLayout<UInt32>.stride)
         resultEncoder.encode(resultBuffer)
-        resultEncoder.encode(1)
                 
         computeCommandEncoder.apply(group) { encoder in
             encoder.setBytes(1, to: "buffer")
@@ -713,7 +712,7 @@ private extension AluminumTests {
         let controller = try! makeComputePipelineState(functionName: functionName)
         let commandBuffer = commandQueue.makeCommandBuffer()!
         let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()!
-        computeCommandEncoder.setComputePipelineState(controller.computePipelineState)
+        computeCommandEncoder.setComputePipelineState(controller.pipelineState)
         
         let resultEncoder = controller.makeEncoder(for: "result", with: computeCommandEncoder)
         let resultBuffer = makeBuffer(length: MemoryLayout<UInt32>.stride)

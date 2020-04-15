@@ -13,24 +13,15 @@ func fatalError(_ error: AluminumError) -> Never {
     fatalError(error.localizedDescription.padded)
 }
 
-func assert(_ condition: @autoclosure () -> Bool,
-            _ error: AluminumError,
-            file: StaticString = #file,
-            line: UInt = #line)
+func precondition(_ condition: @autoclosure () -> Bool,
+                         _ error: AluminumError,
+                         file: StaticString = #file,
+                         line: UInt = #line)
 {
-    assert(condition(),
-           error.localizedDescription.padded,
-           file: file,
-           line: line)
-}
-
-func assertionFailure(_ error: AluminumError,
-                      file: StaticString = #file,
-                      line: UInt = #line)
-{
-    assertionFailure(error.localizedDescription.padded,
-                     file: file,
-                     line: line)
+    precondition(condition(),
+                 error.localizedDescription,
+                 file: file,
+                 line: line)
 }
 
 enum AluminumError: Error {

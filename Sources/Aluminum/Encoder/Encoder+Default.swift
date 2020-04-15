@@ -56,13 +56,16 @@ extension ArgumentBufferEncoder {
         fatalError(.noExistingSampler)
     }
     
+    @available(iOS 13, *)
     func encode(_ pipeline: MTLRenderPipelineState, to path: Path) {
         fatalError(.noExistingRenderPipelineState)
     }
     
+#if os(macOS)
     func encode(_ pipelines: [MTLRenderPipelineState], to path: Path) {
         fatalError(.noExistingRenderPipelineState)
     }
+#endif
     
     func encode(_ buffer: MTLIndirectCommandBuffer, to path: Path) {
         fatalError(.noExistingIndirectBuffer)

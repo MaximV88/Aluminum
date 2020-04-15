@@ -26,7 +26,7 @@ internal class EncodableBufferEncoder {
 extension EncodableBufferEncoder: BytesEncoder {
     func encode(_ bytes: UnsafeRawPointer, count: Int, to path: Path) {
         let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
+        precondition(dataTypePath.last!.isBytes, .invalidBytesPath(dataTypePath.last!))
 
         let pathOffset = queryOffset(for: path, dataTypePath: dataTypePath[1...])
         let destination = encodableBuffer.contents().assumingMemoryBound(to: UInt8.self)

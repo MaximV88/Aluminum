@@ -9,8 +9,13 @@
 import Metal
 
 
+/// Controller for a `MTLComputePipelineState` instance, manages it's lifecycle.
+/// Responsible for creation of `Encoder` and `EncoderGroup` objects
+/// that bind arguments of `MTLComputePipelineState`'s function.
 public class ComputePipelineStateController {
-    public let computePipelineState: MTLComputePipelineState
+    
+    /// Managed `MTLComputePipelineState`.
+    public let pipelineState: MTLComputePipelineState
         
     private let function: MTLFunction
     private let parser: Parser
@@ -22,10 +27,14 @@ public class ComputePipelineStateController {
     {
         self.function = function
         self.parser = Parser(arguments: arguments)
-        self.computePipelineState = computePipelineState
+        self.pipelineState = computePipelineState
         self.factory = EncoderGroupFactory(arguments: arguments)
     }
     
+    /// Initializes a new controller with provided metal function.
+    ///
+    /// - Throws: propogates `makeComputePipelineState` throw.
+    /// - Parameter function: Function that controller should manage.
     public convenience init(_ function: MTLFunction) throws {
         var reflection: MTLComputePipelineReflection?
         let pipeline = try function.device.makeComputePipelineState(function: function,
@@ -37,6 +46,10 @@ public class ComputePipelineStateController {
                   arguments: reflection!.arguments)
     }
     
+    /// Initializes a new controller with provided `MTLComputePipelineDescriptor` instance.
+    ///
+    /// - Throws: propogates `makeComputePipelineState` throw.
+    /// - Parameter descriptor: Descriptor that references function that controller should manage.
     public convenience init(_ descriptor: MTLComputePipelineDescriptor) throws {
         guard let function = descriptor.computeFunction else {
             fatalError(.descriptorConstructorRequiresFunction)
@@ -54,6 +67,12 @@ public class ComputePipelineStateController {
 }
 
 public extension ComputePipelineStateController {
+    
+    /// Initializes a new encoder that binds `MTLComputeCommandEncoder`'s arguments directly.
+    ///
+    /// - Parameter argument: Name of argument (metal function parameter) to bind for.
+    /// - Parameter computeCommandEncoder: A `MTLComputeCommandEncoder` instance that is target of binding.
+    /// - Returns: A `RootEncoder` assigned to specified argument.
     func makeEncoder(for argument: String, with computeCommandEncoder: MTLComputeCommandEncoder) -> RootEncoder
     {
         return makeRootEncoder(for: parser.encoding(for: argument),
@@ -62,6 +81,9 @@ public extension ComputePipelineStateController {
                                metalEncoder: ComputeMetalEncoder(computeCommandEncoder))
     }
     
+    /// Initializes a new `EncoderGroup`.
+    ///
+    /// - Returns: An `EncoderGroup` that targets the creating Controller's function.
     func makeEncoderGroup() -> EncoderGroup {
         factory.makeEncoderGroup(function: function, parser: parser)
     }

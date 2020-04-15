@@ -9,6 +9,12 @@
 import Metal
 
 
+/// A representation of a function's argument (or part of) bindings.
+/// It caches all bindings done by it's encoders and
+/// when applied, binds them.
+///
+/// `EncoderGroup` can bind to any argument and is intended to be applied on multiple arguments.
+///
 public class EncoderGroup {
     fileprivate struct Buffer {
         let buffer: MTLBuffer
@@ -52,7 +58,11 @@ public class EncoderGroup {
         textures = [MTLTexture?](repeating: nil, count: textureCount)
         samplerStates = [Sampler?](repeating: nil, count: samplerCount)
     }
-
+    
+    /// Initializes a new encoder that targets provided argument.
+    ///
+    /// - Parameter argument: Name of argument (metal function parameter) to bind.
+    /// - Returns: A RootEncoder assigned to specified argument.
     public func makeEncoder(for argument: String) -> RootEncoder {
         let encoding = parser.encoding(for: argument)
         return makeRootEncoder(for: encoding,
@@ -97,12 +107,12 @@ internal extension EncoderGroup {
         // TODO: optimize to use continous
 
         let textures = self.textures.compactMap({ $0 })
-        assert(textures.count == self.textures.count,
-               .missingTextureEncodings(textures.count, self.textures.count))
+        precondition(textures.count == self.textures.count,
+                     .missingTextureEncodings(textures.count, self.textures.count))
         
         let samplerStates = self.samplerStates.compactMap({ $0 })
-        assert(samplerStates.count == self.samplerStates.count,
-               .missingSamplerStateEncodings(samplerStates.count, self.samplerStates.count))
+        precondition(samplerStates.count == self.samplerStates.count,
+                     .missingSamplerStateEncodings(samplerStates.count, self.samplerStates.count))
         
         buffers.forEach {
             if case let .some(value) = $0 {

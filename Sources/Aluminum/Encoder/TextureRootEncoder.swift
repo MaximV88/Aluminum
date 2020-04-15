@@ -29,12 +29,12 @@ internal class TextureRootEncoder {
 
 extension TextureRootEncoder: RootEncoder {
     func encode(_ texture: MTLTexture) {
-        assert(argument.arrayLength == 1, .requiresArrayReference)
+        precondition(argument.arrayLength == 1, .requiresArrayReference)
         metalEncoder.encode(texture, to: argument.index)
     }
     
     func encode(_ textures: [MTLTexture]) {
-        assert(argument.arrayLength >= textures.count, .arrayOutOfBounds(argument.arrayLength))
+        precondition(argument.arrayLength >= textures.count, .arrayOutOfBounds(argument.arrayLength))
         
         let index = argument.index
         metalEncoder.encode(textures, to: index ..< index + textures.count)
@@ -42,7 +42,7 @@ extension TextureRootEncoder: RootEncoder {
     
     func encode(_ texture: MTLTexture, to path: Path) {
         let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isTextureArgument, .invalidTexturePath(dataTypePath.last!))
+        precondition(dataTypePath.last!.isTextureArgument, .invalidTexturePath(dataTypePath.last!))
         
         let index = queryIndex(for: path, dataTypePath: dataTypePath)
         metalEncoder.encode([texture], to: index ..< index + 1)
@@ -50,7 +50,7 @@ extension TextureRootEncoder: RootEncoder {
     
     func encode(_ textures: [MTLTexture], to path: Path) {
         let dataTypePath = encoding.localDataTypePath(for: path)
-        assert(dataTypePath.last!.isTextureArgument, .invalidTexturePath(dataTypePath.last!))
+        precondition(dataTypePath.last!.isTextureArgument, .invalidTexturePath(dataTypePath.last!))
 
         let index = queryIndex(for: path, dataTypePath: dataTypePath)
         metalEncoder.encode(textures, to: index ..< index + textures.count)

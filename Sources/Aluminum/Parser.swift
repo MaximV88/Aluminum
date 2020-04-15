@@ -34,7 +34,7 @@ internal class Parser {
                          parser: Parser,
                          startIndex: Int)
         {
-            assert(validateEncodablePath(from: dataTypePath[startIndex...]), .invalidEncoderPath)
+            precondition(validateEncodablePath(from: dataTypePath[startIndex...]), .invalidEncoderPath)
 
             self.dataTypePath = dataTypePath
             self.parsePath = parsePath
@@ -66,7 +66,7 @@ internal class Parser {
                 fatalError(.nonExistingPath)
             }
 
-            assert(validateEncodablePath(from: dataTypePath[(startIndex + 1)...]), .invalidEncoderPath)
+            precondition(validateEncodablePath(from: dataTypePath[(startIndex + 1)...]), .invalidEncoderPath)
             return Array(dataTypePath[startIndex...])
         }
         
