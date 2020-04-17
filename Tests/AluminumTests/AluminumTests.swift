@@ -470,7 +470,7 @@ class AluminumTests: XCTestCase {
             (0 ..< 10).forEach { intBufferPtr[$0] = Int32($0) }
 
             let bufferArray = [MTLBuffer](repeating: intBuffer, count: 10)
-            encoder.encode(bufferArray, to: [.argument("arr"), .index(0)])
+            encoder.encode(bufferArray, to: "arr")
         }
     }
     

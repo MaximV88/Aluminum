@@ -92,6 +92,25 @@ public extension ArgumentBufferEncoder {
     func encode(_ buffer: MTLBuffer, offset: Int, to path: String) {
         encode(buffer, offset: offset, to: Path.path(withVisualFormat: path))
     }
+    
+    /// Binds an array `MTLBuffer` to destination argument with a default offset of 0.
+    /// This will remove any previous binding.
+    ///
+    /// - Parameter buffers: The `MTLBuffer` array  to set in the argument buffer.
+    /// - Parameter path: A visual path to an argument on which binding will be performed.
+    func encode(_ buffers: [MTLBuffer], to path: String) {
+        encode(buffers, to: Path.path(withVisualFormat: path))
+    }
+    
+    /// Binds an array `MTLBuffer` to destination argument.
+    /// This will remove any previous binding.
+    ///
+    /// - Parameter buffers: The `MTLBuffer` array  to set in the argument buffer.
+    /// - Parameter offset: Where the data begins, in bytes, from the start of the buffer, where index corresponds to index in `buffers`.
+    /// - Parameter path: A visual path to an argument on which binding will be performed.
+    func encode(_ buffers: [MTLBuffer], offsets: [Int], to path: String) {
+        encode(buffers, offsets: offsets, to: Path.path(withVisualFormat: path))
+    }
 
     /// Binds a `MTLBuffer` to destination argument, with addition of changing values in buffer for target argument with a default offset of 0.
     /// This will remove any previous binding.
