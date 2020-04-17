@@ -102,7 +102,25 @@ class AluminumTests: XCTestCase {
             encoder.encode(UInt(10), to: [.argument("j")])
         }
     }
-        
+
+    func testArgumentComplexStructWithArrayInput() {
+        runTestController(for: "test_argument_complex_struct", expected: 100)
+        { controller, computeCommandEncoder in
+
+            let encoder = controller.makeEncoder(for: "argument_complex_struct", with: computeCommandEncoder)
+            let buffer = makeBuffer(length: encoder.encodedLength)
+            encoder.setArgumentBuffer(buffer)
+            
+            let intArray = (0 ..< 10).map { Int32($0) }
+            let uintArray = (0 ..< 10).map { UInt32($0) }
+            
+            encoder.encode(intArray, to: "i_arr")
+            encoder.encode(uintArray, to: [.argument("ui_arr")])
+            
+            encoder.encode(UInt(10), to: [.argument("j")])
+        }
+    }
+    
     func testArgumentBuffer() {
         runTestController(for: "test_argument_buffer", expected: 68)
         { controller, computeCommandEncoder in

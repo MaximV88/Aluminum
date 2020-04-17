@@ -16,11 +16,11 @@ public enum PathComponent {
 }
 
 internal extension PathComponent {
-    var index: UInt? {
+    var index: Int? {
         switch self {
         case .index(let i):
             assert(i >= 0)
-            return UInt(i)
+            return i
         default: return nil
         }
     }

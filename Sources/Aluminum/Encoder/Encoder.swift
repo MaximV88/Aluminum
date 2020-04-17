@@ -262,6 +262,32 @@ public extension BytesEncoder {
             encode(ptr, count: MemoryLayout<T>.stride, to: path)
         }
     }
+    
+    /// Bind data (by copy) for a given argument array by name.
+    /// Infers data length as the stride of the array's element memory layout.
+    /// This will remove any previous binding at given path.
+    ///
+    /// Refer to `setBytes(_:length:index:)` regarding input requirements.
+    ///
+    /// - Parameter array: Array of values to bind (note that the instance's bytes are copied).
+    /// - Parameter path: A path to an argument on which binding will be performed.
+    func encode<T>(_ array: [T], to path: Path) {
+        var conformedPath: Path
+        var startingIndex: Int = 0 // default starting index
+        
+        if let index = path.last!.index {
+            startingIndex = index
+            conformedPath = Array(path[...(path.count - 2)])
+        } else {
+            conformedPath = path
+        }
+        
+        for (index, element) in array.enumerated() {
+            withUnsafePointer(to: element) { ptr in
+                encode(ptr, count: MemoryLayout<T>.stride, to: conformedPath + [.index(startingIndex + index)])
+            }
+        }
+    }
 }
 
 public extension ArgumentBufferEncoder {

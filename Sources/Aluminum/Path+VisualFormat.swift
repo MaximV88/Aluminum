@@ -50,6 +50,18 @@ public extension BytesEncoder {
         encode(parameter, to: Path.path(withVisualFormat: path))
     }
 
+    /// Bind data (by copy) for a given argument array by name.
+    /// Infers data length as the stride of the array's element memory layout.
+    /// This will remove any previous binding at given path.
+    ///
+    /// Refer to `setBytes(_:length:index:)` regarding input requirements.
+    ///
+    /// - Parameter array: Array of values to bind (note that the instance's bytes are copied).
+    /// - Parameter path: A visual path to an argument on which binding will be performed.
+    func encode<T>(_ array: [T], to path: String) {
+        encode(array, to: Path.path(withVisualFormat: path))
+    }
+
     /// Bind data (by copy) for a given argument by name.
     /// This will remove any previous binding at given path.
     ///
