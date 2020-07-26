@@ -89,7 +89,7 @@ extension ArgumentBufferRootEncoder: RootEncoder {
         applyArray(path: path) { (applicablePath, dataTypePath) in
             precondition(dataTypePath.last!.isTexture, .invalidTexturePath(dataTypePath.last!))
 
-            let index = queryIndex(for: path, dataTypePath: dataTypePath[1...])
+            let index = queryIndex(for: applicablePath, dataTypePath: dataTypePath[1...])
             argumentEncoder.setTextures(textures, range: index ..< index + textures.count)
         }
     }
